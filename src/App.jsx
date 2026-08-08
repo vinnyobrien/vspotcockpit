@@ -6,14 +6,14 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
    ============================================================ */
 
 const C = {
-  red: "#E8272A",
-  navy: "#1A1F3C",
-  black: "#0A0A0A",
-  tan: "#D2B48C",
-  grey: "#A0A0A0",
-  navyLift: "#232A4D",
-  navyDeep: "#12162E",
-  line: "rgba(210,180,140,0.18)",
+  red: "#B81A1D",
+  navy: "#EDEBE4",
+  black: "#F5F3EE",
+  tan: "#565C82",
+  grey: "#767CA0",
+  navyLift: "#F2E6D0",
+  navyDeep: "#FFFFFF",
+  line: "rgba(20,24,51,0.12)",
 };
 
 const FONT_D = "'Big Shoulders Display', 'Oswald', Impact, sans-serif";
@@ -55,7 +55,7 @@ const ACCOUNTS = [
 const LANE = {
   content: { label: "CONTENT", c: C.red },
   foundrae: { label: "FOUNDRAE", c: C.tan },
-  pipeline: { label: "PIPELINE", c: "#7FB2C4" },
+  pipeline: { label: "PIPELINE", c: "#3D7A91" },
   ops: { label: "OPS", c: C.grey },
 };
 
@@ -643,14 +643,14 @@ export default function Cockpit({ onLogout, googleConnected }) {
   const offAir = tasks.length === 0;
 
   return (
-    <div style={{ background: C.black, minHeight: "100vh", fontFamily: FONT_B, color: "#EDEDF2" }}>
+    <div style={{ background: C.black, minHeight: "100vh", fontFamily: FONT_B, color: "#141833" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
         * { box-sizing: border-box; }
         .lamp { animation: pulse 2.4s ease-in-out infinite; }
         @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .55 } }
         .row { transition: background .18s ease, opacity .18s ease; }
-        .row:hover { background: rgba(255,255,255,.035); }
+        .row:hover { background: rgba(20,24,51,.04); }
         .btn { transition: all .15s ease; cursor: pointer; }
         .btn:hover { transform: translateY(-1px); }
         .btn:focus-visible, .row:focus-visible { outline: 2px solid ${C.tan}; outline-offset: 2px; }
@@ -664,11 +664,11 @@ export default function Cockpit({ onLogout, googleConnected }) {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <div className="flex items-baseline gap-3">
-                <h1 style={{ fontFamily: FONT_D, fontWeight: 900, fontSize: 42, lineHeight: 0.9, letterSpacing: "0.01em", color: C.red, textShadow: `0 0 18px rgba(232,39,42,.45)` }}>
+                <h1 style={{ fontFamily: FONT_D, fontWeight: 900, fontSize: 42, lineHeight: 0.9, letterSpacing: "0.01em", color: C.red, textShadow: `0 0 18px rgba(0,0,0,0)` }}>
                   THE COCKPIT
                 </h1>
                 <span className="lamp" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FONT_M, fontSize: 10, letterSpacing: ".18em", color: pct === 100 ? C.red : C.grey }}>
-                  <span style={{ width: 8, height: 8, borderRadius: 99, background: pct === 100 ? C.red : "#3A3F5C", boxShadow: pct === 100 ? `0 0 10px ${C.red}` : "none" }} />
+                  <span style={{ width: 8, height: 8, borderRadius: 99, background: pct === 100 ? C.red : "#9095B5", boxShadow: pct === 100 ? `0 0 10px ${C.red}` : "none" }} />
                   {pct === 100 ? "ON AIR" : offAir ? "OFF AIR" : "STANDBY"}
                 </span>
               </div>
@@ -683,7 +683,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               </div>
               <Meter pct={pct} />
               <div style={{ fontFamily: FONT_M, fontSize: 11, color: C.grey, marginTop: 4 }}>
-                <span style={{ color: "#EDEDF2", fontSize: 15, fontWeight: 500 }}>{pct}%</span> transmission · {doneW}/{totalW} weighted
+                <span style={{ color: "#141833", fontSize: 15, fontWeight: 500 }}>{pct}%</span> transmission · {doneW}/{totalW} weighted
               </div>
             </div>
           </div>
@@ -694,7 +694,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
         {err && (
           <div
             role="alert"
-            style={{ position: "fixed", left: 16, right: 16, bottom: 16, zIndex: 70, background: "#2A0E10", border: `1px solid ${C.red}`, padding: "12px 14px", fontSize: 13, lineHeight: 1.5, boxShadow: "0 8px 30px rgba(0,0,0,.6)", maxWidth: 640, margin: "0 auto" }}
+            style={{ position: "fixed", left: 16, right: 16, bottom: 16, zIndex: 70, background: "#FFD8D9", border: `1px solid ${C.red}`, padding: "12px 14px", fontSize: 13, lineHeight: 1.5, boxShadow: "0 8px 30px rgba(0,0,0,.6)", maxWidth: 640, margin: "0 auto" }}
           >
             <div className="flex items-start gap-3">
               <span style={{ flex: 1 }}>{err}</span>
@@ -712,7 +712,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
                   <SectionHead n="00" title="THE GAP" right={`${gaps.length} slipping`} />
                   <div style={{ border: `1px solid ${C.red}55` }}>
                     {gaps.slice(0, 5).map((g, i) => (
-                      <div key={i} className="px-3 py-2.5" style={{ background: i === 0 ? "rgba(232,39,42,.07)" : C.navyDeep, borderTop: i === 0 ? "none" : `1px solid rgba(255,255,255,.05)`, borderLeft: `3px solid ${g.w >= 3 ? C.red : g.w === 2 ? "#D9A441" : "#4A4F70"}` }}>
+                      <div key={i} className="px-3 py-2.5" style={{ background: i === 0 ? "#FFD8D9" : C.navyDeep, borderTop: i === 0 ? "none" : `1px solid rgba(20,24,51,.07)`, borderLeft: `3px solid ${g.w >= 3 ? C.red : g.w === 2 ? "#A8761A" : "#9095B5"}` }}>
                         <div style={{ fontSize: 13.5, fontWeight: 500, lineHeight: 1.35 }}>{g.t}</div>
                         <p style={{ fontSize: 12, color: C.grey, marginTop: 3, lineHeight: 1.45 }}>{g.s}</p>
                       </div>
@@ -724,7 +724,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               <SectionHead n="01" title="RUNDOWN" right={offAir ? "rest day" : `${all.filter((t) => done[t.id]).length}/${all.length}`} />
 
               {!offAir && (
-                <div className="flex items-center gap-2 mb-2 flex-wrap px-3 py-2" style={{ background: floorDay ? "rgba(210,180,140,.08)" : C.navyDeep, border: `1px solid ${C.line}` }}>
+                <div className="flex items-center gap-2 mb-2 flex-wrap px-3 py-2" style={{ background: floorDay ? "#F2E6D0" : C.navyDeep, border: `1px solid ${C.line}` }}>
                   <button className="btn" onClick={() => setFloorDay(!floorDay)} style={btnStyle(C.tan, !floorDay)}>
                     {floorDay ? "FLOOR DAY ON" : "DECLARE A FLOOR DAY"}
                   </button>
@@ -765,8 +765,8 @@ export default function Cockpit({ onLogout, googleConnected }) {
                         onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), toggle(t.id))}
                         className="row flex gap-3 px-3 py-3"
                         style={{
-                          background: isDone ? "rgba(210,180,140,.05)" : C.navyDeep,
-                          borderTop: i === 0 ? "none" : `1px solid rgba(255,255,255,.05)`,
+                          background: isDone ? "rgba(20,24,51,.03)" : C.navyDeep,
+                          borderTop: i === 0 ? "none" : `1px solid rgba(20,24,51,.07)`,
                           borderLeft: `3px solid ${isDone ? lane.c : "transparent"}`,
                           opacity: isDone ? 0.55 : muted ? 0.3 : 1,
                           cursor: "pointer",
@@ -786,7 +786,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
                           </div>
                           <p style={{ fontSize: 12.5, color: C.grey, marginTop: 2, lineHeight: 1.45 }}>{t.note}</p>
                         </div>
-                        <div style={{ width: 18, height: 18, marginTop: 3, flexShrink: 0, border: `1px solid ${isDone ? lane.c : "#3A3F5C"}`, background: isDone ? lane.c : "transparent", display: "grid", placeItems: "center" }}>
+                        <div style={{ width: 18, height: 18, marginTop: 3, flexShrink: 0, border: `1px solid ${isDone ? lane.c : "#9095B5"}`, background: isDone ? lane.c : "transparent", display: "grid", placeItems: "center" }}>
                           {isDone && <span style={{ color: C.black, fontSize: 12, fontWeight: 700, lineHeight: 1 }}>✓</span>}
                         </div>
                       </div>
@@ -805,7 +805,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
                   onChange={(e) => setThree(e.target.value)}
                   placeholder={"1.\n2.\n3."}
                   rows={4}
-                  style={{ width: "100%", background: C.navyDeep, border: `1px solid ${C.line}`, color: "#EDEDF2", padding: 12, fontSize: 13, lineHeight: 1.6, resize: "vertical" }}
+                  style={{ width: "100%", background: C.navyDeep, border: `1px solid ${C.line}`, color: "#141833", padding: 12, fontSize: 13, lineHeight: 1.6, resize: "vertical" }}
                 />
               </div>
 
@@ -819,7 +819,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
                       const h = r.pct !== undefined ? Math.max(3, (r.pct / 100) * 60) : 3;
                       return (
                         <div key={r.d} className="flex flex-col items-center gap-1.5" style={{ flex: 1 }}>
-                          <div style={{ width: "100%", height: h, background: isToday ? C.red : r.pct !== undefined ? C.tan : "#2A2F4D", boxShadow: isToday ? `0 0 10px rgba(232,39,42,.5)` : "none" }} />
+                          <div style={{ width: "100%", height: h, background: isToday ? C.red : r.pct !== undefined ? C.tan : "rgba(20,24,51,0.08)", boxShadow: isToday ? `0 0 10px rgba(0,0,0,0)` : "none" }} />
                           <span style={{ fontFamily: FONT_M, fontSize: 9, color: isToday ? C.red : C.grey }}>{DAYS[(new Date(r.d).getDay())][0]}</span>
                         </div>
                       );
@@ -886,23 +886,23 @@ export default function Cockpit({ onLogout, googleConnected }) {
                     .sort((a, b) => (b.last || "").localeCompare(a.last || ""))
                     .map((t, i) => {
                       const d = daysSince(t.last, today);
-                      const heat = d === null ? "#3A3F5C" : d <= 7 ? C.red : d <= 21 ? C.tan : "#4A4F70";
+                      const heat = d === null ? "#9095B5" : d <= 7 ? C.red : d <= 21 ? C.tan : "#9095B5";
                       const label = d === null ? "unfired" : d === 0 ? "today" : `${d}d`;
                       return (
                         <div
                           key={t.id}
                           className="flex items-start gap-3 px-3 py-2.5"
-                          style={{ background: C.navyDeep, borderTop: i === 0 ? "none" : `1px solid rgba(255,255,255,.05)`, borderLeft: `3px solid ${heat}` }}
+                          style={{ background: C.navyDeep, borderTop: i === 0 ? "none" : `1px solid rgba(20,24,51,.07)`, borderLeft: `3px solid ${heat}` }}
                         >
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span style={{ fontSize: 13.5, fontWeight: 500, color: d !== null && d > 21 ? C.grey : "#EDEDF2" }}>{t.name}</span>
-                              {t.seeded && <span style={{ fontFamily: FONT_M, fontSize: 8.5, color: "#5A6088", letterSpacing: ".1em" }}>SEEDED</span>}
+                              <span style={{ fontSize: 13.5, fontWeight: 500, color: d !== null && d > 21 ? C.grey : "#141833" }}>{t.name}</span>
+                              {t.seeded && <span style={{ fontFamily: FONT_M, fontSize: 8.5, color: "#767CA0", letterSpacing: ".1em" }}>SEEDED</span>}
                             </div>
                             {d !== null && d > 21 && (
-                              <p style={{ fontSize: 11.5, color: "#5A6088", marginTop: 2 }}>Going cold. Revive it or retire it.</p>
+                              <p style={{ fontSize: 11.5, color: "#767CA0", marginTop: 2 }}>Going cold. Revive it or retire it.</p>
                             )}
-                            {d === null && <p style={{ fontSize: 11.5, color: "#5A6088", marginTop: 2 }}>{t.note}</p>}
+                            {d === null && <p style={{ fontSize: 11.5, color: "#767CA0", marginTop: 2 }}>{t.note}</p>}
                           </div>
                           <span style={{ fontFamily: FONT_M, fontSize: 10, color: heat, paddingTop: 2 }}>{label}</span>
                         </div>
@@ -925,9 +925,9 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 }
               />
 
-              <div className="px-3 py-2 mb-2" style={{ background: "rgba(210,180,140,.06)", borderLeft: `2px solid ${C.tan}` }}>
+              <div className="px-3 py-2 mb-2" style={{ background: "#F2E6D0", borderLeft: `2px solid ${C.tan}` }}>
                 <div style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".16em", color: C.tan, marginBottom: 3 }}>STANDING ORDERS</div>
-                <p style={{ fontSize: 12, color: "#C6C9DA", lineHeight: 1.5 }}>
+                <p style={{ fontSize: 12, color: "#4A5075", lineHeight: 1.5 }}>
                   Live or nothing. Nothing on this screen comes from memory. Every card arrives with the work done to the last step, and the last step is yours.
                 </p>
               </div>
@@ -960,12 +960,12 @@ export default function Cockpit({ onLogout, googleConnected }) {
                     </div>
                   ) : (
                     supplement.map((x, i) => (
-                      <article key={i} style={{ background: C.navyDeep, border: `1px solid ${C.line}`, borderLeft: `3px solid ${x.gated ? "#D9A441" : C.tan}`, padding: 14 }}>
+                      <article key={i} style={{ background: C.navyDeep, border: `1px solid ${C.line}`, borderLeft: `3px solid ${x.gated ? "#A8761A" : C.tan}`, padding: 14 }}>
                         <div className="flex items-center gap-2" style={{ marginBottom: 4 }}>
-                          <span style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".1em", color: "#5A6088" }}>{(x.source || "").toUpperCase()}</span>
-                          {x.gated && <span style={{ fontFamily: FONT_M, fontSize: 8.5, letterSpacing: ".1em", color: "#D9A441" }}>GATED</span>}
+                          <span style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".1em", color: "#767CA0" }}>{(x.source || "").toUpperCase()}</span>
+                          {x.gated && <span style={{ fontFamily: FONT_M, fontSize: 8.5, letterSpacing: ".1em", color: "#A8761A" }}>GATED</span>}
                           <button className="btn" onClick={() => setSupplement((p) => { const n = p.filter((_, j) => j !== i); sSet(K.reading, n); return n; })}
-                            style={{ ...btnStyle(C.grey, true), borderColor: "transparent", color: "#4A4F70", marginLeft: "auto", fontSize: 9, padding: "1px 5px" }}>✕</button>
+                            style={{ ...btnStyle(C.grey, true), borderColor: "transparent", color: "#9095B5", marginLeft: "auto", fontSize: 9, padding: "1px 5px" }}>✕</button>
                         </div>
                         <h3 style={{ fontFamily: FONT_D, fontSize: 19, fontWeight: 700, lineHeight: 1.1 }}>{x.title}</h3>
                         <p style={{ fontSize: 13, color: C.tan, lineHeight: 1.5, marginTop: 5 }}>{x.why}</p>
@@ -981,7 +981,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               {brief && briefTab === "decisions" && (
                 <div className="mb-6">
                   {briefMeta && (
-                    <div style={{ fontFamily: FONT_M, fontSize: 9.5, color: briefMeta.failed ? C.red : "#5A6088", marginBottom: 6, letterSpacing: ".08em" }}>
+                    <div style={{ fontFamily: FONT_M, fontSize: 9.5, color: briefMeta.failed ? C.red : "#767CA0", marginBottom: 6, letterSpacing: ".08em" }}>
                       {briefMeta.calls} PLATFORM CALLS{briefMeta.failed ? ` · ${briefMeta.failed} FAILED, TREAT AS UNKNOWN NOT EMPTY` : " · ALL RETURNED"}
                     </div>
                   )}
@@ -1024,7 +1024,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                         <span style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".12em", color: C.tan, border: `1px solid ${C.tan}40`, padding: "1px 5px" }}>{s.region}</span>
                         <span style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".1em", color: C.grey }}>{(s.topic || "").toUpperCase()}</span>
-                        <span style={{ fontFamily: FONT_M, fontSize: 9, color: "#5A6088" }}>· {s.source}</span>
+                        <span style={{ fontFamily: FONT_M, fontSize: 9, color: "#767CA0" }}>· {s.source}</span>
                         {s.thread && (() => {
                           const t = threads.find((x) => x.id === s.thread);
                           if (!t) return null;
@@ -1038,22 +1038,22 @@ export default function Cockpit({ onLogout, googleConnected }) {
                       </div>
                       <h3 style={{ fontFamily: FONT_D, fontSize: 21, fontWeight: 700, lineHeight: 1.05, marginBottom: 6 }}>
                         {s.url ? (
-                          <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: "#EDEDF2", textDecoration: "none", borderBottom: `1px solid ${C.red}60` }}>
+                          <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: "#141833", textDecoration: "none", borderBottom: `1px solid ${C.red}60` }}>
                             {s.headline}
                           </a>
                         ) : (
                           s.headline
                         )}
                       </h3>
-                      <p style={{ fontSize: 13, color: "#C6C9DA", lineHeight: 1.5 }}>{s.summary}</p>
+                      <p style={{ fontSize: 13, color: "#4A5075", lineHeight: 1.5 }}>{s.summary}</p>
                       {s.url && (
-                        <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", fontFamily: FONT_M, fontSize: 10.5, color: "#7FB2C4", marginTop: 5, wordBreak: "break-all", textDecoration: "none" }}>
+                        <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", fontFamily: FONT_M, fontSize: 10.5, color: "#3D7A91", marginTop: 5, wordBreak: "break-all", textDecoration: "none" }}>
                           {s.source ? `${s.source} · ` : ""}{s.url.replace(/^https?:\/\//, "").slice(0, 72)}
                         </a>
                       )}
                       <p style={{ fontSize: 13, color: C.tan, lineHeight: 1.5, marginTop: 6, fontStyle: "italic" }}>{s.pov}</p>
                       <div className="flex gap-2 mt-3 flex-wrap">
-                        <button className="btn" onClick={() => setWorkshop({ story: s })} disabled={!!busy} style={btnStyle("#9B8FD4", true)}>
+                        <button className="btn" onClick={() => setWorkshop({ story: s })} disabled={!!busy} style={btnStyle("#6B5CA5", true)}>
                           DISCUSS
                         </button>
                         {[["post", "LINKEDIN POST"], ["script", "60 SEC SCRIPT"], ["substack", "SUBSTACK ANGLES"]].map(([k, label]) => {
@@ -1077,7 +1077,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
                   title="THE SHORTS"
                   right={shorts ? `${shorts.length} proposed` : "not pulled"}
                   action={
-                    <button className="btn" onClick={() => pullShorts(6)} disabled={busy === "shorts"} style={btnStyle("#F0A38C")}>
+                    <button className="btn" onClick={() => pullShorts(6)} disabled={busy === "shorts"} style={btnStyle("#C2603F")}>
                       {busy === "shorts" ? "READING LIBRARY..." : shorts ? "PULL AGAIN" : "PULL TODAY'S CLIPS"}
                     </button>
                   }
@@ -1092,7 +1092,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
                   )}
                   {busy === "shorts" && (
                     <div className="px-4 py-5 mb-2" style={{ background: C.navyDeep, border: `1px solid ${C.line}` }}>
-                      <div className="lamp" style={{ fontFamily: FONT_M, fontSize: 10, letterSpacing: ".16em", color: "#F0A38C" }}>READING THE LIBRARY...</div>
+                      <div className="lamp" style={{ fontFamily: FONT_M, fontSize: 10, letterSpacing: ".16em", color: "#C2603F" }}>READING THE LIBRARY...</div>
                       <p style={{ fontSize: 12.5, color: C.grey, marginTop: 6, lineHeight: 1.5 }}>
                         Listing projects, then clips, then choosing. Ninety seconds is normal. Leave this tab open.
                       </p>
@@ -1114,13 +1114,13 @@ export default function Cockpit({ onLogout, googleConnected }) {
                       </div>
                       <div style={{ border: `1px solid ${C.line}` }}>
                         {published.slice(0, 12).map((p, i) => (
-                          <div key={p.id} className="flex items-center gap-2 px-3 py-2" style={{ background: C.navyDeep, borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,.05)" }}>
+                          <div key={p.id} className="flex items-center gap-2 px-3 py-2" style={{ background: C.navyDeep, borderTop: i === 0 ? "none" : "1px solid rgba(20,24,51,.07)" }}>
                             <span style={{ fontFamily: FONT_M, fontSize: 9, color: C.tan, minWidth: 46 }}>{p.platform}</span>
                             <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{p.title}</span>
                             {p.url ? (
-                              <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FONT_M, fontSize: 10, color: "#7FB2C4" }}>OPEN</a>
+                              <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FONT_M, fontSize: 10, color: "#3D7A91" }}>OPEN</a>
                             ) : (
-                              <span style={{ fontFamily: FONT_M, fontSize: 9.5, color: "#5A6088" }}>{p.scheduled ? "SCHEDULED" : "NO URL YET"}</span>
+                              <span style={{ fontFamily: FONT_M, fontSize: 9.5, color: "#767CA0" }}>{p.scheduled ? "SCHEDULED" : "NO URL YET"}</span>
                             )}
                           </div>
                         ))}
@@ -1132,11 +1132,11 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 <SectionHead n="10" title="THE STUDIO" />
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Card title="Content ideas" note="Six angles across the network, threaded to what you already run." busy={busy === "ideas"} onRun={() => generate("ideas")} accent={C.red} />
-                  <Prompted title="Sponsor approach" note="Names a prospect, builds the asset first, then writes the short email." placeholder="Prospect name" accent="#7FB2C4" busy={busy.startsWith("sponsor")} onRun={(v) => generate("sponsor", null, v)} />
+                  <Prompted title="Sponsor approach" note="Names a prospect, builds the asset first, then writes the short email." placeholder="Prospect name" accent="#3D7A91" busy={busy.startsWith("sponsor")} onRun={(v) => generate("sponsor", null, v)} />
                   <Prompted title="Foundrae email" note="House rules enforced. Under 150 words, decision named, documents linked." placeholder="What is the email about?" accent={C.tan} busy={busy.startsWith("foundrae")} onRun={(v) => generate("foundrae", null, v)} />
                   <Card title="Sixty seconds" note="Standalone script for the morning video when the wire is not the subject." busy={busy === "script"} onRun={() => generate("script", null)} accent={C.red} />
-                  <Card title="Clip desk" note="Paste a transcript. Get six ranked clips, or the full metadata object. Nothing publishes without your tick." busy={false} onRun={() => setDesk(true)} accent="#F0A38C" />
-                  <Card title="Essay workshop" note="Argue a V Spot essay into shape with an editor who knows your back catalogue. Saves per thread." busy={false} onRun={() => setWorkshop({})} accent="#9B8FD4" />
+                  <Card title="Clip desk" note="Paste a transcript. Get six ranked clips, or the full metadata object. Nothing publishes without your tick." busy={false} onRun={() => setDesk(true)} accent="#C2603F" />
+                  <Card title="Essay workshop" note="Argue a V Spot essay into shape with an editor who knows your back catalogue. Saves per thread." busy={false} onRun={() => setWorkshop({})} accent="#6B5CA5" />
                 </div>
               </div>
 
@@ -1173,7 +1173,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
         {desk && <ClipDesk onClose={() => setDesk(false)} />}
         {workshop && <EssayWorkshop threads={threads} threadContext={threadContext} seed={workshop.story || null} onClose={() => setWorkshop(false)} />}
 
-        <footer className="flex items-center justify-between gap-3 flex-wrap" style={{ marginTop: 48, paddingTop: 16, borderTop: `1px solid ${C.line}`, fontFamily: FONT_M, fontSize: 10, letterSpacing: ".18em", color: "#4A4F70" }}>
+        <footer className="flex items-center justify-between gap-3 flex-wrap" style={{ marginTop: 48, paddingTop: 16, borderTop: `1px solid ${C.line}`, fontFamily: FONT_M, fontSize: 10, letterSpacing: ".18em", color: "#9095B5" }}>
           <span>THE COCKPIT · SAVES ITSELF · TRALEE, KERRY</span>
           <span className="flex gap-2 items-center">
             <a className="btn" href="/api/oauth-start" style={{ ...btnStyle(googleConnected === "workspace" ? C.tan : C.grey, true), textDecoration: "none" }}>
@@ -1206,7 +1206,7 @@ function Meter({ pct }) {
             width: 7,
             height: 16,
             background: i < lit ? (i > segs - 4 ? C.red : C.tan) : "transparent",
-            border: `1px solid ${i < lit ? "transparent" : "rgba(210,180,140,.22)"}`,
+            border: `1px solid ${i < lit ? "transparent" : "rgba(20,24,51,.18)"}`,
             boxShadow: i < lit && i > segs - 4 ? `0 0 8px ${C.red}` : "none",
           }}
         />
@@ -1270,7 +1270,7 @@ function Prompted({ title, note, placeholder, onRun, busy, accent }) {
           value={v}
           onChange={(e) => setV(e.target.value)}
           placeholder={placeholder}
-          style={{ flex: 1, minWidth: 0, background: C.navy, border: `1px solid ${C.line}`, color: "#EDEDF2", padding: "6px 9px", fontSize: 12.5 }}
+          style={{ flex: 1, minWidth: 0, background: C.navy, border: `1px solid ${C.line}`, color: "#141833", padding: "6px 9px", fontSize: 12.5 }}
         />
         <button className="btn" onClick={() => v.trim() && onRun(v.trim())} disabled={busy || !v.trim()} style={btnStyle(accent, true)}>
           {busy ? "…" : "GO"}
@@ -1281,11 +1281,11 @@ function Prompted({ title, note, placeholder, onRun, busy, accent }) {
 }
 
 const SRC = {
-  gmail: { label: "GMAIL", c: "#E8272A" },
-  slack: { label: "SLACK", c: "#7FB2C4" },
-  asana: { label: "ASANA", c: "#F0A38C" },
-  calendar: { label: "CALENDAR", c: "#D2B48C" },
-  fireflies: { label: "FIREFLIES", c: "#9B8FD4" },
+  gmail: { label: "GMAIL", c: "#B81A1D" },
+  slack: { label: "SLACK", c: "#3D7A91" },
+  asana: { label: "ASANA", c: "#C2603F" },
+  calendar: { label: "CALENDAR", c: "#565C82" },
+  fireflies: { label: "FIREFLIES", c: "#6B5CA5" },
 };
 
 function DecisionCard({ card, state, onSet, onKeep }) {
@@ -1311,7 +1311,7 @@ function DecisionCard({ card, state, onSet, onKeep }) {
       style={{
         background: C.navyDeep,
         border: `1px solid ${urgent && !settled ? C.red + "55" : C.line}`,
-        borderLeft: `3px solid ${settled ? "#3A3F5C" : src.c}`,
+        borderLeft: `3px solid ${settled ? "#9095B5" : src.c}`,
         padding: 14,
         opacity: settled ? 0.45 : 1,
         transition: "opacity .2s ease",
@@ -1320,19 +1320,19 @@ function DecisionCard({ card, state, onSet, onKeep }) {
       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
         <span style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".12em", color: src.c, border: `1px solid ${src.c}40`, padding: "1px 5px" }}>{src.label}</span>
         {urgent && <span style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".12em", color: C.red }}>TODAY</span>}
-        <span style={{ fontFamily: FONT_M, fontSize: 9.5, color: "#5A6088" }}>{card.when}</span>
+        <span style={{ fontFamily: FONT_M, fontSize: 9.5, color: "#767CA0" }}>{card.when}</span>
         {settled && <span style={{ fontFamily: FONT_M, fontSize: 9, color: C.tan, letterSpacing: ".1em" }}>{state.toUpperCase()}</span>}
       </div>
 
       <h3 style={{ fontFamily: FONT_D, fontSize: 20, fontWeight: 700, lineHeight: 1.1 }}>{card.who}</h3>
-      <p style={{ fontSize: 13, color: "#C6C9DA", lineHeight: 1.5, marginTop: 4 }}>{card.what}</p>
+      <p style={{ fontSize: 13, color: "#4A5075", lineHeight: 1.5, marginTop: 4 }}>{card.what}</p>
 
-      <p style={{ fontSize: 13.5, color: C.tan, lineHeight: 1.5, marginTop: 8, paddingTop: 8, borderTop: `1px solid rgba(255,255,255,.06)` }}>
+      <p style={{ fontSize: 13.5, color: C.tan, lineHeight: 1.5, marginTop: 8, paddingTop: 8, borderTop: `1px solid rgba(20,24,51,.07)` }}>
         {card.needs}
       </p>
 
       {showDraft && card.draft && (
-        <pre style={{ marginTop: 10, padding: 12, background: C.navy, border: `1px solid ${C.line}`, whiteSpace: "pre-wrap", fontFamily: FONT_B, fontSize: 13, lineHeight: 1.6, color: "#DCDFEC" }}>
+        <pre style={{ marginTop: 10, padding: 12, background: C.navy, border: `1px solid ${C.line}`, whiteSpace: "pre-wrap", fontFamily: FONT_B, fontSize: 13, lineHeight: 1.6, color: "#232748" }}>
           {card.draft}
         </pre>
       )}
@@ -1348,7 +1348,7 @@ function DecisionCard({ card, state, onSet, onKeep }) {
         ) : null}
         <button className="btn" onClick={() => onSet("done")} style={btnStyle(C.grey, true)}>DONE</button>
         <button className="btn" onClick={() => onSet("deferred")} style={btnStyle(C.grey, true)}>DEFER</button>
-        <button className="btn" onClick={() => onSet("not mine")} style={{ ...btnStyle(C.grey, true), borderColor: "transparent", color: "#5A6088" }}>NOT MINE</button>
+        <button className="btn" onClick={() => onSet("not mine")} style={{ ...btnStyle(C.grey, true), borderColor: "transparent", color: "#767CA0" }}>NOT MINE</button>
         {card.link && (
           <a href={card.link} target="_blank" rel="noopener noreferrer" className="btn" style={{ ...btnStyle(C.grey, true), textDecoration: "none", marginLeft: "auto" }}>
             OPEN ↗
@@ -1384,10 +1384,10 @@ function Output({ entry, onDelete }) {
           </span>
         )}
         <button className="btn" onClick={copy} style={btnStyle(C.grey, true)}>{copied ? "COPIED" : "COPY"}</button>
-        <button className="btn" onClick={onDelete} style={{ ...btnStyle(C.grey, true), borderColor: "transparent", color: "#5A6088" }}>✕</button>
+        <button className="btn" onClick={onDelete} style={{ ...btnStyle(C.grey, true), borderColor: "transparent", color: "#767CA0" }}>✕</button>
       </div>
       {open && (
-        <pre style={{ padding: 14, margin: 0, whiteSpace: "pre-wrap", fontFamily: FONT_B, fontSize: 13.5, lineHeight: 1.62, color: "#DCDFEC" }}>{entry.body}</pre>
+        <pre style={{ padding: 14, margin: 0, whiteSpace: "pre-wrap", fontFamily: FONT_B, fontSize: 13.5, lineHeight: 1.62, color: "#232748" }}>{entry.body}</pre>
       )}
     </div>
   );
@@ -1411,8 +1411,8 @@ function AddTask({ onAdd }) {
     );
   return (
     <div className="flex gap-2 mt-2">
-      <input value={slot} onChange={(e) => setSlot(e.target.value)} style={{ width: 64, background: C.navyDeep, border: `1px solid ${C.line}`, color: "#EDEDF2", padding: "6px 8px", fontFamily: FONT_M, fontSize: 12 }} />
-      <input autoFocus value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="What is it?" style={{ flex: 1, minWidth: 0, background: C.navyDeep, border: `1px solid ${C.line}`, color: "#EDEDF2", padding: "6px 9px", fontSize: 13 }} />
+      <input value={slot} onChange={(e) => setSlot(e.target.value)} style={{ width: 64, background: C.navyDeep, border: `1px solid ${C.line}`, color: "#141833", padding: "6px 8px", fontFamily: FONT_M, fontSize: 12 }} />
+      <input autoFocus value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="What is it?" style={{ flex: 1, minWidth: 0, background: C.navyDeep, border: `1px solid ${C.line}`, color: "#141833", padding: "6px 9px", fontSize: 13 }} />
       <button className="btn" onClick={submit} style={btnStyle(C.tan, true)}>ADD</button>
     </div>
   );
@@ -1484,7 +1484,7 @@ function Signals({ rows, onAdd }) {
           {FIELDS.map((f) => {
             const d = delta(f.k);
             return (
-              <div key={f.k} style={{ borderLeft: `2px solid ${d > 0 ? C.tan : d < 0 ? C.red : "#3A3F5C"}`, paddingLeft: 8 }}>
+              <div key={f.k} style={{ borderLeft: `2px solid ${d > 0 ? C.tan : d < 0 ? C.red : "#9095B5"}`, paddingLeft: 8 }}>
                 <div style={{ fontFamily: FONT_M, fontSize: 9, color: C.grey, letterSpacing: ".06em" }}>{f.label.toUpperCase()}</div>
                 <div style={{ fontFamily: FONT_M, fontSize: 17 }}>{latest[f.k] ?? "-"}</div>
                 {d !== null && <div style={{ fontFamily: FONT_M, fontSize: 10, color: d > 0 ? C.tan : d < 0 ? C.red : C.grey }}>{d > 0 ? "+" : ""}{d}</div>}
@@ -1513,7 +1513,7 @@ function Signals({ rows, onAdd }) {
                 inputMode="numeric"
                 value={v[f.k] ?? ""}
                 onChange={(e) => setV({ ...v, [f.k]: e.target.value })}
-                style={{ width: "100%", background: C.navy, border: `1px solid ${C.line}`, color: "#EDEDF2", padding: "6px 8px", fontFamily: FONT_M, fontSize: 13 }}
+                style={{ width: "100%", background: C.navy, border: `1px solid ${C.line}`, color: "#141833", padding: "6px 8px", fontFamily: FONT_M, fontSize: 13 }}
               />
             </div>
           ))}
@@ -1565,7 +1565,7 @@ function ResultPanel({ entry, onClose }) {
   return (
     <div
       onClick={onClose}
-      style={{ position: "fixed", inset: 0, background: "rgba(10,10,10,.78)", zIndex: 50, display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "5vh 16px", overflowY: "auto" }}
+      style={{ position: "fixed", inset: 0, background: "rgba(20,24,51,.35)", zIndex: 50, display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "5vh 16px", overflowY: "auto" }}
     >
       <div onClick={(e) => e.stopPropagation()} style={{ background: C.navyDeep, border: `1px solid ${C.line}`, borderTop: `3px solid ${C.red}`, width: "100%", maxWidth: 720 }}>
         <div className="flex items-center justify-between gap-3 px-4 py-3" style={{ borderBottom: `1px solid ${C.line}` }}>
@@ -1583,7 +1583,7 @@ function ResultPanel({ entry, onClose }) {
           </div>
         ) : (
           <>
-            <pre style={{ padding: 18, margin: 0, whiteSpace: "pre-wrap", fontFamily: FONT_B, fontSize: 14.5, lineHeight: 1.65, color: "#EDEDF2", maxHeight: "55vh", overflowY: "auto" }}>
+            <pre style={{ padding: 18, margin: 0, whiteSpace: "pre-wrap", fontFamily: FONT_B, fontSize: 14.5, lineHeight: 1.65, color: "#141833", maxHeight: "55vh", overflowY: "auto" }}>
               {entry.body}
             </pre>
 
@@ -1594,7 +1594,7 @@ function ResultPanel({ entry, onClose }) {
                   OPEN IN DOCS ↗
                 </a>
               ) : (
-                <button className="btn" onClick={toDoc} disabled={saving} style={btnStyle("#7FB2C4", true)}>
+                <button className="btn" onClick={toDoc} disabled={saving} style={btnStyle("#3D7A91", true)}>
                   {saving ? "SAVING…" : "SAVE TO GOOGLE DOC"}
                 </button>
               )}
@@ -1637,7 +1637,7 @@ function ContentCalendar({ cal, today, recent, onSet }) {
                 if (e.key === "Escape") setOpen(null);
               }}
               onBlur={(e) => { onSet(dk, slot, e.target.value.trim()); setOpen(null); }}
-              style={{ width: "100%", background: C.navy, border: `1px solid ${C.tan}`, color: "#EDEDF2", padding: "4px 6px", fontSize: 12 }}
+              style={{ width: "100%", background: C.navy, border: `1px solid ${C.tan}`, color: "#141833", padding: "4px 6px", fontSize: 12 }}
             />
             {recent.length > 0 && (
               <div className="flex gap-1 mt-1 flex-wrap">
@@ -1652,10 +1652,10 @@ function ContentCalendar({ cal, today, recent, onSet }) {
           </div>
         ) : (
           <button className="btn text-left" onClick={() => setOpen(key)}
-            style={{ width: "100%", background: val ? "rgba(210,180,140,.09)" : "transparent",
-                     border: `1px dashed ${val ? "transparent" : "#3A3F5C"}`,
-                     borderLeft: `2px solid ${val ? (slot === "video" ? C.red : C.tan) : "#3A3F5C"}`,
-                     color: val ? "#EDEDF2" : "#5A6088", padding: "5px 7px", fontSize: 11.5, lineHeight: 1.3 }}>
+            style={{ width: "100%", background: val ? "#D6EFE0" : "transparent",
+                     border: `1px dashed ${val ? "transparent" : "#9095B5"}`,
+                     borderLeft: `2px solid ${val ? (slot === "video" ? C.red : C.tan) : "#9095B5"}`,
+                     color: val ? "#141833" : "#767CA0", padding: "5px 7px", fontSize: 11.5, lineHeight: 1.3 }}>
             {val || `+ ${label}`}
           </button>
         )}
@@ -1670,11 +1670,11 @@ function ContentCalendar({ cal, today, recent, onSet }) {
         const full = !!(cal[dk]?.written && cal[dk]?.video);
         return (
           <div key={dk} className="flex gap-2 px-3 py-2 items-start"
-               style={{ background: C.navyDeep, borderTop: i === 0 ? "none" : `1px solid rgba(255,255,255,.05)`,
+               style={{ background: C.navyDeep, borderTop: i === 0 ? "none" : `1px solid rgba(20,24,51,.07)`,
                         borderLeft: `3px solid ${full ? C.tan : i === 0 ? C.red : "transparent"}` }}>
             <div style={{ minWidth: 34, paddingTop: 4 }}>
               <div style={{ fontFamily: FONT_M, fontSize: 10, color: i === 0 ? C.red : C.grey }}>{DAYS[d.getDay()][0]}{DAYS[d.getDay()][1].toLowerCase()}</div>
-              <div style={{ fontFamily: FONT_M, fontSize: 9, color: "#5A6088" }}>{d.getDate()}</div>
+              <div style={{ fontFamily: FONT_M, fontSize: 9, color: "#767CA0" }}>{d.getDate()}</div>
             </div>
             <div className="flex gap-1.5" style={{ flex: 1, minWidth: 0 }}>
               <Slot dk={dk} slot="written" label="written" />
@@ -1683,7 +1683,7 @@ function ContentCalendar({ cal, today, recent, onSet }) {
           </div>
         );
       })}
-      <p style={{ fontSize: 11, color: "#5A6088", padding: "8px 10px", borderTop: `1px solid ${C.line}`, lineHeight: 1.4 }}>
+      <p style={{ fontSize: 11, color: "#767CA0", padding: "8px 10px", borderTop: `1px solid ${C.line}`, lineHeight: 1.4 }}>
         Two a day, minimum one written and one video. Filling both ticks Sixty Seconds and The Post in the rundown.
       </p>
     </div>
@@ -1704,18 +1704,18 @@ function SourceLedger({ sources }) {
       </div>
     );
 
-  const light = (r) => (r.used >= 3 ? C.tan : r.used >= 1 ? "#D9A441" : r.seen >= 4 ? C.red : "#4A4F70");
+  const light = (r) => (r.used >= 3 ? C.tan : r.used >= 1 ? "#A8761A" : r.seen >= 4 ? C.red : "#9095B5");
   const verdict = (r) => (r.used >= 3 ? "carrying you" : r.used >= 1 ? "occasional" : r.seen >= 4 ? "noise, consider dropping" : "too early to say");
 
   return (
     <div style={{ border: `1px solid ${C.line}` }}>
       {rows.slice(0, 14).map((r, i) => (
         <div key={r.name} className="flex items-center gap-2 px-3 py-2"
-             style={{ background: C.navyDeep, borderTop: i === 0 ? "none" : `1px solid rgba(255,255,255,.05)` }}>
+             style={{ background: C.navyDeep, borderTop: i === 0 ? "none" : `1px solid rgba(20,24,51,.07)` }}>
           <span style={{ width: 8, height: 8, borderRadius: 99, background: light(r), flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, color: "#EDEDF2", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{r.name}</div>
-            <div style={{ fontSize: 10.5, color: "#5A6088" }}>{verdict(r)}</div>
+            <div style={{ fontSize: 13, color: "#141833", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{r.name}</div>
+            <div style={{ fontSize: 10.5, color: "#767CA0" }}>{verdict(r)}</div>
           </div>
           <span style={{ fontFamily: FONT_M, fontSize: 10, color: C.grey, whiteSpace: "nowrap" }}>{r.used}/{r.seen}</span>
         </div>
@@ -1815,9 +1815,9 @@ function EssayWorkshop({ threads, threadContext, seed, onClose }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: C.black, zIndex: 60, display: "flex", flexDirection: "column" }}>
       <div className="flex items-center gap-3 px-4 py-3 flex-wrap" style={{ background: C.navy, borderBottom: `1px solid ${C.line}` }}>
-        <h2 style={{ fontFamily: FONT_D, fontSize: 24, fontWeight: 900, color: "#9B8FD4", lineHeight: 1 }}>ESSAY WORKSHOP</h2>
+        <h2 style={{ fontFamily: FONT_D, fontSize: 24, fontWeight: 900, color: "#6B5CA5", lineHeight: 1 }}>ESSAY WORKSHOP</h2>
         <select value={thread} onChange={(e) => setThread(e.target.value)}
-          style={{ background: C.navyDeep, border: `1px solid ${C.line}`, color: "#EDEDF2", padding: "5px 8px", fontSize: 12.5, maxWidth: 240 }}>
+          style={{ background: C.navyDeep, border: `1px solid ${C.line}`, color: "#141833", padding: "5px 8px", fontSize: 12.5, maxWidth: 240 }}>
           <option value="">No thread, standalone</option>
           {threads.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
@@ -1830,7 +1830,7 @@ function EssayWorkshop({ threads, threadContext, seed, onClose }) {
         <button className="btn" onClick={onClose} style={{ ...btnStyle(C.grey, true), marginLeft: "auto" }}>CLOSE</button>
       </div>
 
-      {err && <div className="px-4 py-2" style={{ background: "rgba(232,39,42,.12)", fontSize: 12.5 }}>{err}</div>}
+      {err && <div className="px-4 py-2" style={{ background: "#FFD8D9", fontSize: 12.5 }}>{err}</div>}
 
       <div className="flex" style={{ flex: 1, minHeight: 0 }}>
         {/* draft */}
@@ -1839,7 +1839,7 @@ function EssayWorkshop({ threads, threadContext, seed, onClose }) {
             value={draft}
             onChange={(e) => { setDraft(e.target.value); save(e.target.value, history); }}
             placeholder="Write here. Or paste what you have and start arguing about it."
-            style={{ flex: 1, background: C.navyDeep, border: "none", color: "#EDEDF2", padding: 20, fontSize: 15, lineHeight: 1.7, resize: "none", outline: "none", fontFamily: FONT_B }}
+            style={{ flex: 1, background: C.navyDeep, border: "none", color: "#141833", padding: 20, fontSize: 15, lineHeight: 1.7, resize: "none", outline: "none", fontFamily: FONT_B }}
           />
           {prev && (
             <div className="px-3 py-2 flex items-center gap-2" style={{ borderTop: `1px solid ${C.line}`, background: C.navy }}>
@@ -1853,8 +1853,8 @@ function EssayWorkshop({ threads, threadContext, seed, onClose }) {
         <div className={tab === "editor" ? "flex flex-col" : "hidden lg:flex lg:flex-col"} style={{ flex: 1, minWidth: 0 }}>
           <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
             {seed && (
-              <div style={{ background: C.navyDeep, border: `1px solid ${C.line}`, borderLeft: `3px solid #9B8FD4`, padding: 12, marginBottom: 14 }}>
-                <div style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".12em", color: "#5A6088", marginBottom: 3 }}>
+              <div style={{ background: C.navyDeep, border: `1px solid ${C.line}`, borderLeft: `3px solid #6B5CA5`, padding: 12, marginBottom: 14 }}>
+                <div style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".12em", color: "#767CA0", marginBottom: 3 }}>
                   STARTED FROM THE WIRE{seed.source ? ` · ${seed.source.toUpperCase()}` : ""}
                 </div>
                 <div style={{ fontFamily: FONT_D, fontSize: 17, fontWeight: 700, lineHeight: 1.15 }}>{seed.headline}</div>
@@ -1870,13 +1870,13 @@ function EssayWorkshop({ threads, threadContext, seed, onClose }) {
             )}
             {history.map((m, i) => (
               <div key={i} style={{ marginBottom: 14 }}>
-                <div style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".14em", color: m.role === "user" ? C.red : "#9B8FD4", marginBottom: 3 }}>
+                <div style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".14em", color: m.role === "user" ? C.red : "#6B5CA5", marginBottom: 3 }}>
                   {m.role === "user" ? "VINNY" : "EDITOR"}
                 </div>
-                <div style={{ fontSize: 13.5, lineHeight: 1.6, color: m.role === "user" ? "#C6C9DA" : "#EDEDF2", whiteSpace: "pre-wrap" }}>{m.content}</div>
+                <div style={{ fontSize: 13.5, lineHeight: 1.6, color: m.role === "user" ? "#4A5075" : "#141833", whiteSpace: "pre-wrap" }}>{m.content}</div>
               </div>
             ))}
-            {busy && <div className="lamp" style={{ fontFamily: FONT_M, fontSize: 10, letterSpacing: ".16em", color: "#9B8FD4" }}>{busy === "rewrite" ? "REWRITING…" : "THINKING…"}</div>}
+            {busy && <div className="lamp" style={{ fontFamily: FONT_M, fontSize: 10, letterSpacing: ".16em", color: "#6B5CA5" }}>{busy === "rewrite" ? "REWRITING…" : "THINKING…"}</div>}
             <div ref={endRef} />
           </div>
 
@@ -1887,10 +1887,10 @@ function EssayWorkshop({ threads, threadContext, seed, onClose }) {
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send(); }}
               rows={3}
               placeholder="Argue with it. Cmd+Enter to send."
-              style={{ width: "100%", background: C.navyDeep, border: `1px solid ${C.line}`, color: "#EDEDF2", padding: 9, fontSize: 13, lineHeight: 1.5, resize: "vertical" }}
+              style={{ width: "100%", background: C.navyDeep, border: `1px solid ${C.line}`, color: "#141833", padding: 9, fontSize: 13, lineHeight: 1.5, resize: "vertical" }}
             />
             <div className="flex gap-2 mt-2">
-              <button className="btn" onClick={send} disabled={!!busy || !input.trim()} style={btnStyle("#9B8FD4")}>SEND</button>
+              <button className="btn" onClick={send} disabled={!!busy || !input.trim()} style={btnStyle("#6B5CA5")}>SEND</button>
               <button className="btn" onClick={rewrite} disabled={!!busy || !draft.trim()} style={btnStyle(C.tan, true)}>REWRITE DRAFT</button>
             </div>
           </div>
@@ -1930,25 +1930,25 @@ function ClipDesk({ onClose }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: C.black, zIndex: 60, display: "flex", flexDirection: "column" }}>
       <div className="flex items-center gap-3 px-4 py-3 flex-wrap" style={{ background: C.navy, borderBottom: `1px solid ${C.line}` }}>
-        <h2 style={{ fontFamily: FONT_D, fontSize: 24, fontWeight: 900, color: "#F0A38C", lineHeight: 1 }}>CLIP DESK</h2>
+        <h2 style={{ fontFamily: FONT_D, fontSize: 24, fontWeight: 900, color: "#C2603F", lineHeight: 1 }}>CLIP DESK</h2>
         {[["selection", "SELECT CLIPS"], ["metadata", "WRITE METADATA"]].map(([k, l]) => (
-          <button key={k} className="btn" onClick={() => { setMode(k); setOut(null); }} style={{ ...btnStyle(mode === k ? "#F0A38C" : C.grey, mode !== k), padding: "5px 9px" }}>{l}</button>
+          <button key={k} className="btn" onClick={() => { setMode(k); setOut(null); }} style={{ ...btnStyle(mode === k ? "#C2603F" : C.grey, mode !== k), padding: "5px 9px" }}>{l}</button>
         ))}
         <span style={{ fontFamily: FONT_M, fontSize: 10, color: words < 500 && words > 0 ? C.red : C.grey }}>{words} words{words > 0 && words < 500 ? " · under the 500 floor" : ""}</span>
         <button className="btn" onClick={onClose} style={{ ...btnStyle(C.grey, true), marginLeft: "auto" }}>CLOSE</button>
       </div>
 
-      {err && <div className="px-4 py-3" style={{ background: "rgba(232,39,42,.12)", fontSize: 13, lineHeight: 1.5 }}>{err}</div>}
+      {err && <div className="px-4 py-3" style={{ background: "#FFD8D9", fontSize: 13, lineHeight: 1.5 }}>{err}</div>}
 
       <div className="flex" style={{ flex: 1, minHeight: 0 }}>
         <div className="flex flex-col" style={{ flex: 1, minWidth: 0, borderRight: `1px solid ${C.line}` }}>
           <input value={context} onChange={(e) => setContext(e.target.value)} placeholder="Which show, which episode, who is in it"
-            style={{ background: C.navy, border: "none", borderBottom: `1px solid ${C.line}`, color: "#EDEDF2", padding: "10px 14px", fontSize: 13 }} />
+            style={{ background: C.navy, border: "none", borderBottom: `1px solid ${C.line}`, color: "#141833", padding: "10px 14px", fontSize: 13 }} />
           <textarea value={source} onChange={(e) => setSource(e.target.value)}
             placeholder="Paste the transcript with timestamps. Under 500 words and the desk halts, by design."
-            style={{ flex: 1, background: C.navyDeep, border: "none", color: "#C6C9DA", padding: 14, fontSize: 13, lineHeight: 1.6, resize: "none", outline: "none", fontFamily: FONT_M }} />
+            style={{ flex: 1, background: C.navyDeep, border: "none", color: "#4A5075", padding: 14, fontSize: 13, lineHeight: 1.6, resize: "none", outline: "none", fontFamily: FONT_M }} />
           <div className="px-3 py-2" style={{ borderTop: `1px solid ${C.line}`, background: C.navy }}>
-            <button className="btn" onClick={run} disabled={busy || words < 500} style={btnStyle("#F0A38C")}>
+            <button className="btn" onClick={run} disabled={busy || words < 500} style={btnStyle("#C2603F")}>
               {busy ? "RUNNING…" : mode === "selection" ? "RANK THE CLIPS" : "WRITE THE METADATA"}
             </button>
           </div>
@@ -1956,10 +1956,10 @@ function ClipDesk({ onClose }) {
 
         <div style={{ flex: 1.1, minWidth: 0, overflowY: "auto", padding: 16 }}>
           {!out && !busy && <p style={{ fontSize: 13, color: C.grey, lineHeight: 1.6 }}>Output lands here as a queue awaiting your tick. Nothing leaves this screen on its own.</p>}
-          {busy && <div className="lamp" style={{ fontFamily: FONT_M, fontSize: 10, letterSpacing: ".16em", color: "#F0A38C" }}>WORKING…</div>}
+          {busy && <div className="lamp" style={{ fontFamily: FONT_M, fontSize: 10, letterSpacing: ".16em", color: "#C2603F" }}>WORKING…</div>}
 
           {out && mode === "selection" && out.map((c, i) => (
-            <div key={i} style={{ background: C.navyDeep, border: `1px solid ${C.line}`, borderLeft: `3px solid ${approved[i] ? C.tan : c.divergence ? C.red : "#3A3F5C"}`, padding: 12, marginBottom: 8, opacity: approved[i] ? 0.5 : 1 }}>
+            <div key={i} style={{ background: C.navyDeep, border: `1px solid ${C.line}`, borderLeft: `3px solid ${approved[i] ? C.tan : c.divergence ? C.red : "#9095B5"}`, padding: 12, marginBottom: 8, opacity: approved[i] ? 0.5 : 1 }}>
               <div className="flex items-center gap-2 mb-1">
                 <span style={{ fontFamily: FONT_M, fontSize: 10, color: C.tan }}>{c.start} – {c.end}</span>
                 {c.divergence && <span style={{ fontFamily: FONT_M, fontSize: 8.5, letterSpacing: ".1em", color: C.red }}>CROSS-ATLANTIC</span>}
@@ -1978,7 +1978,7 @@ function ClipDesk({ onClose }) {
             <div className="grid gap-3">
               {(out.titles || []).map((t, i) => (
                 <div key={i} style={{ background: C.navyDeep, border: `1px solid ${C.line}`, padding: 10 }}>
-                  <div style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".12em", color: "#F0A38C" }}>{(t.variant || "").toUpperCase()}</div>
+                  <div style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".12em", color: "#C2603F" }}>{(t.variant || "").toUpperCase()}</div>
                   <div style={{ fontSize: 14.5, marginTop: 3 }}>{t.text}</div>
                 </div>
               ))}
@@ -2000,7 +2000,7 @@ function ClipDesk({ onClose }) {
                 <Block key={i} label={`CLIP ${i + 1} · ${c.start}–${c.end} · ${c.hook}`} onCopy={() => copy(c.captions)}
                   body={Object.entries(c.captions || {}).map(([k, v]) => `[${k}]\n${v}`).join("\n\n")} />
               ))}
-              <button className="btn" onClick={() => copy(out)} style={{ ...btnStyle("#F0A38C", true), alignSelf: "flex-start" }}>COPY FULL JSON</button>
+              <button className="btn" onClick={() => copy(out)} style={{ ...btnStyle("#C2603F", true), alignSelf: "flex-start" }}>COPY FULL JSON</button>
             </div>
           )}
         </div>
@@ -2016,7 +2016,7 @@ function Block({ label, body, onCopy }) {
         <span style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".12em", color: C.tan }}>{label}</span>
         <button className="btn" onClick={onCopy} style={{ ...btnStyle(C.grey, true), fontSize: 8.5, padding: "2px 6px" }}>COPY</button>
       </div>
-      <pre style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: FONT_B, fontSize: 13, lineHeight: 1.6, color: "#DCDFEC" }}>{body}</pre>
+      <pre style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: FONT_B, fontSize: 13, lineHeight: 1.6, color: "#232748" }}>{body}</pre>
     </div>
   );
 }
@@ -2028,7 +2028,7 @@ function AddReading({ onAdd, busy }) {
       <input value={v} onChange={(e) => setV(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter" && v.trim()) { onAdd(v.trim()); setV(""); } }}
         placeholder="Paste a URL for Sunday"
-        style={{ flex: 1, minWidth: 0, background: C.navy, border: `1px solid ${C.line}`, color: "#EDEDF2", padding: "6px 9px", fontSize: 12.5 }} />
+        style={{ flex: 1, minWidth: 0, background: C.navy, border: `1px solid ${C.line}`, color: "#141833", padding: "6px 9px", fontSize: 12.5 }} />
       <button className="btn" onClick={() => { if (v.trim()) { onAdd(v.trim()); setV(""); } }} disabled={busy || !v.trim()} style={btnStyle(C.tan, true)}>
         {busy ? "LOOKING…" : "ADD"}
       </button>
@@ -2055,7 +2055,7 @@ function Pipeline({ rows, stages, placeholder, onChange }) {
       <div className="flex gap-2 px-2 py-2" style={{ background: C.navy, borderBottom: `1px solid ${C.line}` }}>
         <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()}
           placeholder={placeholder}
-          style={{ flex: 1, minWidth: 0, background: C.navyDeep, border: `1px solid ${C.line}`, color: "#EDEDF2", padding: "5px 8px", fontSize: 12.5 }} />
+          style={{ flex: 1, minWidth: 0, background: C.navyDeep, border: `1px solid ${C.line}`, color: "#141833", padding: "5px 8px", fontSize: 12.5 }} />
         <button className="btn" onClick={add} disabled={!name.trim()} style={btnStyle(C.tan, true)}>ADD</button>
       </div>
       {rows.length === 0 ? (
@@ -2065,11 +2065,11 @@ function Pipeline({ rows, stages, placeholder, onChange }) {
           const d = stale(r);
           const cold = d !== null && d > 14 && !["published", "recorded"].includes(r.stage);
           return (
-            <div key={r.id} className="px-3 py-2" style={{ background: C.navyDeep, borderTop: i === 0 ? "none" : `1px solid rgba(255,255,255,.05)`, borderLeft: `3px solid ${cold ? C.red : r.stage === "confirmed" ? C.tan : "#3A3F5C"}` }}>
+            <div key={r.id} className="px-3 py-2" style={{ background: C.navyDeep, borderTop: i === 0 ? "none" : `1px solid rgba(20,24,51,.07)`, borderLeft: `3px solid ${cold ? C.red : r.stage === "confirmed" ? C.tan : "#9095B5"}` }}>
               <div className="flex items-center gap-2">
                 <span style={{ flex: 1, minWidth: 0, fontSize: 13, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{r.name}</span>
-                <span style={{ fontFamily: FONT_M, fontSize: 9.5, color: cold ? C.red : "#5A6088" }}>{d === 0 ? "today" : d + "d"}</span>
-                <button className="btn" onClick={() => onChange(rows.filter((x) => x.id !== r.id))} style={{ ...btnStyle(C.grey, true), borderColor: "transparent", color: "#4A4F70", fontSize: 9, padding: "1px 4px" }}>✕</button>
+                <span style={{ fontFamily: FONT_M, fontSize: 9.5, color: cold ? C.red : "#767CA0" }}>{d === 0 ? "today" : d + "d"}</span>
+                <button className="btn" onClick={() => onChange(rows.filter((x) => x.id !== r.id))} style={{ ...btnStyle(C.grey, true), borderColor: "transparent", color: "#9095B5", fontSize: 9, padding: "1px 4px" }}>✕</button>
               </div>
               <div className="flex gap-1 mt-1.5 flex-wrap">
                 {stages.map((st) => (
@@ -2106,10 +2106,10 @@ function Assets({ rows, onChange }) {
     <div style={{ border: `1px solid ${C.line}` }}>
       <div className="grid gap-1.5 px-2 py-2" style={{ background: C.navy, borderBottom: `1px solid ${C.line}` }}>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Prospect, and what you built them"
-          style={{ background: C.navyDeep, border: `1px solid ${C.line}`, color: "#EDEDF2", padding: "5px 8px", fontSize: 12.5 }} />
+          style={{ background: C.navyDeep, border: `1px solid ${C.line}`, color: "#141833", padding: "5px 8px", fontSize: 12.5 }} />
         <div className="flex gap-1.5">
           <input value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="netlify URL"
-            style={{ flex: 1, minWidth: 0, background: C.navyDeep, border: `1px solid ${C.line}`, color: "#EDEDF2", padding: "5px 8px", fontFamily: FONT_M, fontSize: 11.5 }} />
+            style={{ flex: 1, minWidth: 0, background: C.navyDeep, border: `1px solid ${C.line}`, color: "#141833", padding: "5px 8px", fontFamily: FONT_M, fontSize: 11.5 }} />
           <button className="btn" onClick={add} disabled={!name.trim()} style={btnStyle(C.tan, true)}>ADD</button>
         </div>
       </div>
@@ -2117,11 +2117,11 @@ function Assets({ rows, onChange }) {
         <p style={{ fontSize: 12.5, color: C.grey, padding: 12 }}>No spec builds tracked. The Salesfire piece worked because it existed before the conversation did.</p>
       ) : (
         rows.map((r, i) => (
-          <div key={r.id} className="px-3 py-2" style={{ background: C.navyDeep, borderTop: i === 0 ? "none" : `1px solid rgba(255,255,255,.05)`, borderLeft: `3px solid ${r.camp ? C.red : r.status === "won" ? C.tan : r.status === "sent" ? "#7FB2C4" : "#3A3F5C"}` }}>
+          <div key={r.id} className="px-3 py-2" style={{ background: C.navyDeep, borderTop: i === 0 ? "none" : `1px solid rgba(20,24,51,.07)`, borderLeft: `3px solid ${r.camp ? C.red : r.status === "won" ? C.tan : r.status === "sent" ? "#3D7A91" : "#9095B5"}` }}>
             <div className="flex items-center gap-2">
               <span style={{ flex: 1, minWidth: 0, fontSize: 13, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{r.name}</span>
-              {r.url && <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FONT_M, fontSize: 9.5, color: "#7FB2C4" }}>OPEN</a>}
-              <button className="btn" onClick={() => onChange(rows.filter((x) => x.id !== r.id))} style={{ ...btnStyle(C.grey, true), borderColor: "transparent", color: "#4A4F70", fontSize: 9, padding: "1px 4px" }}>✕</button>
+              {r.url && <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FONT_M, fontSize: 9.5, color: "#3D7A91" }}>OPEN</a>}
+              <button className="btn" onClick={() => onChange(rows.filter((x) => x.id !== r.id))} style={{ ...btnStyle(C.grey, true), borderColor: "transparent", color: "#9095B5", fontSize: 9, padding: "1px 4px" }}>✕</button>
             </div>
             <div className="flex gap-1 mt-1.5 flex-wrap items-center">
               {STATUS.map((st) => (
@@ -2141,28 +2141,28 @@ function Assets({ rows, onChange }) {
 function ShortCard({ clip, busy, onPublish, done }) {
   const [open, setOpen] = useState(false);
   return (
-    <article style={{ background: C.navyDeep, border: `1px solid ${C.line}`, borderLeft: `3px solid ${done ? C.tan : clip.divergence ? C.red : "#F0A38C"}`, padding: 13, opacity: done ? 0.55 : 1 }}>
+    <article style={{ background: C.navyDeep, border: `1px solid ${C.line}`, borderLeft: `3px solid ${done ? C.tan : clip.divergence ? C.red : "#C2603F"}`, padding: 13, opacity: done ? 0.55 : 1 }}>
       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-        <span style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".1em", color: "#5A6088" }}>{(clip.episode || "").toUpperCase().slice(0, 34)}</span>
+        <span style={{ fontFamily: FONT_M, fontSize: 9, letterSpacing: ".1em", color: "#767CA0" }}>{(clip.episode || "").toUpperCase().slice(0, 34)}</span>
         {clip.guest && <span style={{ fontFamily: FONT_M, fontSize: 9, color: C.tan }}>{clip.guest}</span>}
         <span style={{ fontFamily: FONT_M, fontSize: 9, color: C.grey }}>{clip.seconds}s</span>
         {clip.divergence && <span style={{ fontFamily: FONT_M, fontSize: 8.5, letterSpacing: ".1em", color: C.red }}>CROSS-ATLANTIC</span>}
-        <span style={{ fontFamily: FONT_M, fontSize: 8.5, color: "#4A4F70" }}>opus #{clip.opus_rank}</span>
+        <span style={{ fontFamily: FONT_M, fontSize: 8.5, color: "#9095B5" }}>opus #{clip.opus_rank}</span>
       </div>
       <h3 style={{ fontFamily: FONT_D, fontSize: 19, fontWeight: 700, lineHeight: 1.15 }}>{clip.title}</h3>
-      <p style={{ fontSize: 12.5, color: "#C6C9DA", marginTop: 4, lineHeight: 1.5 }}>
-        <span style={{ color: "#F0A38C" }}>HOOK</span> {clip.hook}
+      <p style={{ fontSize: 12.5, color: "#4A5075", marginTop: 4, lineHeight: 1.5 }}>
+        <span style={{ color: "#C2603F" }}>HOOK</span> {clip.hook}
       </p>
       <p style={{ fontSize: 12.5, color: C.tan, marginTop: 4, lineHeight: 1.5 }}>{clip.reason}</p>
       {open && (
-        <pre style={{ marginTop: 8, padding: 10, background: C.navy, border: `1px solid ${C.line}`, whiteSpace: "pre-wrap", fontFamily: FONT_B, fontSize: 12.5, lineHeight: 1.55, color: "#DCDFEC" }}>{clip.description}</pre>
+        <pre style={{ marginTop: 8, padding: 10, background: C.navy, border: `1px solid ${C.line}`, whiteSpace: "pre-wrap", fontFamily: FONT_B, fontSize: 12.5, lineHeight: 1.55, color: "#232748" }}>{clip.description}</pre>
       )}
       <div className="flex gap-2 mt-2.5 flex-wrap items-center">
         <button className="btn" onClick={() => setOpen(!open)} style={btnStyle(C.grey, true)}>{open ? "HIDE COPY" : "SEE COPY"}</button>
         {ACCOUNTS.map((a) => {
           const mine = busy === "pub" + clip.clipId + a.id;
           return (
-            <button key={a.id} className="btn" onClick={() => onPublish(clip, a, null)} disabled={!!busy} style={btnStyle(mine ? C.red : "#F0A38C", !mine)}>
+            <button key={a.id} className="btn" onClick={() => onPublish(clip, a, null)} disabled={!!busy} style={btnStyle(mine ? C.red : "#C2603F", !mine)}>
               {mine ? "POSTING..." : "PUBLISH " + a.short}
             </button>
           );
@@ -2178,9 +2178,9 @@ function Skeleton() {
     <div className="grid gap-2">
       {[0, 1, 2].map((i) => (
         <div key={i} style={{ background: C.navyDeep, border: `1px solid ${C.line}`, padding: 14 }}>
-          <div style={{ height: 8, width: "22%", background: "#2A2F4D", marginBottom: 10 }} />
-          <div style={{ height: 16, width: "78%", background: "#2A2F4D", marginBottom: 8 }} />
-          <div style={{ height: 10, width: "94%", background: "#22273F" }} />
+          <div style={{ height: 8, width: "22%", background: "rgba(20,24,51,0.08)", marginBottom: 10 }} />
+          <div style={{ height: 16, width: "78%", background: "rgba(20,24,51,0.08)", marginBottom: 8 }} />
+          <div style={{ height: 10, width: "94%", background: "rgba(20,24,51,0.05)" }} />
         </div>
       ))}
     </div>
