@@ -13,14 +13,19 @@ import { record } from "./_ledger.js";
  *   2. Every send is written to the ledger. Outbound email is the highest
  *      consequence action in the app, so it is the first thing instrumented.
  *
- * Needs RESEND_API_KEY. The from domain is already verified.
+ * Env: RESEND_API_KEY, RESEND_FROM, and optionally RESEND_REPLY_TO.
+ *
+ * No addresses are hardcoded here. An earlier version carried the from address
+ * as a fallback and Netlify's secret scanner failed the build, correctly — a
+ * value held as a secret must not also sit in the repo.
  */
 
-const FROM = process.env.RESEND_FROM || "Vinny O'Brien <vinny@vinnyandco.com>";
-const key = () => (process.env.RESEND_API_KEY || "").trim().replace(/^["']|["']$/g, "");
+const env = (k) => (process.env[k] || "").trim().replace(/^["']|["']$/g, "");
 
 const list = (v) => (Array.isArray(v) ? v : [v]).map((s) => String(s || "").trim()).filter(Boolean);
 const looksLikeEmail = (s) => /^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(s);
+/** Accepts a bare address or "Name <addr>". */
+const addressOk = (s) => looksLikeEmail(s) || /^.+<[^@\s]+@[^@\s.]+\.[^@\s]+>$/.test(s);
 
 /** Plain text to minimal HTML. Paragraphs on blank lines, nothing clever. */
 const toHtml = (body) =>
@@ -39,11 +44,15 @@ export default async (req) => {
   let body;
   try { body = await req.json(); } catch { return json({ error: "Bad request" }, 400); }
 
+  const from = env("RESEND_FROM");
+  if (!from) return json({ error: "RESEND_FROM is not set on this site." }, 500);
+  if (!addressOk(from)) return json({ error: "RESEND_FROM is not a valid address." }, 500);
+
   const to = list(body.to);
+  const cc = list(body.cc);
   const subject = String(body.subject || "").trim().slice(0, 200);
   const text = String(body.body || body.text || "").trim();
-  const cc = list(body.cc);
-  const replyTo = String(body.replyTo || "").trim();
+  const replyTo = String(body.replyTo || "").trim() || env("RESEND_REPLY_TO");
   const context = String(body.context || "").slice(0, 120);   // e.g. "guest.asset_request"
 
   if (!to.length) return json({ error: "No recipient." }, 400);
@@ -57,21 +66,21 @@ export default async (req) => {
     return json({
       sent: false,
       needsConfirmation: true,
-      preview: { from: FROM, to, cc, subject, body: text },
+      preview: { from, to, cc, subject, body: text },
       note: "Nothing was sent. Call again with confirm: true.",
     });
   }
 
-  const k = key();
-  if (!k) return json({ error: "RESEND_API_KEY is not set on this site." }, 500);
+  const key = env("RESEND_API_KEY");
+  if (!key) return json({ error: "RESEND_API_KEY is not set on this site." }, 500);
 
   let res, data;
   try {
     res = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: { Authorization: `Bearer ${k}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: FROM,
+        from,
         to,
         ...(cc.length ? { cc } : {}),
         ...(replyTo ? { reply_to: replyTo } : {}),
