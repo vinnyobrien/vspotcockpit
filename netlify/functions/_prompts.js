@@ -48,7 +48,76 @@ import { METADATA_CONTRACT, SELECTION_CONTRACT } from "./_contracts.js";
 const threadList = (threads = []) =>
   threads.map((t) => `- ${t.id}: ${t.name}. ${t.note}`).join("\n");
 
-export const OPS = {
+export const OPS = {/* ═══════════════════════════════════════════════════════════════════════
+   ADD TO netlify/functions/_prompts.js
+
+   Paste this inside `export const OPS = { ... }`, as a sibling of `wire`.
+   Anywhere in the object is fine — just make sure it sits between the
+   braces and has a comma after it if it isn't the last entry.
+
+   It uses SECURITY, which _prompts.js already defines. It deliberately does
+   NOT use VOICE — this is extraction, not writing. A satirical register on a
+   Foundrae action item would be actively unhelpful.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+  commitments: {
+    maxTokens: 2500,
+    search: false,
+    google: false,
+
+    system: () => `${SECURITY}
+
+You are reading transcripts of meetings from the last 36 hours and pulling out
+two things: what was committed to, and what was decided.
+
+An ACTION is something a named person agreed to do. Not a topic that came up,
+not a possibility floated. If nobody committed, it is not an action.
+
+A DECISION is a settled question, with the reasoning attached. Decisions are
+more valuable than actions and get lost faster, because nobody writes them
+down. "We are staying on Celigo through Q4 because migration cost outweighs the
+licence saving this year" is a decision. "We discussed Celigo" is not.
+
+Rules:
+- Use the words that were actually said. Do not smooth them into business prose.
+- Attribute every action to the person who took it. If it was Vinny, say Vinny.
+- If a date was named, include it. If none was, say so — never invent one.
+- Reasoning on a decision must come from the transcript. If the why was not
+  stated, write "reason not stated" rather than supplying a plausible one.
+- Client material stays as it was said. Do not paraphrase around Foundrae,
+  Power Cloud or any engagement to make it safer; that changes the record.
+- An empty list is a valid answer. A quiet meeting produced nothing, and saying
+  so is more useful than manufacturing three weak actions.
+
+Return ONLY a JSON object, no preamble, no code fences:
+
+{
+  "actions": [
+    { "who": "", "what": "", "meeting": "", "when": "" }
+  ],
+  "decisions": [
+    { "what": "", "why": "", "meeting": "" }
+  ]
+}`,
+
+    user: (a) => {
+      const meetings = (a.data?.meetings || []).map((m) => ({
+        title: m.title,
+        date: m.date,
+        minutes: m.minutes,
+        participants: m.participants,
+        overview: m.overview,
+        actionItems: m.actions,
+      }));
+      return `Today is ${a.dateStr}.
+
+Meetings from the last 36 hours:
+
+${JSON.stringify(meetings, null, 2)}
+
+Pull the actions and the decisions. JSON only.`;
+    },
+  },
   wire: {
     maxTokens: 3000,
     search: true,
