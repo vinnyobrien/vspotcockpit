@@ -6,6 +6,19 @@ const TTL_MS = 1000 * 60 * 60 * 24 * 14; // two weeks
 const b64u = (b) => Buffer.from(b).toString("base64url");
 const sign = (data, secret) => crypto.createHmac("sha256", secret).update(data).digest("base64url");
 
+/**
+ * TEMPORARY — set COCKPIT_OPEN=true in Netlify to disable the login gate.
+ *
+ * A switch rather than deleted code, so turning it back on is removing a
+ * variable rather than remembering to undo an edit. It is visible in the
+ * Netlify UI, which is where you will actually see it.
+ *
+ * While this is on, ANYONE with the URL can read Gmail, Calendar and Drive,
+ * read the vault (Foundrae material), and send email as you through Resend.
+ * Put a site-level password on under Visitor access before setting it.
+ */
+const OPEN = String(process.env.COCKPIT_OPEN || "").trim().toLowerCase() === "true";
+
 /** Constant time compare, so the password check leaks nothing through timing. */
 export function safeEqual(a = "", b = "") {
   const A = Buffer.from(String(a));
@@ -37,8 +50,13 @@ function readCookie(req) {
 /** Returns null when authenticated, or a Response to return as-is.
     Every function calls this before doing anything else. */
 export function requireAuth(req) {
+  if (OPEN) {
+    console.warn("COCKPIT_OPEN is set — auth bypassed. Do not leave this on.");
+    return null;
+  }
+
   const secret = process.env.SESSION_SECRET;
-  if (!secret) return json({ error: "Server not configured" }, 500);
+  if (!secret) return json({ error: "SESSION_SECRET is not set on this site." }, 500);
 
   const token = readCookie(req);
   if (!token) return json({ error: "Not authenticated" }, 401);
