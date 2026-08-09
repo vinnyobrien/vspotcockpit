@@ -4,9 +4,6 @@ import {
   C, BODY, DISPLAY, Mono, Big, Card, Section, Pill, Field, Note, Empty,
   Problem, Confirm, iso, daysSince,
 } from "../lib/ui.jsx";
-import React, { useState } from "react";
-
-   ============================================================ */
 
 const STAGES = ["idea", "approached", "confirmed", "recorded", "published"];
 const ASSETS = ["headshot", "logo", "bio", "questions"];
