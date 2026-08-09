@@ -4,7 +4,7 @@ import {
   Drama, LineChart, ChevronLeft, CalendarDays, Scale,
 } from "lucide-react";
 import {
-  C, BODY, SH, R, Mono, Big, Card, Section, Pill, Problem,
+  C, BODY, SH, R, MONO, Big, Card, Section, Pill, Problem,
   iso, DAYS, MONTHS, daysSince, weekDates,
 } from "./lib/ui.jsx";
 import Diary from "./lib/Diary.jsx";
