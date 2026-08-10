@@ -256,6 +256,12 @@ export default function Video({
 
       {tab === "shorts" && (
         <>
+        <div className="flex items-center justify-between gap-3" style={{ marginBottom: 16 }}>
+            <Mono>{shorts ? `${shorts.length} pulled today` : "Nothing pulled"}</Mono>
+            <Pill sm disabled={pulling} onClick={() => { setQueue(null); pull(); }}>
+              {pulling ? "Reading…" : shorts ? "Pull new clips" : "Pull today's clips"}
+            </Pill>
+          </div>
           <Note>
             Filtered against everything already proposed and rotated across themes. Keeping queues a clip.
             Publishing is per platform, with its own copy, and nothing goes twice.
