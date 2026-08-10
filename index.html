@@ -2,7 +2,66 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=devi<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+
+    <!-- viewport-fit=cover lets the installed app run under the notch.
+         Without it iOS letterboxes it with white bars. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+
+    <title>The Cockpit</title>
+    <meta name="description" content="Daily operations rundown for V Spot Media." />
+
+    <!-- Favicons. The .ico carries 16, 32 and 48 so browsers pick their own;
+         below 48 the mark is a simplified drawing rather than a downscale,
+         because the ring and the mug fight each other at that size. -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png" />
+
+    <!-- Home screen -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#114A52" />
+    <meta name="application-name" content="The Cockpit" />
+
+    <!-- iOS still wants its own tags rather than reading the manifest. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Cockpit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+
+    <!-- Link previews -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="V Spot Media" />
+    <meta property="og:description" content="Drafted 2026." />
+    <meta property="og:image" content="/og-card.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+    <style>
+      /* Respect the notch and the home indicator when installed. */
+      body {
+        margin: 0;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        background: #F5F3EE;
+      }
+      /* No rubber-band bounce past the edges. It is the clearest tell that
+         something is a website rather than an app. */
+      html { overscroll-behavior-y: none; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+ce-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <title>The Cockpit</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
