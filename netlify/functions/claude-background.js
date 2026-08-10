@@ -111,7 +111,8 @@ export default async (req) => {
       for (const p of chosen) {
         const id = p.project_id || p.projectId || p.id;
         try {
-          const clips = await listClips(id);
+          const clips = await new Promise((r) => setTimeout(r, 250));   // 30 req/min ceiling
+          const clips = await listClips(p.projectId);;
           library.push({
             projectId: id,
             title: p.title,
