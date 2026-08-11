@@ -1,12 +1,4 @@
-import { json } from "./_auth.js";
-import { readJSON, writeJSON } from "./_blobs.js";
-import { record } from "./_ledger.js";
-
-/**
- * POST /api/inbox  → drops a note into the Cockpit from outside it.
- *
- * Deliberately NOT behind the session cookie, because the whole point is that
- * a chat, a shortcut or a scripimport React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Mail, ExternalLink, Send, Check, Star, FileText, RotateCcw } from "lucide-react";
 import {
   C, BODY, MONO, DISPLAY, Mono, Big, Card, Section, Pill, Field, Note,
@@ -326,4 +318,3 @@ number he has not verified, a client confidentiality edge. Empty if none.` }],
     </div>
   );
 }
-
