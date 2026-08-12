@@ -12,8 +12,11 @@ const REPO = "vspot-hub";
 const API = `https://api.github.com/repos/${OWNER}/${REPO}`;
 
 function gh() {
-  const token = (process.env.GITHUB_TOKEN || "").trim().replace(/^["']|["']$/g, "");
-  if (!token) throw new Error("GITHUB_TOKEN is not set on this site.");
+  // The two cockpit sites name this differently, so accept either rather than
+  // failing silently on whichever one happens to be serving.
+  const raw = process.env.GITHUB_TOKEN || process.env.VSPOT_GH_TOKEN || "";
+  const token = raw.trim().replace(/^["']|["']$/g, "");
+  if (!token) throw new Error("Neither GITHUB_TOKEN nor VSPOT_GH_TOKEN is set on this site.");
   return {
     Authorization: `Bearer ${token}`,
     Accept: "application/vnd.github+json",

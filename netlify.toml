@@ -13,6 +13,18 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
+# The X Desk renders from a function, so give it a clean address.
+# This must sit above the SPA fallback or the shell swallows it.
+[[redirects]]
+  from = "/xdesk"
+  to = "/.netlify/functions/xdesk-page"
+  status = 200
+
+[[redirects]]
+  from = "/xdesk/*"
+  to = "/.netlify/functions/xdesk-page"
+  status = 200
+
 # SPA fallback, but never swallow the API routes above.
 [[redirects]]
   from = "/*"
@@ -27,4 +39,6 @@
     Referrer-Policy = "no-referrer"
     Permissions-Policy = "geolocation=(), microphone=(), camera=()"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
-    Content-Security-Policy = "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    # Opus serves clip thumbnails and previews from its signed CDN, so img-src
+    # and media-src have to name it or the cards render blank with no error.
+    Content-Security-Policy = "default-src 'self'; connect-src 'self' https://signed-ext.cdn.opus.pro; img-src 'self' data: https://signed-ext.cdn.opus.pro; media-src 'self' blob: https://signed-ext.cdn.opus.pro; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"

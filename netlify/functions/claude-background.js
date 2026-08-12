@@ -111,8 +111,9 @@ export default async (req) => {
       for (const p of chosen) {
         const id = p.project_id || p.projectId || p.id;
         try {
-          const clips = await new Promise((r) => setTimeout(r, 250));   // 30 req/min ceiling
-          const clips = await listClips(p.projectId);;
+          await new Promise((r) => setTimeout(r, 250));   // 30 req/min ceiling
+          // listProjects returns snake_case project_id, so use the resolved id.
+          const clips = await listClips(id);
           library.push({
             projectId: id,
             title: p.title,

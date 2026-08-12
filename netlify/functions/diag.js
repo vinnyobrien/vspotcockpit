@@ -36,12 +36,21 @@ export default async (req) => {
       length: (process.env.OPUS_API_KEY || "").trim().length,
       fingerprint: fp((process.env.OPUS_API_KEY || "").trim()),
     },
-    github: {
-      keySet: !!(process.env.GITHUB_TOKEN || "").trim(),
-      length: (process.env.GITHUB_TOKEN || "").trim().length,
-      prefix: (process.env.GITHUB_TOKEN || "").trim().slice(0, 11),
-      looksRight: /^(github_pat_|ghp_)/.test((process.env.GITHUB_TOKEN || "").trim()),
-    },
+    github: (() => {
+      // Mirror the fallback order in _github.js so diag never disagrees with
+      // what the publish path will actually use.
+      const names = ["GITHUB_TOKEN", "VSPOT_GH_TOKEN"];
+      const readFrom = names.find((n) => (process.env[n] || "").trim());
+      const tok = (process.env[readFrom] || "").trim();
+      return {
+        readFrom: readFrom || null,
+        namesTried: names,
+        keySet: !!tok,
+        length: tok.length,
+        prefix: tok.slice(0, 11),
+        looksRight: /^(github_pat_|ghp_)/.test(tok),
+      };
+    })(),
     sessionSecret: !!process.env.SESSION_SECRET,
     sitePassword: !!process.env.SITE_PASSWORD,
     google: {
