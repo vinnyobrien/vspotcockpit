@@ -50,7 +50,8 @@ relationship is one of: develops, contradicts, revisits, resolves.
 If genuinely empty, say so explicitly. A blank field is ambiguous, an explicit
 empty is a decision.
 
-PINNED COMMENT — one claim from the claim block plus one link. Never a request to subscribe.
+PINNED COMMENT — one claim from the claim block plus one link. Never a request to
+subscribe.
 
 TAGS — ten maximum, mostly useful for misspellings and entity variants. Do not
 spend editorial energy here.
@@ -93,9 +94,59 @@ corrected boundary.
 `;
 
 /** Guardrails that outrank throughput. Checked in code, not just in prose. */
-export const CLIENT_TERMS = ["foundrae", "power cloud", "powercloud", "phoebe", "netsuite", "celigo", "taylor carr"];
+export const CLIENT_TERMS = [
+  "foundrae", "power cloud", "powercloud", "phoebe", "netsuite",
+  "celigo", "taylor carr",
+];
 
 export const containsClientMaterial = (text = "") => {
   const t = String(text).toLowerCase();
   return CLIENT_TERMS.filter((term) => t.includes(term));
 };
+
+/**
+ * Overrides.
+ *
+ * The matcher cannot tell Phoebe Buffay from Phoebe Johnson, and it should not
+ * try — a guardrail that guesses is worse than one that stops. So the escape
+ * hatch is a human saying why, per term, with the reason recorded.
+ *
+ * Three rules, all deliberate:
+ *
+ *   1. PER TERM. Clearing "phoebe" must not also clear "foundrae" appearing
+ *      later in the same transcript. Each term is its own decision.
+ *   2. A REASON IS REQUIRED, and it has to be a sentence rather than a
+ *      keystroke. An override you can click through without thinking is just
+ *      a slower halt.
+ *   3. IT IS LOGGED. If a client name ever does reach public metadata, there
+ *      has to be a record of who waved it through and what they said.
+ *
+ * @param {string[]} hits      terms found by containsClientMaterial
+ * @param {object[]} overrides [{ term, reason }]
+ * @returns {{ cleared: object[], blocked: string[] }}
+ */
+export function applyOverrides(hits = [], overrides = []) {
+  const byTerm = new Map();
+  for (const o of Array.isArray(overrides) ? overrides : []) {
+    const term = String(o?.term || "").toLowerCase().trim();
+    const reason = String(o?.reason || "").trim();
+    // Twelve characters is roughly "not a client" — enough to require a
+    // thought, short enough not to be a chore.
+    if (term && reason.length >= 12) byTerm.set(term, reason.slice(0, 300));
+  }
+
+  const cleared = [];
+  const blocked = [];
+  for (const hit of hits) {
+    const reason = byTerm.get(String(hit).toLowerCase());
+    if (reason) cleared.push({ term: hit, reason });
+    else blocked.push(hit);
+  }
+  return { cleared, blocked };
+}
+
+/** The halt message, written to be acted on rather than merely read. */
+export function haltMessage(blocked) {
+  const list = blocked.join(", ");
+  return `Halted. The source mentions ${list}. Client confidentiality outranks throughput, so nothing was generated. If ${blocked.length > 1 ? "these are" : "this is"} not a client reference, say why and it will proceed. Otherwise remove the reference or clip around it.`;
+}
