@@ -208,8 +208,14 @@ export default async (req) => {
       failed: blocks.filter((b) => b.type === "mcp_tool_result" && b.is_error).length,
       note: JOB_TTL_NOTE,
     });
-  } catch (e) {
-    await finish(id, { status: "error", error: String(e.message || e).slice(0, 300) });
+ } catch (e) {
+    await finish(id, {
+      status: "error",
+      error: String(e.message || e).slice(0, 400),
+      // Present only on a confidentiality halt. The UI uses it to show a
+      // reason field per term rather than a dead end.
+      blocked: e.blocked || null,
+    });
   }
 
   return json({ accepted: true });
