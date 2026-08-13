@@ -4,7 +4,7 @@ import { OPS } from "./_prompts.js";
 import { getAccessToken, googleServers, opusServer } from "./_google.js";
 import { anthropicKey } from "./_key.js";
 import { fetchBriefing } from "./_workspace.js";
-import { containsClientMaterial } from "./_contracts.js";
+import { containsClientMaterial, applyOverrides, haltMessage } from "./_contracts.js";
 import { listProjects, listClips } from "./_opus.js";
 
 /**
@@ -73,15 +73,33 @@ export default async (req) => {
       throw new Error("Unknown generator");
     }
 
-    // Guardrail 4, enforced in code rather than trusted to a prompt.
+ // Guardrail 4, enforced in code rather than trusted to a prompt.
     // Client material must never become public video metadata.
+    //
+    // The matcher cannot tell Phoebe Buffay from Phoebe Johnson. Rather than
+    // teach it to guess, a person can clear a specific term by saying why —
+    // and that reason is recorded, per term, before anything is generated.
     if (body.op === "metadata" || body.op === "selection") {
       const hits = containsClientMaterial(args.draft);
       if (hits.length) {
-        throw new Error(
-          `Halted. The source mentions ${hits.join(", ")}. Client confidentiality outranks throughput, so nothing was generated. Remove the reference or clip around it.`
-        );
+        const { cleared, blocked } = applyOverrides(hits, body.overrides);
+
+        if (blocked.length) {
+          const e = new Error(haltMessage(blocked));
+          e.blocked = blocked;              // so the UI can offer the field
+          throw e;
+        }
+
+        // Nothing blocked, but the record matters more than the pass.
+        for (const c of cleared) {
+          await writeJSON("cockpit", `override:${Date.now()}:${c.term}`, {
+            term: c.term, reason: c.reason, op: body.op,
+            at: new Date().toISOString(),
+            excerpt: String(args.draft || "").slice(0, 400),
+          });
+        }
       }
+
       if ((args.draft || "").trim().split(/\s+/).length < 500) {
         throw new Error(
           "Halted. Transcript is under 500 words. Guardrail 2 says do not infer clip boundaries from titles or virality scores alone."
