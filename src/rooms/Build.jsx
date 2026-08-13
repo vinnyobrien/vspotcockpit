@@ -31,21 +31,34 @@ export default function Build() {
   const [out, setOut] = useState(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  /* Set when the confidentiality guardrail halts. Holds the terms it caught,
+     so the reason field is per term rather than a blanket "proceed anyway". */
+  const [blocked, setBlocked] = useState(null);
+  const [reasons, setReasons] = useState({});
   const [ch, setCh] = useState("linkedin");
   const [copied, setCopied] = useState("");
 
   const words = source.trim() ? source.trim().split(/\s+/).length : 0;
   const short = words > 0 && words < 500;
 
-  const run = async () => {
+  const run = async (overrides) => {
     setBusy(true);
     setErr("");
     setOut(null);
+    if (!overrides) setBlocked(null);
     try {
-      const r = await callOp({ op: "metadata", extra: context, draft: source });
+      const r = await callOp({
+        op: "metadata", extra: context, draft: source,
+        ...(overrides?.length ? { overrides } : {}),
+      });
       setOut(parseObject(r.text));
+      setBlocked(null);
+      setReasons({});
     } catch (e) {
       setErr(e.message || "The build failed.");
+      // The job carries the caught terms on a confidentiality halt, so the
+      // reason field can name them rather than offering a blanket override.
+      if (e.blocked?.length) setBlocked(e.blocked);
     }
     setBusy(false);
   };
@@ -62,7 +75,47 @@ export default function Build() {
         Transcript in, every channel out. It names the argument first — if that cannot be written in
         one sentence, there is no episode.
       </Note>
-      <Problem onDismiss={() => setErr("")}>{err}</Problem>
+      <Problem onDismiss={() => { setErr(""); setBlocked(null); }}>{err}</Problem>
+
+      {/* Not a "proceed anyway" button. Each term needs its own reason, and the
+          reason is recorded — because if a client name ever does reach public
+          metadata, there has to be a record of what was said. */}
+      {blocked && (
+        <Card tint={C.blush} style={{ marginBottom: 14 }}>
+          <Mono c={C.red}>Held for a reason</Mono>
+          <p style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5, marginTop: 8 }}>
+            Say why {blocked.length > 1 ? "each of these is" : "this is"} not a client reference.
+            It goes in the record with the piece.
+          </p>
+          {blocked.map((term) => (
+            <div key={term} style={{ marginTop: 12 }}>
+              <Mono s={9}>{term}</Mono>
+              <div style={{ marginTop: 6 }}>
+                <Field
+                  tint="rgba(255,255,255,.7)"
+                  value={reasons[term] || ""}
+                  onChange={(v) => setReasons((r) => ({ ...r, [term]: v }))}
+                  placeholder={`Why "${term}" is safe here`}
+                />
+              </div>
+            </div>
+          ))}
+          <div className="flex items-center gap-2" style={{ marginTop: 14 }}>
+            <Mono s={9}>
+              {blocked.every((t) => (reasons[t] || "").trim().length >= 12)
+                ? "Recorded on proceed"
+                : "A sentence, not a keystroke"}
+            </Mono>
+            <span style={{ marginLeft: "auto" }}>
+              <Pill sm danger
+                disabled={busy || !blocked.every((t) => (reasons[t] || "").trim().length >= 12)}
+                onClick={() => run(blocked.map((term) => ({ term, reason: reasons[term].trim() })))}>
+                {busy ? "Building…" : "Proceed"}
+              </Pill>
+            </span>
+          </div>
+        </Card>
+      )}
 
       {!out && (
         <Card>
