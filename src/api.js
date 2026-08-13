@@ -52,7 +52,6 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function callOp(payload, { onWait } = {}) {
   const jobId = crypto.randomUUID();
-
   const res = await req("/api/claude-background", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -60,26 +59,25 @@ export async function callOp(payload, { onWait } = {}) {
   });
   if (!res.ok && res.status !== 202) {
     const data = await res.json().catch(() => ({}));
-   if (job.status === "error") {
-      const e = new Error(job.error || "The job failed.");
-      // Carry the caught terms through, or the guardrail becomes a dead end
-      // rather than a question the UI can put back to you.
-      if (job.blocked) e.blocked = job.blocked;
-      throw e;
-    }
+    throw new Error(data.error || `Could not start (${res.status})`);
+  }
 
   const deadline = Date.now() + 4 * 60 * 1000;
   let wait = 1500;
   while (Date.now() < deadline) {
     await sleep(wait);
     wait = Math.min(wait * 1.25, 5000);
-
     const r = await req(`/api/job?id=${jobId}`);
     if (!r.ok) continue;
     const job = await r.json().catch(() => ({}));
-
     if (job.status === "done") return job;
-    if (job.status === "error") throw new Error(job.error || "The job failed.");
+    if (job.status === "error") {
+      const e = new Error(job.error || "The job failed.");
+      // Carry the caught terms through, or the confidentiality guardrail
+      // becomes a dead end rather than a question the UI can put back to you.
+      if (job.blocked) e.blocked = job.blocked;
+      throw e;
+    }
     if (onWait) onWait(job.status || "pending");
   }
   throw new Error("Timed out after four minutes. The wire is slow today, try again.");
