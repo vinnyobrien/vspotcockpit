@@ -48,17 +48,88 @@ import { METADATA_CONTRACT, SELECTION_CONTRACT } from "./_contracts.js";
 const threadList = (threads = []) =>
   threads.map((t) => `- ${t.id}: ${t.name}. ${t.note}`).join("\n");
 
-export const OPS = {/* ═══════════════════════════════════════════════════════════════════════
-   ADD TO netlify/functions/_prompts.js
+export const OPS = { channel: {
+    maxTokens: 2000,
+    search: false,
+    google: false,
 
-   Paste this inside `export const OPS = { ... }`, as a sibling of `wire`.
-   Anywhere in the object is fine — just make sure it sits between the
-   braces and has a comma after it if it isn't the last entry.
+    system: ({ kind }) => `${VOICE}
 
-   It uses SECURITY, which _prompts.js already defines. It deliberately does
-   NOT use VOICE — this is extraction, not writing. A satirical register on a
-   Foundrae action item would be actively unhelpful.
-   ═══════════════════════════════════════════════════════════════════════ */
+You are writing the ${kind} version of a piece that already exists. The argument
+is settled. Your job is the register, the length and the shape for this one
+surface, not to reopen the thesis.
+
+${
+  {
+    linkedin: `LINKEDIN. Between 120 and 200 words.
+Open on the claim, not the context. First line has to survive being the only
+line anyone reads, because on mobile it is.
+Three or four short paragraphs, single line breaks between them.
+No hashtags. No "thoughts?" at the end. No emoji.
+Close on the implication, not a question. If a question is the right ending it
+has to be one only an operator would ask.`,
+
+    substack: `SUBSTACK. Between 250 and 1000 words.
+This is the note that goes out with the episode, not the essay. It carries the
+argument far enough that someone who never listens still got something.
+Prose, no subheads, no bullets.
+The last paragraph earns the click without asking for it.`,
+
+    youtube: `YOUTUBE DESCRIPTION.
+First 150 characters state the conclusion, because that is all that shows before
+"more". Never tease.
+Then two or three short paragraphs of what the episode actually argues.
+Write it for someone who will never watch. If it only works as an advertisement
+for the video, rewrite it. SEO COMPLIANT.
+Plain text, no markdown, no hashtags.`,
+
+    spotify: `SPOTIFY DESCRIPTION. Under 200 words.
+Audio listeners are usually doing something else, so the argument has to survive
+partial attention.
+Name the guest and what they actually claim, not their job title.
+Plain text, no links, no formatting.`,
+  }[kind] || "Write it plainly."
+}
+
+Return ONLY the text. No preamble, no explanation, no quotes around it, no
+markdown fences.`,
+
+    user: ({ kind, extra, draft, archive }) => `Write the ${kind} version.
+
+SHOW / EPISODE: ${extra || "V Spot Network"}
+
+THE ARGUMENT AND THE MATERIAL:
+"""
+${String(draft || "").slice(0, 20000)}
+"""
+${archive || ""}
+
+${
+  // Feedback arrives as a note on the previous attempt. Keeping the argument
+  // fixed and changing only what was asked stops each pass drifting further
+  // from the piece.
+  ""
+}`,
+
+    /* Multi turn, so feedback is a reply rather than a fresh brief. The prior
+       draft stays in the conversation and the note applies to it. */
+    messages: ({ kind, extra, draft, archive, history }) => {
+      const first = {
+        role: "user",
+        content: `Write the ${kind} version.
+
+SHOW / EPISODE: ${extra || "V Spot Network"}
+
+THE ARGUMENT AND THE MATERIAL:
+"""
+${String(draft || "").slice(0, 20000)}
+"""
+${archive || ""}`,
+      };
+      const turns = Array.isArray(history) ? history.slice(-6) : [];
+      return turns.length ? [first, ...turns] : [first];
+    },
+  },
 
   commitments: {
     maxTokens: 2500,
