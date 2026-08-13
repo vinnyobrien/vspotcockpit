@@ -60,8 +60,13 @@ export async function callOp(payload, { onWait } = {}) {
   });
   if (!res.ok && res.status !== 202) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || `Could not start (${res.status})`);
-  }
+   if (job.status === "error") {
+      const e = new Error(job.error || "The job failed.");
+      // Carry the caught terms through, or the guardrail becomes a dead end
+      // rather than a question the UI can put back to you.
+      if (job.blocked) e.blocked = job.blocked;
+      throw e;
+    }
 
   const deadline = Date.now() + 4 * 60 * 1000;
   let wait = 1500;
