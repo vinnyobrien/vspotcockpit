@@ -1,199 +1,412 @@
-import React, { useState } from "react";
-import { Lock, Copy, AlertTriangle } from "lucide-react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { Copy, Check, Upload, Pencil } from "lucide-react";
 import {
-  C, BODY, DISPLAY, MONO, Mono, Big, Card, Section, Pill, Field, Note,
-  Problem, Chips,
+  C, BODY, MONO, DISPLAY, SH, Mono, Big, Card, Section, Pill,
+  Field, Note, Empty, Problem, Chips, Confirm, parseJSON,
 } from "../lib/ui.jsx";
+import { callOp, sGet, sSet } from "../api.js";
+import { readyCast, getBlock, TREATMENTS } from "../lib/cast-blocks.js";
 
 /* ============================================================
    src/rooms/Cast.jsx
 
-   Story in, shooting prompt out.
+   The Cast is not a mouthpiece. A correspondent carries a STANCE,
+   which is what they believe before they read anything, and the
+   generator is instructed to let that stance take them somewhere
+   the editor did not go. A correspondent who only ever agrees is a
+   filter with a hat on.
 
-   The CHARACTER block is assembled from a constant and never
-   retyped. The first Murt video already drifted — "a forward-facing
-   quiff" became "forward facing quiff" — and generative models
-   drift on paraphrase. A constant cannot forget; a person can.
+   Two checks are therefore INVERTED here relative to Sub-Editor.
+   Voice similarity to Vinny is a defect, not a pass. Contradicting
+   the archive is a note, not a halt. What still binds absolutely is
+   the claim ledger: wrong about meaning, never about fact.
 
-   Kapwing has no public API, so the prompt is copied across by
-   hand. That is the honest end of this pipeline.
+   Kapwing has no generation API. The render step is manual by
+   nature, which sits exactly where the standing orders already put
+   things. The room does the work to the last step. The last step is
+   yours.
+
+   Publishing reuses onPublish, the same handler the clip desk uses,
+   so a Cast piece lands in the same published blob and Analysis
+   counts it without knowing it was different.
    ============================================================ */
 
-/* LOCKED. Never edit. Never paraphrase. From vspot-correspondents.md. */
-const CHARACTER = {
-  murt: "An average looking 45 year old Irish male. Was once athletic but more of an armchair sports fan now. Thinning hair with a forward-facing quiff, salt and pepper colour mix, blue eyes, glowing skin, and a once-athletic figure.",
-  reagan: "A 32 year old American woman. Shoulder-length dark blonde hair, usually tied back, with strands escaping. Sharp cheekbones, tired but bright hazel eyes, faint freckles, minimal makeup applied quickly. Athletic build kept up rather than trained for. Small silver hoop earrings, always the same pair.",
-  jimmy: "A 30 year old American man with the clean-cut look of a television presenter. Dark brown neatly-cut hair, strong jaw, warm brown eyes, tall and broad-shouldered from an athletic past. Naturally photogenic in a way he seems unaware of. Open, earnest facial expressions.",
-};
+const ACCOUNTS = [
+  { id: "6853f3c16581970b2eebf51a", platform: "YouTube", short: "YT", tint: C.blush,
+    rule: "Video title, under 60 characters, no hashtags.", cap: 60 },
+  { id: "6a6a4fc9b6bbd46119642533", platform: "TikTok", short: "TT", tint: C.mint,
+    rule: "Hook first. One line of context.", cap: 300 },
+  { id: "6a6a4ff343c4264488aa4fa0", platform: "X", short: "X", tint: C.sky,
+    rule: "Single claim. No link — a URL costs 13x.", cap: 280 },
+];
 
-const CAST = {
-  murt: {
-    name: "Murt Moriarty",
-    angle: "The absurd. Founder discourse, funding announcements, anything involving a gilet.",
-    voice: "Alan Partridge. Socially awkward, over-shares, leaves silences he cannot fill. Never says \"content\". Refers to LinkedIn as \"the LinkedIn\".",
-    tint: C.sand,
-    formats: [
-      { id: "gym", label: "The gym vlog", secs: "30–45s", beats: 8,
-        wardrobe: "fitted blue sleeveless workout top, high-waisted black shorts, white socks, white sneakers, white towel loosely around his neck",
-        setting: "A modern boutique gym late in the evening. Dumbbell racks, kettlebells, medicine balls, mirrors, benches, stretching mats, a gym bag, shaker bottle, warm overhead lighting. Almost empty, one or two people blurred in the distance." },
-      { id: "kitchen", label: "The kitchen verdict", secs: "20–30s", beats: 5,
-        wardrobe: "creased polo, one size too big",
-        setting: "A domestic kitchen in the evening. Kettle, mugs, a delivery box half opened on the counter. Overhead light only." },
-      { id: "event", label: "The event floor", secs: "20–35s", beats: 6,
-        wardrobe: "lanyard worn too high, blazer over polo",
-        setting: "A trade show floor between sessions. Booth graphics out of focus behind him, carpet tiles, a coffee cup he is not drinking." },
-      { id: "lobby", label: "The hotel lobby", secs: "20–30s", beats: 5,
-        wardrobe: "blazer over polo, lanyard still on from earlier",
-        setting: "A conference hotel lobby, late. Low armchairs, a bar in the far background, no other delegates." },
-    ],
-  },
-  reagan: {
-    name: "Reagan Doyle",
-    angle: "The optimisation, with exactly one clue per video that she is winging it.",
-    voice: "Fast, declarative, over-confident on camera. Slower and quieter when the clue lands. She talks to the audience the way you talk to someone you are trying to convince of something you have stopped believing.",
-    tint: C.apricot,
-    formats: [
-      { id: "morning", label: "Morning routine", secs: "20–30s", beats: 6,
-        wardrobe: "matching neutral athleisure set, expensive, slightly too new",
-        setting: "A bright apartment before six. An unexplained trophy on the shelf behind her, never mentioned." },
-      { id: "desk", label: "The desk take", secs: "20–30s", beats: 5,
-        wardrobe: "oversized crew neck, hair up",
-        setting: "A tidy desk, second monitor off. A framed photo she never refers to." },
-      { id: "event", label: "The event floor", secs: "20–35s", beats: 6,
-        wardrobe: "blazer over a t-shirt, lanyard, coffee in both hands",
-        setting: "A conference concourse mid-morning, people moving behind her." },
-      { id: "weekend", label: "Weekend", secs: "15–25s", beats: 4,
-        wardrobe: "band t-shirt, the one authentic garment she owns",
-        setting: "A sofa, Saturday. A beer visible in shot despite a stated dry quarter." },
-    ],
-  },
-  jimmy: {
-    name: "Jimmy Vance",
-    angle: "The mechanism, explained via something in the natural world.",
-    voice: "Measured. Genuinely curious. Frequently pauses mid-sentence to reconsider. Never sarcastic, which in this cast makes him the strangest person in it.",
-    tint: C.sky,
-    formats: [
-      { id: "thread", label: "The sincere thread", secs: "under 30s", beats: 5,
-        wardrobe: "crisp white shirt, sleeves rolled, no tie",
-        setting: "A plain room, natural light from one side. Nothing on the walls." },
-      { id: "outdoors", label: "Outdoors", secs: "30–45s", beats: 7,
-        wardrobe: "technical fleece, walking boots, small backpack",
-        setting: "A hillside path in flat afternoon light. Wind on the microphone." },
-      { id: "presenting", label: "Presenting", secs: "20–30s", beats: 5,
-        wardrobe: "crisp white shirt, sleeves rolled, no tie",
-        setting: "A studio corner with a plant and a lamp, deliberately unglamorous." },
-      { id: "travel", label: "Travel", secs: "20–30s", beats: 5,
-        wardrobe: "linen shirt, sunglasses pushed up",
-        setting: "A European street in the early evening, shopfronts behind." },
-    ],
-  },
-};
+const MAX_MB = 512;
 
-const CAMERA = `Handheld DV 16mm daily vlog footage. Opens in selfie mode at arm's length, speaking directly to the lens. Keep subtle handheld shake, drifting composition, autofocus hunting, rushed reframing, uneven zooms, exposure breathing, brief accidental face cropping, and imperfect framing throughout. The camera itself is never visible.`;
+/* Kapwing takes one pasted block. Built here rather than by the model, because
+   the treatment is a brand constant and does not need a token spent on it. */
+function kapwingPrompt(scenes, correspondent) {
+  const t = TREATMENTS[correspondent.treatment] || TREATMENTS["red-neon"];
+  const shots = (scenes || [])
+    .map((s) => `Scene ${s.n}. ${s.action}`)
+    .join("\n");
+  return [
+    `Nine by sixteen vertical video, ${(scenes || []).length} scenes, roughly fifty seconds.`,
+    "",
+    `Consistent character throughout: ${correspondent.name}. Save this as a reusable persona on the first render so every future piece from this correspondent matches.`,
+    "",
+    shots,
+    "",
+    `Ground: ${t.ground}. Accent: ${t.accent}. Look: ${t.look}.`,
+    t.forbid,
+  ].join("\n");
+}
 
-const LOOK = `Warm analog tape texture with gentle film grain, slightly softened sharpness, subtle halation around lights, realistic skin tones, low contrast, tiny exposure shifts, and natural motion blur. It should feel authentic and completely unstaged.`;
+function CopyBox({ label, text, tint, rows = 8 }) {
+  const [done, setDone] = useState(false);
+  return (
+    <Card tint={tint} pad={16} style={{ marginBottom: 12 }}>
+      <div className="flex items-center justify-between gap-2">
+        <Mono s={9.5}>{label}</Mono>
+        <Pill sm tone="ghost" icon={done ? Check : Copy}
+          onClick={() => {
+            navigator.clipboard?.writeText(text);
+            setDone(true);
+            setTimeout(() => setDone(false), 1600);
+          }}>
+          {done ? "Copied" : "Copy"}
+        </Pill>
+      </div>
+      <p style={{
+        fontFamily: label === "KAPWING PROMPT" ? MONO : BODY,
+        fontSize: label === "KAPWING PROMPT" ? 11.5 : 13.5,
+        color: C.ink, lineHeight: 1.55, marginTop: 10, whiteSpace: "pre-wrap",
+      }}>{text}</p>
+      <div style={{ height: rows === 0 ? 0 : 0 }} />
+    </Card>
+  );
+}
 
-const SILENCE = `He speaks in short, natural sentences with frequent pauses. Never rush dialogue. Leave quiet moments between lines.`;
+/* One finished Cast clip, three platforms, three pieces of copy.
+   Deliberately shaped like QueuedClip in Video.jsx. Same handler downstream. */
+function CastPublish({ clip, captions, published, busy, onPublish }) {
+  const [copy, setCopy] = useState(() => ({
+    YouTube: (captions?.youtube || clip.title || "").slice(0, 100),
+    TikTok: captions?.tiktok || "",
+    X: (captions?.twitter || "").replace(/https?:\/\/\S+/g, "").trim(),
+  }));
+  const [editing, setEditing] = useState(null);
 
-export default function Cast() {
-  const [who, setWho] = useState("murt");
-  const [fmt, setFmt] = useState(0);
-  const [story, setStory] = useState("");
-  const [copied, setCopied] = useState(false);
-  const c = CAST[who];
-  const f = c.formats[fmt];
+  return (
+    <Card pad={18} style={{ marginBottom: 12 }}>
+      <div style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: 800, lineHeight: 1.1, color: C.ink }}>
+        {clip.title}
+      </div>
+      {clip.seconds && <div style={{ marginTop: 4 }}><Mono s={9}>{clip.seconds}s</Mono></div>}
 
-  const pronoun = who === "reagan" ? "She" : "He";
-  const silence = SILENCE.replace("He speaks", `${pronoun} speaks`);
+      <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
+        {ACCOUNTS.map((a) => {
+          const shipped = published.find((p) => p.title === clip.title && p.platform === a.platform);
+          const mine = busy === "pub" + clip.clipId + a.id;
+          const text = copy[a.platform] || "";
+          const isEditing = editing === a.platform;
+          const over = text.length > a.cap;
+          const hasLink = a.platform === "X" && /https?:\/\/|\w+\.(com|ie|co|news|app)\b/i.test(text);
 
-  const prompt = `CAMERA: ${CAMERA}
+          return (
+            <div key={a.id} style={{ background: a.tint, borderRadius: 18, padding: 14, opacity: shipped ? 0.55 : 1 }}>
+              <div className="flex items-center justify-between gap-2">
+                <Mono s={9.5}>{a.platform}</Mono>
+                <Mono s={9} c={over ? C.red : C.ink2}>{text.length}/{a.cap}</Mono>
+              </div>
 
-LOOK: ${LOOK}
+              {isEditing ? (
+                <div style={{ marginTop: 9 }}>
+                  <Field tint="rgba(255,255,255,.75)" rows={a.platform === "YouTube" ? 2 : 4}
+                    value={text} onChange={(v) => setCopy({ ...copy, [a.platform]: v })} />
+                </div>
+              ) : (
+                <p style={{ fontSize: 13.5, color: C.ink, lineHeight: 1.5, marginTop: 8, whiteSpace: "pre-wrap" }}>
+                  {text || <span style={{ color: C.ink2 }}>Nothing written for {a.platform} yet.</span>}
+                </p>
+              )}
 
-STYLE: ${c.voice} ${silence}
+              <div style={{ marginTop: 6 }}>
+                <Mono s={8.5} style={{ opacity: .75 }}>{a.rule}</Mono>
+              </div>
+              {hasLink && (
+                <div style={{ marginTop: 5 }}>
+                  <Mono s={8.5} c={C.red}>This carries a link. Reach drops and the post costs 13x.</Mono>
+                </div>
+              )}
 
-CHARACTER: ${CHARACTER[who]} ${pronoun === "She" ? "She wears" : "He wears"} ${f.wardrobe}.
+              <div className="flex gap-2 items-center" style={{ marginTop: 11 }}>
+                <Pill sm tone="ghost" icon={isEditing ? Check : Pencil}
+                  onClick={() => setEditing(isEditing ? null : a.platform)}>
+                  {isEditing ? "Done" : "Edit"}
+                </Pill>
+                <span style={{ marginLeft: "auto" }}>
+                  {shipped
+                    ? <Mono s={9}>Shipped ✓</Mono>
+                    : mine
+                      ? <Pill sm disabled>Posting…</Pill>
+                      : <Confirm sm label={`Publish ${a.short}`} confirmLabel="Yes, publish"
+                          disabled={!!busy || !text.trim() || over}
+                          onConfirm={() => onPublish(clip, a, text)} />}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
 
-SETTING: ${f.setting}
+export default function Cast({ published, onPublish, busy, K }) {
+  const cast = readyCast();
 
-SCENES:
-[${f.beats} beats maximum for a ${f.secs} cut. Write behaviour, not lines — "he laughs quietly and adjusts the towel" produces better output than a line of dialogue on its own.]
+  const [who, setWho] = useState(cast[0]?.id || null);
+  const [material, setMaterial] = useState("");
+  const [piece, setPiece] = useState(null);
+  const [writing, setWriting] = useState(false);
+  const [err, setErr] = useState("");
 
-The story being reacted to:
-${story || "[paste the story]"}`;
+  const [uploading, setUploading] = useState(false);
+  const [projectId, setProjectId] = useState(null);
+  const [state, setState] = useState(null);
+  const [clip, setClip] = useState(null);
+  const fileRef = useRef(null);
+
+  /* Write. The stance goes in whole; the op is instructed not to agree. */
+  const write = useCallback(async () => {
+    if (!who || !material.trim()) return;
+    setWriting(true);
+    setErr("");
+    setPiece(null);
+    try {
+      const block = getBlock(who);
+      const priorArt = (await sGet(K.castPrior, "")) || "";
+      const r = await callOp({
+        op: "cast",
+        correspondent: block,
+        material: material.trim(),
+        priorArt,
+      });
+      const out = parseJSON(r.text);
+      if (!out || !out.script) throw new Error("The correspondent returned nothing usable.");
+      setPiece({ ...out, correspondent: block });
+    } catch (e) {
+      setErr(e.message || "Could not reach the correspondent.");
+    }
+    setWriting(false);
+  }, [who, material, K]);
+
+  /* Upload the Kapwing render, then submit in no-clip mode.
+     The bytes go browser to signed URL directly. They never touch a function,
+     which is the only way this fits inside the execution limit. */
+  const upload = useCallback(async (file) => {
+    if (!file || !piece) return;
+    const mb = file.size / (1024 * 1024);
+    if (mb > MAX_MB) {
+      setErr(`${Math.round(mb)}MB is over the ${MAX_MB}MB ceiling. Long form belongs in Video.`);
+      return;
+    }
+    setUploading(true);
+    setErr("");
+    try {
+      const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
+
+      const link = await fetch("/api/cast-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName: file.name, sizeMb: Math.ceil(mb), extension: ext }),
+      }).then((r) => r.json());
+      if (link.error) throw new Error(link.error);
+
+      const put = await fetch(link.uploadUrl, { method: "PUT", body: file });
+      if (!put.ok) throw new Error(`Upload rejected with ${put.status}.`);
+
+      const sub = await fetch("/api/cast-submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uploadId: link.uploadId,
+          correspondent: piece.correspondent.name,
+          slug: (piece.position || "").slice(0, 40),
+        }),
+      }).then((r) => r.json());
+      if (sub.error) throw new Error(sub.error);
+
+      setProjectId(sub.projectId);
+      setState("processing");
+    } catch (e) {
+      setErr(e.message || "Upload failed.");
+    }
+    setUploading(false);
+  }, [piece]);
+
+  /* Poll. Processing takes minutes, so the wait lives in the client and not in
+     a function that would die at ten seconds. */
+  useEffect(() => {
+    if (!projectId || state !== "processing") return;
+    let live = true;
+    const tick = async () => {
+      try {
+        const r = await fetch(`/api/cast-status?projectId=${encodeURIComponent(projectId)}`)
+          .then((x) => x.json());
+        if (!live) return;
+        if (r.state === "ready") {
+          setClip({
+            clipId: r.clip.curationId,
+            projectId,
+            title: piece?.correspondent?.name
+              ? `${piece.correspondent.name}: ${piece.position || ""}`.slice(0, 90)
+              : r.clip.title,
+            seconds: r.clip.durationSec,
+          });
+          setState("ready");
+        } else if (r.state === "unexpected") {
+          setErr(r.message || "Opus returned something unexpected. Do not publish.");
+          setState("stuck");
+        } else if (r.error) {
+          setErr(r.error);
+          setState("stuck");
+        }
+      } catch {
+        /* transient; the next tick tries again */
+      }
+    };
+    const h = setInterval(tick, 10000);
+    tick();
+    return () => { live = false; clearInterval(h); };
+  }, [projectId, state, piece]);
+
+  if (!cast.length) {
+    return (
+      <div>
+        <Empty>
+          No correspondent has a stance yet. A character block without a stance produces
+          ventriloquism, so the room stays shut until one lands.
+        </Empty>
+      </div>
+    );
+  }
 
   return (
     <div>
+      <Chips items={cast.map((c) => [c.id, c.name.split(" ")[0]])} value={who} onChange={setWho} />
+      <div style={{ height: 18 }} />
+      <Problem onDismiss={() => setErr("")}>{err}</Problem>
+
       <Note>
-        Story in, shooting prompt out. The character block is pasted from a constant and never retyped —
-        paraphrase is how a face drifts between videos.
+        The correspondent holds a position before reading anything and is instructed to land
+        where that takes them. Disagreement with you is the format working, not a fault.
+        Facts still bind absolutely.
       </Note>
 
-      <Chips items={Object.entries(CAST).map(([k, v]) => [k, v.name.split(" ")[0]])} value={who}
-        onChange={(k) => { setWho(k); setFmt(0); }} />
-      <div style={{ height: 14 }} />
-
-      <Card tint={c.tint} style={{ marginBottom: 14 }}>
-        <Big s={22}>{c.name.toUpperCase()}</Big>
-        <p style={{ fontSize: 13.5, color: C.ink2, lineHeight: 1.5, marginTop: 6 }}>{c.angle}</p>
-
-        <div className="sc flex gap-2" style={{ overflowX: "auto", marginTop: 14 }}>
-          {c.formats.map((x, i) => (
-            <button key={x.id} onClick={() => setFmt(i)} className="tap"
-              style={{
-                flexShrink: 0, padding: "8px 13px", borderRadius: 999, cursor: "pointer",
-                fontFamily: BODY, fontSize: 12, fontWeight: fmt === i ? 600 : 500,
-                background: fmt === i ? C.ink : "rgba(255,255,255,.65)",
-                color: fmt === i ? "#fff" : C.ink2, border: "none",
-              }}>
-              {x.label} · {x.secs}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ marginTop: 14 }}>
-          <Field tint="rgba(255,255,255,.7)" value={story} onChange={setStory} rows={4}
-            placeholder="Paste the story, the LinkedIn post, or the essay they're reacting to." />
-        </div>
-      </Card>
-
-      <Card tint={C.blush} pad={16} style={{ marginBottom: 14 }}>
-        <div className="flex items-start gap-2.5">
-          <Lock size={16} strokeWidth={2.3} color={C.red} style={{ marginTop: 1, flexShrink: 0 }} />
-          <div>
-            <div style={{ fontSize: 14, color: C.ink, fontWeight: 600 }}>
-              Character locked · wardrobe by format · silence instruction injected
-            </div>
-            <p style={{ fontSize: 12.5, color: C.ink2, marginTop: 4, lineHeight: 1.45 }}>
-              Beat count capped at {f.beats} for a {f.secs} cut. The first gym vlog ran eleven beats and
-              a paraphrased character block. Both are handled here.
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      <Section label="The shooting prompt" right={
-        <Pill sm icon={Copy} onClick={() => { navigator.clipboard?.writeText(prompt); setCopied(true); setTimeout(() => setCopied(false), 1600); }}>
-          {copied ? "Copied" : "Copy"}
-        </Pill>
-      }>
+      <Section label="Material" style={{ marginTop: 18 }}>
         <Card pad={16}>
-          <pre style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: C.ink }}>
-            {prompt}
-          </pre>
+          <Field rows={8} value={material} onChange={setMaterial}
+            placeholder="Paste the raw material. Notes, observations, a story, your own reading of it. Everything the correspondent asserts must be traceable back to what goes in here." />
+          <div style={{ marginTop: 12 }}>
+            {writing
+              ? <Pill full disabled>Writing…</Pill>
+              : <Pill full onClick={write} disabled={!material.trim()}>
+                  Send it to {getBlock(who).name.split(" ")[0]}
+                </Pill>}
+          </div>
         </Card>
       </Section>
 
-      <Card tint={C.sand} pad={16}>
-        <div className="flex items-start gap-2.5">
-          <AlertTriangle size={16} strokeWidth={2.3} color={C.ink2} style={{ marginTop: 1, flexShrink: 0 }} />
-          <p style={{ fontSize: 12.5, color: C.ink2, lineHeight: 1.5 }}>
-            Kapwing has no public API for programmatic editing, so this is where the pipeline hands over
-            to you. Generate in Runway or Veo with the same seed per character, then assemble and caption
-            in Kapwing. Do not mix generators mid-campaign — a character made in two models is two people.
+      {piece && (
+        <>
+          <Section label="Position" style={{ marginTop: 24 }}>
+            <Card tint={C.sand} pad={16}>
+              <p style={{ fontSize: 14, color: C.ink, lineHeight: 1.5 }}>{piece.position}</p>
+              {piece.divergence && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(20,24,51,.09)" }}>
+                  <Mono s={9.5} c={C.red}>DIVERGES FROM YOU</Mono>
+                  <p style={{ fontSize: 13, color: C.ink, lineHeight: 1.5, marginTop: 6 }}>
+                    {piece.divergence}
+                  </p>
+                </div>
+              )}
+              {!piece.divergence && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(20,24,51,.09)" }}>
+                  <Mono s={9.5}>NO DIVERGENCE</Mono>
+                  <p style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5, marginTop: 6 }}>
+                    This correspondent landed where you did. Worth a second look before it goes out,
+                    because a cast that always agrees is not a cast.
+                  </p>
+                </div>
+              )}
+            </Card>
+          </Section>
+
+          <Section label="Script" style={{ marginTop: 20 }}>
+            <CopyBox label="SPOKEN" text={piece.script} tint={C.lilac} />
+          </Section>
+
+          {piece.claims?.length > 0 && (
+            <Section label="Claims made" style={{ marginTop: 20 }}>
+              <Card pad={0} style={{ padding: "6px 0" }}>
+                {piece.claims.map((c, i) => (
+                  <div key={i} style={{
+                    padding: "10px 16px", fontSize: 12.5, color: C.ink, lineHeight: 1.45,
+                    borderTop: i ? "1px solid rgba(20,24,51,.07)" : "none",
+                  }}>{c}</div>
+                ))}
+              </Card>
+              <div style={{ marginTop: 8 }}>
+                <Mono s={8.5} style={{ opacity: .75 }}>
+                  Wrong about meaning is allowed. Wrong about fact is not. Check these against the material.
+                </Mono>
+              </div>
+            </Section>
+          )}
+
+          <Section label="Render" style={{ marginTop: 24 }}>
+            <CopyBox label="KAPWING PROMPT"
+              text={kapwingPrompt(piece.scenes, piece.correspondent)} tint={C.apricot} />
+            <Card pad={16}>
+              <p style={{ fontSize: 13, color: C.ink2, lineHeight: 1.55 }}>
+                Paste that into Kapwing, render nine by sixteen, download, then bring the file back here.
+                Kapwing has no generation API, so this step is manual and will stay manual.
+              </p>
+              <input ref={fileRef} type="file" accept="video/mp4,video/quicktime,video/x-matroska"
+                style={{ display: "none" }}
+                onChange={(e) => upload(e.target.files?.[0])} />
+              <div style={{ marginTop: 12 }}>
+                {uploading
+                  ? <Pill full disabled>Uploading…</Pill>
+                  : <Pill full icon={Upload} onClick={() => fileRef.current?.click()}
+                      disabled={state === "processing"}>
+                      Upload the render
+                    </Pill>}
+              </div>
+            </Card>
+          </Section>
+        </>
+      )}
+
+      {state === "processing" && (
+        <Card style={{ marginTop: 12 }}>
+          <div className="lamp"><Mono c={C.red}>Processing…</Mono></div>
+          <p style={{ fontSize: 12.5, color: C.ink2, marginTop: 8, lineHeight: 1.5 }}>
+            Reframing and captioning the whole piece, nothing cut. A few minutes is normal.
+            This keeps checking on its own.
           </p>
-        </div>
-      </Card>
+        </Card>
+      )}
+
+      {state === "ready" && clip && (
+        <Section label="Publish" style={{ marginTop: 24 }}>
+          <Note>Nothing has gone out. Three platforms, three pieces of copy, one confirm each.</Note>
+          <div style={{ height: 12 }} />
+          <CastPublish clip={clip} captions={piece?.captions} published={published}
+            busy={busy} onPublish={onPublish} />
+        </Section>
+      )}
     </div>
   );
 }
