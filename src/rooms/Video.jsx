@@ -4,7 +4,7 @@ import {
   C, BODY, MONO, DISPLAY, SH, SH_UP, R, Mono, Big, Card, Section, Pill,
   Field, Note, Empty, Problem, Chips, Confirm, iso, DAYS, parseJSON,
 } from "../lib/ui.jsx";
-import { callOp, sSet } from "../api.js";
+import { callOp, sGet, sSet } from "../api.js";
 
 /* ============================================================
    src/rooms/Video.jsx
@@ -17,6 +17,12 @@ import { callOp, sSet } from "../api.js";
    metadata contract: a YouTube Short title under 60 characters is
    not an X post is not an Instagram caption. Never the same text
    four times.
+
+   TWO TIERS. Tier one is hook and coherence both strong. Tier two
+   is the wider funnel — the overflow tier one had no room for, plus
+   everything clearing a lower floor. Tier two is pulled on demand,
+   never automatically, so its clips are only ever marked as seen
+   once they have actually been in front of you.
    ============================================================ */
 
 const ACCOUNTS = [
@@ -224,18 +230,52 @@ export default function Video({
 }) {
   const [tab, setTab] = useState("shorts");
   const [err, setErr] = useState("");
+  const [warn, setWarn] = useState("");
   const [pulling, setPulling] = useState(false);
   const [queue, setQueue] = useState(null);
+  const [tier, setTier] = useState(1);
 
-  const pull = useCallback(async () => {
+  /* Exclusion is the whole point of the daily pull. Two lists feed it:
+     everything ever PROPOSED, so today is not yesterday, and everything ever
+     PUBLISHED, so a clip that has gone out never comes back. The second list
+     matters more — a repeat proposal is an annoyance, a repeat publish is a
+     mistake your audience notices.
+
+     The tier argument decides which side of the selector answers. Tier two is
+     never pulled automatically, because a clip you never saw should not be
+     burnt into the seen list. */
+  const pull = useCallback(async (t = 1) => {
     setPulling(true);
     setErr("");
+    setWarn("");
     setQueue(null);
+    setTier(t);
     try {
-      const r = await callOp({ op: "clips", extra: "12" });
+      const seen = (await sGet(K.seenClips, [])) || [];
+      const shipped = ((await sGet(K.published, [])) || [])
+        .map((p) => p.clipId).filter(Boolean);
+      const exclude = [...new Set([...seen, ...shipped].map(String))];
+
+      const r = await callOp({ op: "clips", extra: t === 2 ? "18" : "12", tier: t, exclude });
       const list = parseJSON(r.text);
       setShorts(list);
       await sSet(K.shorts(dayKey), list);
+
+      // Proposed is remembered immediately, whether or not you keep any of it.
+      // Otherwise a pull you walk away from serves the same twelve tomorrow.
+      const ids = list.map((c) => String(c.clipId || "")).filter(Boolean);
+      await sSet(K.seenClips, [...new Set([...seen, ...ids])].slice(-900));
+
+      /* If the model returned a clip without a usable clipId, that clip cannot
+         enter the seen list and WILL come back tomorrow. This used to fail
+         silently and is the likeliest reason a pull repeats itself. Say so. */
+      if (ids.length < list.length) {
+        setWarn(
+          `${list.length - ids.length} of ${list.length} clips came back without a clipId. ` +
+          `Those cannot be excluded next time and will repeat. Check the clips prompt is ` +
+          `passing clipId through unchanged.`
+        );
+      }
     } catch (e) {
       setErr(e.message || "Could not reach the clip library.");
     }
@@ -256,21 +296,34 @@ export default function Video({
 
       {tab === "shorts" && (
         <>
-        <div className="flex items-center justify-between gap-3" style={{ marginBottom: 16 }}>
-            <Mono>{shorts ? `${shorts.length} pulled today` : "Nothing pulled"}</Mono>
-            <Pill sm disabled={pulling} onClick={() => { setQueue(null); pull(); }}>
-              {pulling ? "Reading…" : shorts ? "Pull new clips" : "Pull today's clips"}
-            </Pill>
-          </div>
           <Note>
-            Filtered against everything already proposed and rotated across themes. Keeping queues a clip.
-            Publishing is per platform, with its own copy, and nothing goes twice.
+            Tier one is hook and coherence both strong. Tier two widens the floor and adds
+            everything tier one had no room for. Both are filtered against what you have already
+            been shown and already published. Keeping queues a clip; publishing is per platform.
           </Note>
+
+          {warn && (
+            <Card tint={C.apricot} pad={14} style={{ marginTop: 12 }}>
+              <Mono s={9.5} c={C.red}>REPEAT RISK</Mono>
+              <p style={{ fontSize: 13, color: C.ink, lineHeight: 1.5, marginTop: 6 }}>{warn}</p>
+            </Card>
+          )}
+
+          {shorts && !pulling && (
+            <div style={{ marginTop: 12 }}>
+              <Mono s={9.5} c={tier === 2 ? C.red : C.ink2}>
+                {tier === 2 ? "TIER TWO · WIDER FUNNEL" : "TIER ONE"}
+              </Mono>
+            </div>
+          )}
 
           {!shorts && !pulling && (
             <>
               <Empty>Nothing pulled yet. This reads every project in the library, not just the recent ones.</Empty>
-              <div style={{ marginTop: 12 }}><Pill full onClick={pull}>Pull today's clips</Pill></div>
+              <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
+                <Pill full onClick={() => pull(1)}>Pull today's clips</Pill>
+                <Pill full tone="ghost" onClick={() => pull(2)}>Go wider — tier two</Pill>
+              </div>
             </>
           )}
 
@@ -298,8 +351,18 @@ export default function Video({
                 <QueuedClip key={c.clipId} clip={c} published={published} busy={busy} onPublish={onPublish} />
               ))}
 
-              <div style={{ marginTop: 8 }}>
-                <Pill full tone="ghost" onClick={() => { setQueue(null); pull(); }}>Pull another set</Pill>
+              <div style={{ marginTop: 8, display: "grid", gap: 8 }}>
+                <Pill full tone="ghost" onClick={() => pull(tier)}>
+                  Pull another set{tier === 2 ? " — tier two" : ""}
+                </Pill>
+                {tier === 1 && (
+                  <Pill full tone="ghost" onClick={() => pull(2)}>
+                    Still thin? Go wider — tier two
+                  </Pill>
+                )}
+                {tier === 2 && (
+                  <Pill full tone="ghost" onClick={() => pull(1)}>Back to tier one</Pill>
+                )}
               </div>
             </>
           )}
