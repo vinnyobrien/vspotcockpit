@@ -1,4 +1,9 @@
 import React, { useState } from "react";
+import { Send, Check, Plus, Copy, ExternalLink, X, Clock4 } from "lucide-react";
+import {
+  C, BODY, DISPLAY, MONO, Mono, Big, Card, Section, Pill, Field, Note,
+  Empty, Problem, Confirm, iso, daysSince,
+} from "../lib/ui.jsx";
 
 /* ============================================================
    src/rooms/Guests.jsx
