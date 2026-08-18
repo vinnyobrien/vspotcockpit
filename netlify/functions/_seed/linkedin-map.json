@@ -1,0 +1,601 @@
+{
+ "source": "linkedin",
+ "backdated": [
+  {
+   "id": "engage-us-bit-below-warp-speed-mr-sulu-ecommerce-state-o-brien",
+   "title": "Engage us a bit below warp speed Mr Sulu​ - an ecommerce state of mind",
+   "created": "2015-10-06T11:27:00",
+   "published": "2022-04-26T16:22:00",
+   "lagDays": 2394
+  }
+ ],
+ "built": "2026-08-18T16:08:07.215760Z",
+ "posts": 143,
+ "canonicalPosts": 138,
+ "republishes": [
+  {
+   "id": "ecommerce-retail-apocalypse-third-industrial-vinny-o-brien-1e",
+   "date": "2022-05-10T13:45:00",
+   "title": "eCommerce, The Retail Apocalypse and The third industrial Revolution.",
+   "republishOf": "ecommerce-retail-apocalypse-third-industrial-vinny-o-brien"
+  },
+  {
+   "id": "ecommerce-retail-apocalypse-third-industrial-2023-version-o-brien",
+   "date": "2023-02-16T14:05:00",
+   "title": "eCommerce, The Retail Apocalypse and The third industrial Revolution. The 2023 version",
+   "republishOf": "ecommerce-retail-apocalypse-third-industrial-vinny-o-brien"
+  },
+  {
+   "id": "hype-overrated-2024-year-ecommerce-renaissance-vinny-o-brien-zoe8e",
+   "date": "2024-01-07T10:47:00",
+   "title": "Hype is overrated. 2024, the year of the eCommerce Renaissance.",
+   "republishOf": "ecommerce-retail-apocalypse-third-industrial-vinny-o-brien"
+  },
+  {
+   "id": "citrini-aint-2028-ecommerce-full-essay-vinny-o-brien-ud92f",
+   "date": "2026-03-06T17:13:00",
+   "title": "Citrini this aint - 2028 in ecommerce. Full Essay",
+   "republishOf": "2028-global-commerce-identity-crisis-vinny-o-brien-htlgf"
+  },
+  {
+   "id": "memo-mission-statement-vinny-o-brien-wabxf",
+   "date": "2026-06-11T15:46:00",
+   "title": "A memo. Not a mission statement.",
+   "republishOf": "mission-statement-memo-vinny-o-brien-22kkf"
+  }
+ ],
+ "draftsSkipped": 7,
+ "words": 259227,
+ "span": [
+  "2015-10-06T12:45:00",
+  "2026-08-06T12:41:00"
+ ],
+ "months": {
+  "2015-10": 2,
+  "2015-11": 2,
+  "2016-04": 1,
+  "2016-10": 1,
+  "2017-01": 3,
+  "2017-03": 1,
+  "2017-04": 1,
+  "2017-07": 1,
+  "2018-01": 1,
+  "2018-02": 1,
+  "2018-03": 2,
+  "2018-05": 1,
+  "2019-02": 1,
+  "2020-03": 2,
+  "2020-04": 1,
+  "2022-04": 2,
+  "2022-05": 6,
+  "2022-06": 4,
+  "2022-07": 1,
+  "2022-08": 1,
+  "2022-09": 2,
+  "2022-12": 2,
+  "2023-01": 3,
+  "2023-02": 2,
+  "2023-03": 2,
+  "2023-05": 1,
+  "2023-06": 1,
+  "2023-08": 1,
+  "2023-10": 2,
+  "2023-11": 1,
+  "2023-12": 1,
+  "2024-01": 1,
+  "2024-02": 1,
+  "2024-03": 2,
+  "2024-04": 2,
+  "2024-05": 1,
+  "2024-08": 2,
+  "2024-09": 3,
+  "2024-10": 1,
+  "2024-11": 2,
+  "2025-01": 3,
+  "2025-02": 1,
+  "2025-03": 3,
+  "2025-04": 2,
+  "2025-05": 4,
+  "2025-06": 5,
+  "2025-07": 1,
+  "2025-08": 4,
+  "2025-09": 6,
+  "2025-10": 6,
+  "2025-11": 1,
+  "2025-12": 4,
+  "2026-01": 7,
+  "2026-02": 8,
+  "2026-03": 9,
+  "2026-04": 2,
+  "2026-06": 7,
+  "2026-07": 1,
+  "2026-08": 1
+ },
+ "threads": {
+  "marketplace-power": 81,
+  "logistics-returns": 57,
+  "margin-economics": 55,
+  "ireland-europe": 53,
+  "ai-in-commerce": 47,
+  "founder-operator": 46,
+  "brand-dtc": 27,
+  "payments-credit": 24,
+  "china-cross-border": 23,
+  "search-discovery": 22,
+  "platform-shopify": 19,
+  "retail-media-ads": 19
+ },
+ "threadsByYear": {
+  "logistics-returns": {
+   "2015": 1,
+   "2016": 2,
+   "2017": 3,
+   "2018": 1,
+   "2019": 1,
+   "2020": 2,
+   "2022": 6,
+   "2023": 4,
+   "2024": 6,
+   "2025": 17,
+   "2026": 14
+  },
+  "marketplace-power": {
+   "2015": 1,
+   "2016": 2,
+   "2017": 4,
+   "2018": 3,
+   "2019": 1,
+   "2020": 2,
+   "2022": 11,
+   "2023": 10,
+   "2024": 11,
+   "2025": 25,
+   "2026": 11
+  },
+  "ireland-europe": {
+   "2015": 4,
+   "2016": 1,
+   "2017": 1,
+   "2018": 4,
+   "2020": 1,
+   "2022": 3,
+   "2023": 7,
+   "2024": 4,
+   "2025": 10,
+   "2026": 18
+  },
+  "china-cross-border": {
+   "2015": 1,
+   "2017": 1,
+   "2018": 1,
+   "2022": 2,
+   "2023": 1,
+   "2024": 6,
+   "2025": 7,
+   "2026": 4
+  },
+  "payments-credit": {
+   "2015": 1,
+   "2016": 1,
+   "2017": 1,
+   "2022": 5,
+   "2023": 1,
+   "2024": 2,
+   "2025": 4,
+   "2026": 9
+  },
+  "search-discovery": {
+   "2015": 1,
+   "2022": 2,
+   "2023": 4,
+   "2024": 2,
+   "2025": 5,
+   "2026": 8
+  },
+  "margin-economics": {
+   "2016": 2,
+   "2017": 1,
+   "2018": 2,
+   "2020": 1,
+   "2022": 5,
+   "2023": 10,
+   "2024": 7,
+   "2025": 17,
+   "2026": 10
+  },
+  "ai-in-commerce": {
+   "2017": 1,
+   "2023": 1,
+   "2024": 4,
+   "2025": 20,
+   "2026": 21
+  },
+  "founder-operator": {
+   "2017": 2,
+   "2020": 1,
+   "2022": 4,
+   "2023": 2,
+   "2024": 4,
+   "2025": 18,
+   "2026": 15
+  },
+  "platform-shopify": {
+   "2017": 1,
+   "2019": 1,
+   "2022": 1,
+   "2023": 2,
+   "2024": 2,
+   "2025": 11,
+   "2026": 1
+  },
+  "brand-dtc": {
+   "2018": 1,
+   "2022": 6,
+   "2023": 3,
+   "2024": 2,
+   "2025": 11,
+   "2026": 4
+  },
+  "retail-media-ads": {
+   "2019": 1,
+   "2022": 6,
+   "2023": 3,
+   "2024": 2,
+   "2025": 5,
+   "2026": 2
+  }
+ },
+ "coOccurrence": {
+  "logistics-returns|marketplace-power": 42,
+  "ireland-europe|marketplace-power": 31,
+  "margin-economics|marketplace-power": 31,
+  "ireland-europe|logistics-returns": 27,
+  "logistics-returns|margin-economics": 25,
+  "founder-operator|marketplace-power": 20,
+  "ireland-europe|margin-economics": 19,
+  "ai-in-commerce|marketplace-power": 19,
+  "ai-in-commerce|logistics-returns": 18,
+  "founder-operator|margin-economics": 17,
+  "china-cross-border|marketplace-power": 17,
+  "ai-in-commerce|founder-operator": 17,
+  "marketplace-power|payments-credit": 16,
+  "brand-dtc|marketplace-power": 16,
+  "marketplace-power|retail-media-ads": 14,
+  "brand-dtc|margin-economics": 14,
+  "ai-in-commerce|search-discovery": 14,
+  "ai-in-commerce|margin-economics": 14,
+  "ai-in-commerce|ireland-europe": 14,
+  "brand-dtc|founder-operator": 13
+ },
+ "entities": {
+  "Amazon": 95,
+  "Shopify": 57,
+  "Google": 50,
+  "TikTok": 41,
+  "Target": 40,
+  "Walmart": 33,
+  "Meta": 31,
+  "eBay": 29,
+  "Temu": 27,
+  "Shein": 22,
+  "Netflix": 16,
+  "ASOS": 14,
+  "Klarna": 14,
+  "Stripe": 10,
+  "PayPal": 10,
+  "BigCommerce": 9,
+  "Rick Watson": 9,
+  "Alibaba": 8,
+  "Etsy": 6,
+  "Gymshark": 5,
+  "Rand Fishkin": 5,
+  "Vinted": 5,
+  "Ryan Petersen": 4,
+  "Salesforce": 4,
+  "Macy's": 3,
+  "Neil Saunders": 3,
+  "Flexport": 3,
+  "Kevin Traynor": 2,
+  "Brittain Ladd": 2,
+  "Criteo": 2,
+  "Peloton": 2,
+  "Starbucks": 2,
+  "John Donahoe": 2,
+  "StockX": 2,
+  "Alex Chriss": 2,
+  "Ina Steiner": 1,
+  "David Marcus": 1
+ },
+ "series": {
+  "The V Spot Linkedin Edition": 84,
+  "The Nearly eComm News": 37,
+  "(standalone Pulse, no series)": 22
+ },
+ "byYear": {
+  "2015": 4,
+  "2016": 2,
+  "2017": 6,
+  "2018": 5,
+  "2019": 1,
+  "2020": 3,
+  "2022": 18,
+  "2023": 14,
+  "2024": 15,
+  "2025": 40,
+  "2026": 35
+ },
+ "relations": [
+  {
+   "a": "noticed-consumer-confidence-downturn-strategy-history-vinny-o-brien",
+   "related": [
+    {
+     "id": "noticed-consumer-confidence-downturn-strategy-history-vinny-o-brien-1c",
+     "kind": "revisit",
+     "titleOverlap": 1.0,
+     "bodyOverlap": 0.3
+    }
+   ]
+  },
+  {
+   "a": "ecommerce-strategy-does-exist-16-things-i-learned-2-week-o-brien",
+   "related": [
+    {
+     "id": "abandoning-tactics-strategies-fuel-strategy-confused-vinny-o-brien",
+     "kind": "revisit",
+     "titleOverlap": 0.04,
+     "bodyOverlap": 0.41
+    }
+   ]
+  },
+  {
+   "a": "ecommerce-retail-apocalypse-third-industrial-vinny-o-brien",
+   "related": [
+    {
+     "id": "ecommerce-retail-apocalypse-third-industrial-2023-version-o-brien",
+     "kind": "duplicate",
+     "titleOverlap": 0.75,
+     "bodyOverlap": 0.93
+    },
+    {
+     "id": "ecommerce-retail-apocalypse-third-industrial-vinny-o-brien-1e",
+     "kind": "duplicate",
+     "titleOverlap": 1.0,
+     "bodyOverlap": 0.97
+    },
+    {
+     "id": "hype-overrated-2024-year-ecommerce-renaissance-vinny-o-brien-zoe8e",
+     "kind": "duplicate",
+     "titleOverlap": 0.09,
+     "bodyOverlap": 0.72
+    }
+   ]
+  },
+  {
+   "a": "ecommerce-retail-apocalypse-third-industrial-vinny-o-brien-1e",
+   "related": [
+    {
+     "id": "ecommerce-retail-apocalypse-third-industrial-2023-version-o-brien",
+     "kind": "duplicate",
+     "titleOverlap": 0.75,
+     "bodyOverlap": 0.91
+    },
+    {
+     "id": "ecommerce-retail-apocalypse-third-industrial-vinny-o-brien",
+     "kind": "duplicate",
+     "titleOverlap": 1.0,
+     "bodyOverlap": 0.97
+    },
+    {
+     "id": "hype-overrated-2024-year-ecommerce-renaissance-vinny-o-brien-zoe8e",
+     "kind": "duplicate",
+     "titleOverlap": 0.09,
+     "bodyOverlap": 0.7
+    }
+   ]
+  },
+  {
+   "a": "noticed-consumer-confidence-downturn-strategy-history-vinny-o-brien-1c",
+   "related": [
+    {
+     "id": "noticed-consumer-confidence-downturn-strategy-history-vinny-o-brien",
+     "kind": "revisit",
+     "titleOverlap": 1.0,
+     "bodyOverlap": 0.3
+    }
+   ]
+  },
+  {
+   "a": "abandoning-tactics-strategies-fuel-strategy-confused-vinny-o-brien",
+   "related": [
+    {
+     "id": "ecommerce-strategy-does-exist-16-things-i-learned-2-week-o-brien",
+     "kind": "revisit",
+     "titleOverlap": 0.04,
+     "bodyOverlap": 0.41
+    }
+   ]
+  },
+  {
+   "a": "ecommerce-retail-apocalypse-third-industrial-2023-version-o-brien",
+   "related": [
+    {
+     "id": "ecommerce-retail-apocalypse-third-industrial-vinny-o-brien-1e",
+     "kind": "duplicate",
+     "titleOverlap": 0.75,
+     "bodyOverlap": 0.91
+    },
+    {
+     "id": "ecommerce-retail-apocalypse-third-industrial-vinny-o-brien",
+     "kind": "duplicate",
+     "titleOverlap": 0.75,
+     "bodyOverlap": 0.93
+    },
+    {
+     "id": "hype-overrated-2024-year-ecommerce-renaissance-vinny-o-brien-zoe8e",
+     "kind": "duplicate",
+     "titleOverlap": 0.08,
+     "bodyOverlap": 0.68
+    }
+   ]
+  },
+  {
+   "a": "blame-weather-man-vinny-o-brien",
+   "related": [
+    {
+     "id": "blame-weather-man-2025-update-vinny-o-brien-6lbhe",
+     "kind": "revisit",
+     "titleOverlap": 0.6,
+     "bodyOverlap": 0.38
+    }
+   ]
+  },
+  {
+   "a": "hype-overrated-2024-year-ecommerce-renaissance-vinny-o-brien-zoe8e",
+   "related": [
+    {
+     "id": "ecommerce-retail-apocalypse-third-industrial-2023-version-o-brien",
+     "kind": "duplicate",
+     "titleOverlap": 0.08,
+     "bodyOverlap": 0.68
+    },
+    {
+     "id": "ecommerce-retail-apocalypse-third-industrial-vinny-o-brien-1e",
+     "kind": "duplicate",
+     "titleOverlap": 0.09,
+     "bodyOverlap": 0.7
+    },
+    {
+     "id": "ecommerce-retail-apocalypse-third-industrial-vinny-o-brien",
+     "kind": "duplicate",
+     "titleOverlap": 0.09,
+     "bodyOverlap": 0.72
+    }
+   ]
+  },
+  {
+   "a": "blame-weather-man-2025-update-vinny-o-brien-6lbhe",
+   "related": [
+    {
+     "id": "blame-weather-man-vinny-o-brien",
+     "kind": "revisit",
+     "titleOverlap": 0.6,
+     "bodyOverlap": 0.38
+    }
+   ]
+  },
+  {
+   "a": "2028-global-commerce-identity-crisis-vinny-o-brien-htlgf",
+   "related": [
+    {
+     "id": "citrini-aint-2028-ecommerce-full-essay-vinny-o-brien-ud92f",
+     "kind": "duplicate",
+     "titleOverlap": 0.1,
+     "bodyOverlap": 0.61
+    }
+   ]
+  },
+  {
+   "a": "citrini-aint-2028-ecommerce-full-essay-vinny-o-brien-ud92f",
+   "related": [
+    {
+     "id": "2028-global-commerce-identity-crisis-vinny-o-brien-htlgf",
+     "kind": "duplicate",
+     "titleOverlap": 0.1,
+     "bodyOverlap": 0.61
+    }
+   ]
+  },
+  {
+   "a": "mission-statement-memo-vinny-o-brien-22kkf",
+   "related": [
+    {
+     "id": "memo-mission-statement-vinny-o-brien-wabxf",
+     "kind": "duplicate",
+     "titleOverlap": 1.0,
+     "bodyOverlap": 1.0
+    }
+   ]
+  },
+  {
+   "a": "memo-mission-statement-vinny-o-brien-wabxf",
+   "related": [
+    {
+     "id": "mission-statement-memo-vinny-o-brien-22kkf",
+     "kind": "duplicate",
+     "titleOverlap": 1.0,
+     "bodyOverlap": 1.0
+    }
+   ]
+  }
+ ],
+ "voice": {
+  "sentences": 16994,
+  "meanLen": 15.2,
+  "medianLen": 13,
+  "variation": 0.78,
+  "shortPct": 18.8,
+  "questions": 992,
+  "exclamations": 142,
+  "emDashes": 356,
+  "enDashes": 435
+ },
+ "emptyThreads": [],
+ "drafts": [
+  {
+   "file": "2015-09-24 15:00:57.0.html",
+   "title": "(untitled)",
+   "created": "2015-09-24T15:00:00",
+   "state": "draft-or-empty",
+   "supersededBy": null,
+   "matchedOn": null
+  },
+  {
+   "file": "2015-10-06 10:54:59.0.html",
+   "title": "(untitled)",
+   "created": "2015-10-06T10:54:00",
+   "state": "draft-or-empty",
+   "supersededBy": null,
+   "matchedOn": null
+  },
+  {
+   "file": "2020-03-17 16:39:43.0-thR.html",
+   "title": "thR",
+   "created": "2020-03-17T16:39:00",
+   "state": "draft-superseded",
+   "supersededBy": "vision-ireland-vinny-o-brien",
+   "matchedOn": "created-timestamp"
+  },
+  {
+   "file": "2020-03-31 09:12:32.0-C.html",
+   "title": "C",
+   "created": "2020-03-31T09:12:00",
+   "state": "draft-superseded",
+   "supersededBy": "cx-business-critical-success-factor-beyond-2020-vinny-o-brien",
+   "matchedOn": "created-timestamp"
+  },
+  {
+   "file": "2022-04-26 16:35:34.0.html",
+   "title": "(untitled)",
+   "created": "2022-04-26T16:35:00",
+   "state": "draft-probable",
+   "supersededBy": "engage-us-bit-below-warp-speed-mr-sulu-ecommerce-state-o-brien",
+   "matchedOn": "same-day"
+  },
+  {
+   "file": "2023-01-31 11:01:22.0-IN.html",
+   "title": "IN",
+   "created": "2023-01-31T11:01:00",
+   "state": "draft-superseded",
+   "supersededBy": "post-modern-classic-goliath-versus-david-romantic-ending-o-brien",
+   "matchedOn": "created-timestamp"
+  },
+  {
+   "file": "2023-05-11 14:49:51.0-It was the best of times, it was the Blurst of times. Why did we hire these monkeys? .html",
+   "title": "It was the best of times, it was the Blurst of times. Why did we hire these monkeys?",
+   "created": "2023-05-11T14:49:00",
+   "state": "draft-superseded",
+   "supersededBy": "best-times-blurst-why-did-we-hire-those-monkeys-vinny-o-brien",
+   "matchedOn": "title-overlap 0.75"
+  }
+ ]
+}
