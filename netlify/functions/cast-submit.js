@@ -11,7 +11,7 @@
 
 import { opus, castTitle } from './_opus.js';
 import { requireAuth } from './_auth.js';
-import { append } from './_ledger.js';
+import { record } from './_ledger.js';
 
 export default async (req) => {
   const denied = await requireAuth(req);
@@ -52,13 +52,10 @@ export default async (req) => {
       return json({ error: 'Opus returned no project id', received: Object.keys(data) }, 502);
     }
 
-    await append({
-      kind: 'cast:submit',
-      projectId,
-      correspondent,
-      title,
-      at: new Date().toISOString(),
-    });
+    // _ledger exports record(action, detail), not append(). The action string
+    // is verb.noun by convention so daysSince() and The Gap can query it.
+    // record() stamps `at` itself, so passing one here is redundant.
+    await record('cast.submit', { projectId, correspondent, title });
 
     return json({ projectId, title, state: 'processing' });
   } catch (err) {
