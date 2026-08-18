@@ -170,7 +170,7 @@ export default function Guests({ guests, setGuests, sSet, K, today }) {
     `mailto:${encodeURIComponent(d.to)}?subject=${encodeURIComponent(d.subject)}&body=${encodeURIComponent(d.body)}`;
 
   const count = (g) => ASSETS.filter((a) => g.assets?.[a]).length;
-  const lastStep = (g) => (g.emails || [])[g.emails.length - 1];
+  const lastStep = (g) => { const e = g.emails || []; return e[e.length - 1]; };
 
   return (
     <div>
