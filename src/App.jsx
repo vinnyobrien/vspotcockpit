@@ -48,6 +48,7 @@ const K = {
   published: "published-shorts",
   seenClips: "clips-seen",
   guests: "guests",
+  essay: (t) => `essay:${t || "untitled"}`,
   assets: "sponsor-assets",
 };
 
