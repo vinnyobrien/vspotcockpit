@@ -43,7 +43,7 @@
     # and media-src have to name it or the cards render blank with no error.
     Content-Security-Policy = "default-src 'self'; connect-src 'self' https://signed-ext.cdn.opus.pro; img-src 'self' data: https://signed-ext.cdn.opus.pro; media-src 'self' blob: https://signed-ext.cdn.opus.pro; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
-# The LinkedIn archive payload contains vinny@vinnyandco.com, published in the
+# The LinkedIn archive payload contains his published contact address, published in the
 # Le Sunday Supplement piece. It matches RESEND_REPLY_TO and trips the scanner.
 # Scoped to the seed directory only, and removed with it after seeding.
 [build.environment]
