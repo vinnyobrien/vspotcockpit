@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Clip to Cockpit</title>
+<link rel="stylesheet" href="/clip.css" />
+</head>
+<body>
+<main class="sheet">
+  <p class="eyebrow">V Spot · Clip</p>
+  <section class="source">
+    <h1 id="title">Untitled</h1>
+    <p class="host"><span id="host">unknown source</span></p>
+    <blockquote id="quote" hidden></blockquote>
+  </section>
+  <form id="form" novalidate>
+    <label class="field why">
+      <span class="label">Why</span>
+      <textarea id="why" rows="3" maxlength="400" autofocus
+        placeholder="What does this argue, or what does it break?"></textarea>
+      <span class="count"><span id="count">0</span>/400</span>
+    </label>
+    <fieldset class="field">
+      <legend class="label">Use</legend>
+      <div class="chips" id="uses"></div>
+    </fieldset>
+    <fieldset class="field">
+      <legend class="label">Thread</legend>
+      <div class="chips" id="threads"></div>
+      <input id="newThread" class="new-thread" type="text" maxlength="80"
+        placeholder="Name the new thread" hidden />
+    </fieldset>
+    <p class="error" id="error" hidden></p>
+    <button class="save" id="save" type="submit">Clip it</button>
+    <p class="hint">Cmd or Ctrl and Enter saves</p>
+  </form>
+  <section class="done" id="done" hidden>
+    <p class="tick">Clipped</p>
+    <p class="echo" id="echo"></p>
+    <button class="save ghost" id="close" type="button">Close</button>
+  </section>
+  <section class="signin" id="signin" hidden>
+    <p>Your session has expired.</p>
+    <a class="save ghost" id="signinLink" href="/" target="_blank" rel="noopener">Open the Cockpit and sign in</a>
+    <button class="save" id="retry" type="button">Try again</button>
+  </section>
+</main>
+<script src="/clip.js" defer></script>
+</body>
+</html>
