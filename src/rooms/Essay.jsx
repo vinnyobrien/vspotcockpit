@@ -1,49 +1,153 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Send, RotateCcw, Check } from "lucide-react";
+import { Send, RotateCcw, Mic, MicOff, CornerDownLeft, Trash2, Globe } from "lucide-react";
 import {
-  C, BODY, DISPLAY, Mono, Big, Card, Section, Pill, Field, Note, Empty,
+  C, BODY, MONO, Mono, Card, Pill, Field, Note, Empty, Confirm,
   Problem, Chips,
 } from "../lib/ui.jsx";
-import { callOp, sGet, sSet } from "../api.js";
+import { callOp, sGet, sSet, publishEssay } from "../api.js";
 
 /* ============================================================
    src/rooms/Essay.jsx
 
-   Live: op "essay" (argue), op "rewrite" (redraft).
+   Live: op "essay" (argue), op "rewrite" (redraft),
+         POST /api/publish-essay (commit to the hub).
 
-   The draft is yours and is never silently altered. Rewrites are
-   explicit, and the previous version is kept so you can always
-   take it back. An editor that edits without asking is a liability.
+   Four surfaces, in the order the work actually happens:
+
+     Capture  raw. Talk into it. Nothing here is judged and nothing
+              here is sent anywhere until you promote it.
+     Draft    the thing you are writing. Never silently altered.
+     Editor   argues with you, knows the back catalogue.
+     Publish  commits the body to VINLAND.
+
+   The capture column exists because the previous version had one
+   textarea holding the finished draft, so dictating a half-formed
+   thought meant dirtying the thing you were trying to write. Raw
+   and worked material need separate homes or you stop using the
+   raw one.
    ============================================================ */
+
+const uid = () => Math.random().toString(36).slice(2, 9);
+
+/** Browser dictation where it exists. Chrome and Edge, effectively. */
+const Recognition =
+  typeof window !== "undefined" &&
+  (window.SpeechRecognition || window.webkitSpeechRecognition);
 
 export default function Essay({ threads, threadContext, K }) {
   const [thread, setThread] = useState("");
   const [draft, setDraft] = useState("");
+  const [capture, setCapture] = useState([]);
+  const [scratch, setScratch] = useState("");
   const [prev, setPrev] = useState(null);
   const [chat, setChat] = useState([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState("");
   const [err, setErr] = useState("");
-  const [tab, setTab] = useState("draft");
+  const [tab, setTab] = useState("capture");
   const [saved, setSaved] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [slug, setSlug] = useState("");
+  const [result, setResult] = useState(null);
   const endRef = useRef(null);
+  const recRef = useRef(null);
+  const scratchRef = useRef("");
+
+  scratchRef.current = scratch;
 
   useEffect(() => {
     (async () => {
       const s = await sGet(K.essay(thread), null);
       setDraft(s?.draft || "");
       setChat(s?.history || []);
+      setCapture(Array.isArray(s?.capture) ? s.capture : []);
+      setSlug(s?.slug || "");
       setPrev(null);
+      setResult(null);
     })();
   }, [thread, K]);
 
-  const save = useCallback(async (d, h) => {
-    await sSet(K.essay(thread), { draft: d, history: h, updated: Date.now() });
+  /* One writer for the whole record. The old version saved (draft, history)
+     as positional arguments, which meant any new field was silently dropped
+     by every existing call site. Patch semantics instead. */
+  const save = useCallback(async (patch) => {
+    const next = {
+      draft, history: chat, capture, slug,
+      ...patch,
+      updated: Date.now(),
+    };
+    await sSet(K.essay(thread), next);
     setSaved(true);
     setTimeout(() => setSaved(false), 1400);
-  }, [thread, K]);
+  }, [thread, K, draft, chat, capture, slug]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chat, busy]);
+
+  /* ---------------------------------------------------------- capture --- */
+
+  const stopListening = useCallback(() => {
+    try { recRef.current?.stop(); } catch { /* already stopped */ }
+    recRef.current = null;
+    setListening(false);
+  }, []);
+
+  useEffect(() => stopListening, [stopListening]);
+
+  const listen = () => {
+    if (listening) return stopListening();
+    if (!Recognition) return;
+    const rec = new Recognition();
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.lang = "en-IE";
+    rec.onresult = (e) => {
+      let add = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) add += e.results[i][0].transcript;
+      }
+      if (add.trim()) {
+        const base = scratchRef.current;
+        setScratch(base ? `${base.replace(/\s+$/, "")} ${add.trim()}` : add.trim());
+      }
+    };
+    // Chrome ends the session on its own after a pause. Restart rather than
+    // dying mid-thought, which is the whole point of continuous dictation.
+    rec.onend = () => { if (recRef.current === rec) { try { rec.start(); } catch { stopListening(); } } };
+    rec.onerror = (e) => {
+      stopListening();
+      if (e.error === "not-allowed") setErr("The browser blocked the microphone. Allow it in the address bar, or dictate with the system keyboard instead.");
+      else if (e.error !== "no-speech" && e.error !== "aborted") setErr(`Dictation stopped: ${e.error}.`);
+    };
+    recRef.current = rec;
+    setListening(true);
+    try { rec.start(); } catch { stopListening(); }
+  };
+
+  const keep = () => {
+    const text = scratch.trim();
+    if (!text) return;
+    const next = [{ id: uid(), text, at: Date.now() }, ...capture];
+    setCapture(next);
+    setScratch("");
+    save({ capture: next });
+  };
+
+  const promote = (frag) => {
+    const next = draft.trim() ? `${draft.replace(/\s+$/, "")}\n\n${frag.text}` : frag.text;
+    const rest = capture.filter((c) => c.id !== frag.id);
+    setDraft(next);
+    setCapture(rest);
+    save({ draft: next, capture: rest });
+    setTab("draft");
+  };
+
+  const bin = (id) => {
+    const rest = capture.filter((c) => c.id !== id);
+    setCapture(rest);
+    save({ capture: rest });
+  };
+
+  /* ----------------------------------------------------------- editor --- */
 
   const send = async () => {
     const text = input.trim();
@@ -63,7 +167,7 @@ export default function Essay({ threads, threadContext, K }) {
       });
       const after = [...next, { role: "assistant", content: r.text }];
       setChat(after);
-      save(draft, after);
+      save({ history: after });
     } catch (e) {
       setErr(e.message || "The editor did not come back.");
       setChat(next);
@@ -86,11 +190,29 @@ export default function Essay({ threads, threadContext, K }) {
       });
       setPrev(draft);
       setDraft(r.text);
-      save(r.text, chat);
+      save({ draft: r.text });
       setInput("");
       setTab("draft");
     } catch (e) {
       setErr(e.message || "Rewrite failed. Your draft is untouched.");
+    }
+    setBusy("");
+  };
+
+  /* ---------------------------------------------------------- publish --- */
+
+  const paragraphs = draft.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+
+  const publish = async () => {
+    setBusy("publish");
+    setErr("");
+    setResult(null);
+    try {
+      const r = await publishEssay({ slug: slug.trim().toLowerCase(), body: draft });
+      setResult(r);
+      save({ slug: slug.trim().toLowerCase() });
+    } catch (e) {
+      setErr(e.message || "Publish failed. Nothing was committed.");
     }
     setBusy("");
   };
@@ -116,20 +238,80 @@ export default function Essay({ threads, threadContext, K }) {
           {threads.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
         <div className="flex items-center justify-between" style={{ marginTop: 10 }}>
-          <Mono s={9}>{words} words</Mono>
+          <Mono s={9}>{words} words · {capture.length} kept</Mono>
           <Mono s={9} c={saved ? C.ink : C.ink2}>{saved ? "Saved" : "Saves as you type"}</Mono>
         </div>
       </Card>
 
-      <Chips items={[["draft", "The draft"], ["editor", "The editor"]]} value={tab} onChange={setTab} />
+      <Chips
+        items={[["capture", "Capture"], ["draft", "The draft"], ["editor", "The editor"], ["publish", "Publish"]]}
+        value={tab} onChange={setTab}
+      />
       <div style={{ height: 14 }} />
+
+      {/* ------------------------------------------------------ capture --- */}
+
+      {tab === "capture" && (
+        <>
+          <Card pad={16} style={{ marginBottom: 12 }}>
+            <Field
+              value={scratch} onChange={setScratch} rows={6} onEnter={keep}
+              placeholder={listening
+                ? "Listening. Talk."
+                : "Say it badly. Half a thought is fine. Cmd+Enter to keep it."}
+            />
+            <div className="flex items-center justify-between gap-3" style={{ marginTop: 12 }}>
+              <div className="flex gap-2">
+                {Recognition && (
+                  <Pill sm tone={listening ? "solid" : "ghost"} danger={listening}
+                    icon={listening ? MicOff : Mic} onClick={listen}>
+                    {listening ? "Stop" : "Dictate"}
+                  </Pill>
+                )}
+                <Pill sm disabled={!scratch.trim()} onClick={keep}>Keep it</Pill>
+              </div>
+              {listening && <Mono s={9} c={C.red}>Recording</Mono>}
+            </div>
+            {!Recognition && (
+              <p style={{ fontSize: 12.5, color: C.ink3, lineHeight: 1.5, marginTop: 10 }}>
+                This browser has no dictation. Use the system keyboard's microphone instead, which is
+                better anyway: it already knows how you speak, and it works offline.
+              </p>
+            )}
+          </Card>
+
+          {capture.length === 0 ? (
+            <Empty>
+              Nothing kept yet. This column is for raw material, so it stays out of the draft until
+              you decide it has earned a place. Fragments promote into the draft in one tap.
+            </Empty>
+          ) : (
+            capture.map((f) => (
+              <Card key={f.id} pad={14} style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 14, color: C.ink, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                  {f.text}
+                </div>
+                <div className="flex items-center justify-between gap-3" style={{ marginTop: 10 }}>
+                  <Mono s={9}>{new Date(f.at).toLocaleString("en-IE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</Mono>
+                  <div className="flex gap-2">
+                    <Pill sm tone="ghost" icon={CornerDownLeft} onClick={() => promote(f)}>Into the draft</Pill>
+                    <Pill sm tone="ghost" icon={Trash2} onClick={() => bin(f.id)}>Bin</Pill>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
+        </>
+      )}
+
+      {/* -------------------------------------------------------- draft --- */}
 
       {tab === "draft" && (
         <>
           <Card pad={16}>
             <textarea
               value={draft}
-              onChange={(e) => { setDraft(e.target.value); save(e.target.value, chat); }}
+              onChange={(e) => { setDraft(e.target.value); save({ draft: e.target.value }); }}
               rows={16}
               placeholder="Write here. Or paste what you have and start arguing about it."
               style={{
@@ -144,7 +326,7 @@ export default function Essay({ threads, threadContext, K }) {
                 <span style={{ fontSize: 13, color: C.ink, lineHeight: 1.45 }}>
                   Rewritten. Your previous version is kept.
                 </span>
-                <Pill sm tone="ghost" onClick={() => { setDraft(prev); save(prev, chat); setPrev(null); }}>
+                <Pill sm tone="ghost" onClick={() => { setDraft(prev); save({ draft: prev }); setPrev(null); }}>
                   Take it back
                 </Pill>
               </div>
@@ -152,6 +334,8 @@ export default function Essay({ threads, threadContext, K }) {
           )}
         </>
       )}
+
+      {/* ------------------------------------------------------- editor --- */}
 
       {tab === "editor" && (
         <Card>
@@ -182,6 +366,83 @@ export default function Essay({ threads, threadContext, K }) {
             </Pill>
           </div>
         </Card>
+      )}
+
+      {/* ------------------------------------------------------ publish --- */}
+
+      {tab === "publish" && (
+        <>
+          <Card style={{ marginBottom: 12 }}>
+            <Mono>VINLAND slug</Mono>
+            <div style={{ marginTop: 8 }}>
+              <Field value={slug} onChange={setSlug} placeholder="friction-as-currency" />
+            </div>
+            <p style={{ fontSize: 12.5, color: C.ink3, lineHeight: 1.5, marginTop: 10 }}>
+              The slug has to already exist in the VINLAND index, because that is what generates the
+              page. Publishing against an unknown slug is refused rather than committed, so a typo
+              costs you nothing.
+            </p>
+            <div className="flex items-center justify-between gap-3" style={{ marginTop: 14 }}>
+              <Mono s={9}>{paragraphs.length} paragraphs · {words} words</Mono>
+              <Confirm
+                sm
+                label="Publish to VINLAND"
+                confirmLabel="Yes, commit it"
+                disabled={!!busy || !slug.trim() || !paragraphs.length}
+                onConfirm={publish}
+              />
+            </div>
+          </Card>
+
+          {busy === "publish" && <Card><div className="lamp"><Mono c={C.red}>Committing…</Mono></div></Card>}
+
+          {result && (
+            <Card tint={C.mint} pad={16}>
+              <div style={{ fontSize: 14, color: C.ink, lineHeight: 1.6 }}>
+                {result.replacing ? "Updated" : "Published"} {result.paragraphs} paragraphs.
+                The hub rebuilds on the commit, so give it a minute before the URL is live.
+              </div>
+              <div style={{ marginTop: 10 }}>
+                <a href={result.url} target="_blank" rel="noopener noreferrer"
+                  style={{ fontFamily: MONO, fontSize: 11, color: C.ink, letterSpacing: ".06em" }}>
+                  {result.url}
+                </a>
+              </div>
+            </Card>
+          )}
+
+          {!result && busy !== "publish" && !paragraphs.length && (
+            <Empty>Nothing to publish yet. Write the draft first.</Empty>
+          )}
+
+          {!result && busy !== "publish" && paragraphs.length > 0 && (
+            <Card pad={16}>
+              <Mono>How it will land</Mono>
+              <div style={{ marginTop: 10 }}>
+                {paragraphs.slice(0, 3).map((p, i) => (
+                  <p key={i} style={{ fontSize: 13.5, color: C.ink2, lineHeight: 1.65, marginBottom: 10 }}>{p}</p>
+                ))}
+                {paragraphs.length > 3 && (
+                  <Mono s={9}>and {paragraphs.length - 3} more</Mono>
+                )}
+              </div>
+              <p style={{ fontSize: 12.5, color: C.ink3, lineHeight: 1.5, marginTop: 12 }}>
+                Blank lines separate paragraphs. Single line breaks are joined, because the page
+                renders one paragraph per entry and stray breaks arrive as sentence fragments.
+              </p>
+            </Card>
+          )}
+
+          <div style={{ height: 10 }} />
+          <Card pad={14}>
+            <div className="flex items-center gap-2">
+              <Globe size={14} strokeWidth={2.2} color={C.ink2} />
+              <span style={{ fontSize: 12.5, color: C.ink2, lineHeight: 1.5 }}>
+                Publishing writes only the body. The index, title and teaser stay hand-maintained.
+              </span>
+            </div>
+          </Card>
+        </>
       )}
     </div>
   );

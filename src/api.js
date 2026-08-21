@@ -130,3 +130,19 @@ export async function publishClipDirect(payload) {
   if (!res.ok) throw new Error(data.error || `Publish failed (${res.status})`);
   return data;
 }
+
+/**
+ * Commit one essay body to the hub. Deterministic, no model in the path.
+ * The function refuses unknown slugs rather than writing an orphan body,
+ * so a rejection here means the VINLAND index needs the entry first.
+ */
+export async function publishEssay(payload) {
+  const res = await req("/api/publish-essay", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Publish failed (${res.status})`);
+  return data;
+}

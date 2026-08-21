@@ -37,7 +37,10 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
-    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+    # microphone=(self) not (), or the Essay room's dictation is blocked at the
+    # document level before the browser ever asks the user. Camera and
+    # geolocation stay off; nothing here needs them.
+    Permissions-Policy = "geolocation=(), microphone=(self), camera=()"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     # Opus serves clip thumbnails and previews from its signed CDN, so img-src
     # and media-src have to name it or the cards render blank with no error.
