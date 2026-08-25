@@ -5,6 +5,7 @@ import {
   Field, Note, Empty, Problem, Chips, Confirm, iso, DAYS, parseJSON,
 } from "../lib/ui.jsx";
 import { callOp, sGet, sSet } from "../api.js";
+import Upload from "../lib/Upload.jsx";
 
 /* ============================================================
    src/rooms/Video.jsx
@@ -290,10 +291,20 @@ export default function Video({
 
   return (
     <div>
-      <Chips items={[["shorts", "The Shorts"], ["cal", "Calendar"]]} value={tab} onChange={setTab} />
+            <Chips items={[["shorts", "The Shorts"], ["upload", "Upload"], ["cal", "Calendar"]]} value={tab} onChange={setTab} />
       <div style={{ height: 18 }} />
       <Problem onDismiss={() => setErr("")}>{err}</Problem>
-
+      {tab === "upload" && (
+        <>
+          <Note>
+            Straight to R2, not through the Cockpit — a 19MB clip breaks the 6MB function
+            limit in both directions. Origin is required because a clip filed untagged
+            today cannot be attributed in December.
+          </Note>
+          <div style={{ height: 12 }} />
+          <Upload onUploaded={() => {}} />
+        </>
+      )}
       {tab === "shorts" && (
         <>
           <Note>
