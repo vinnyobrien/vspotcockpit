@@ -5,7 +5,7 @@ import {
   Field, Note, Empty, Problem, Chips, Confirm, iso, DAYS, parseJSON,
 } from "../lib/ui.jsx";
 import { callOp, sGet, sSet } from "../api.js";
-import Upload from "../lib/Upload.jsx";
+import upload from "../lib/upload.jsx";
 
 /* ============================================================
    src/rooms/Video.jsx
@@ -291,7 +291,7 @@ export default function Video({
 
   return (
     <div>
-            <Chips items={[["shorts", "The Shorts"], ["upload", "Upload"], ["cal", "Calendar"]]} value={tab} onChange={setTab} />
+            <Chips items={[["shorts", "The Shorts"], ["upload", "upload"], ["cal", "Calendar"]]} value={tab} onChange={setTab} />
       <div style={{ height: 18 }} />
       <Problem onDismiss={() => setErr("")}>{err}</Problem>
       {tab === "upload" && (
@@ -302,7 +302,7 @@ export default function Video({
             today cannot be attributed in December.
           </Note>
           <div style={{ height: 12 }} />
-          <Upload onUploaded={() => {}} />
+          <upload onuploaded={() => {}} />
         </>
       )}
       {tab === "shorts" && (
