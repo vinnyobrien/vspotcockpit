@@ -9,7 +9,7 @@ import { mediaPresign, mediaRegister } from "../api.js";
    Live: POST /api/media/presign, PUT straight to R2, POST /api/media/register
 
    The bytes bypass Netlify entirely. A 19MB clip would break the 6MB
-   function limit in both directions, so the browser uploads to R2 on a
+   function limit in both directions, so the browser Uploads to R2 on a
    presigned URL and only the registry entry comes back here.
 
    The three tag fields are not optional decoration. Origin, correspondent
@@ -70,29 +70,29 @@ export default function Upload({ onUploaded }) {
     v.src = URL.createObjectURL(f);
   };
 
-  const upload = async () => {
+  const Upload = async () => {
     if (!file || !tags.origin) return;
-    setBusy("upload");
+    setBusy("Upload");
     setErr("");
     setPct(0);
     try {
-      const { uploadUrl, publicUrl, key, contentType } = await mediaPresign({
+      const { UploadUrl, publicUrl, key, contentType } = await mediaPresign({
         filename: file.name,
         contentType: file.type || "video/mp4",
       });
 
-      /* XHR rather than fetch, purely for upload progress. A 19MB PUT with no
+      /* XHR rather than fetch, purely for Upload progress. A 19MB PUT with no
          feedback looks identical to a hang. */
       await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open("PUT", uploadUrl, true);
+        xhr.open("PUT", UploadUrl, true);
         xhr.setRequestHeader("Content-Type", contentType || file.type || "video/mp4");
-        xhr.upload.onprogress = (e) => {
+        xhr.Upload.onprogress = (e) => {
           if (e.lengthComputable) setPct(Math.round((e.loaded / e.total) * 100));
         };
         xhr.onload = () => (xhr.status >= 200 && xhr.status < 300
           ? resolve()
-          : reject(new Error(`R2 refused the upload: ${xhr.status}. Check the bucket name and keys.`)));
+          : reject(new Error(`R2 refused the Upload: ${xhr.status}. Check the bucket name and keys.`)));
         xhr.onerror = () => reject(new Error("Upload failed. Usually CORS on the bucket, not the file."));
         xhr.send(file);
       });
@@ -175,18 +175,18 @@ export default function Upload({ onUploaded }) {
           <Field value={note} onChange={setNote} placeholder="What it is, one line" />
         </div>
 
-        {busy === "upload" && (
+        {busy === "Upload" && (
           <div style={{ marginTop: 14 }}>
             <div style={{ height: 6, background: "rgba(20,24,51,.08)", borderRadius: 3, overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${pct}%`, background: C.red, transition: "width .2s" }} />
             </div>
-            <div style={{ marginTop: 6 }}><Mono s={9} c={C.red}>{pct}% uploaded</Mono></div>
+            <div style={{ marginTop: 6 }}><Mono s={9} c={C.red}>{pct}% Uploaded</Mono></div>
           </div>
         )}
 
         <div className="flex items-center justify-between gap-3" style={{ marginTop: 16 }}>
           <Mono s={9}>{tags.origin ? "Straight to R2, not through Netlify" : "Set an origin first"}</Mono>
-          <Pill sm icon={UploadCloud} disabled={!file || !tags.origin || !!busy} onClick={upload}>
+          <Pill sm icon={UploadCloud} disabled={!file || !tags.origin || !!busy} onClick={Upload}>
             Upload
           </Pill>
         </div>
