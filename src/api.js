@@ -153,7 +153,7 @@ export async function publishEssay(payload) {
 
 const QUEUE = "/api/queue";
 
-async function queueFetch(path, { method = "GET", body, token } = {}) {
+async function queueFetch(path, { method = "GET", body, token, base = QUEUE } = {}) {
   const res = await fetch(`${QUEUE}/${path}`, {
     method,
     headers: {
