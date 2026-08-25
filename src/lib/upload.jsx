@@ -1,10 +1,10 @@
 import React, { useState, useRef } from "react";
-import { uploadCloud, Copy, Check } from "lucide-react";
+import { UploadCloud, Copy, Check } from "lucide-react";
 import { C, MONO, Mono, Card, Pill, Field, Empty, Problem } from "./ui.jsx";
 import { mediaPresign, mediaRegister } from "../api.js";
 
 /* ============================================================
-   src/lib/upload.jsx
+   src/lib/Upload.jsx
 
    Live: POST /api/media/presign, PUT straight to R2, POST /api/media/register
 
@@ -40,7 +40,7 @@ const BEATS = [
   ["uk", "UK"],
 ];
 
-export default function upload({ onuploaded }) {
+export default function Upload({ onUploaded }) {
   const [file, setFile] = useState(null);
   const [meta, setMeta] = useState(null);
   const [tags, setTags] = useState({ origin: "", correspondent: "house", beat: "general" });
@@ -93,7 +93,7 @@ export default function upload({ onuploaded }) {
         xhr.onload = () => (xhr.status >= 200 && xhr.status < 300
           ? resolve()
           : reject(new Error(`R2 refused the upload: ${xhr.status}. Check the bucket name and keys.`)));
-        xhr.onerror = () => reject(new Error("upload failed. Usually CORS on the bucket, not the file."));
+        xhr.onerror = () => reject(new Error("Upload failed. Usually CORS on the bucket, not the file."));
         xhr.send(file);
       });
 
@@ -106,9 +106,9 @@ export default function upload({ onuploaded }) {
       setFile(null);
       setPct(100);
       if (inputRef.current) inputRef.current.value = "";
-      onuploaded?.(rec.media);
+      onUploaded?.(rec.media);
     } catch (e) {
-      setErr(e.message || "upload failed. Nothing was stored.");
+      setErr(e.message || "Upload failed. Nothing was stored.");
     }
     setBusy("");
   };
@@ -120,7 +120,7 @@ export default function upload({ onuploaded }) {
       <Problem onDismiss={() => setErr("")}>{err}</Problem>
 
       <Card pad={16} style={{ marginBottom: 12 }}>
-        <Mono>upload a clip</Mono>
+        <Mono>Upload a clip</Mono>
 
         <div style={{ marginTop: 12 }}>
           <input
@@ -186,8 +186,8 @@ export default function upload({ onuploaded }) {
 
         <div className="flex items-center justify-between gap-3" style={{ marginTop: 16 }}>
           <Mono s={9}>{tags.origin ? "Straight to R2, not through Netlify" : "Set an origin first"}</Mono>
-          <Pill sm icon={uploadCloud} disabled={!file || !tags.origin || !!busy} onClick={upload}>
-            upload
+          <Pill sm icon={UploadCloud} disabled={!file || !tags.origin || !!busy} onClick={upload}>
+            Upload
           </Pill>
         </div>
       </Card>
@@ -195,7 +195,7 @@ export default function upload({ onuploaded }) {
       {done && (
         <Card tint={C.mint} pad={16}>
           <div style={{ fontSize: 14, color: C.ink, lineHeight: 1.6 }}>
-            uploaded and tagged. This URL is what Metricool fetches from, so it can go
+            Uploaded and tagged. This URL is what Metricool fetches from, so it can go
             straight into a scheduled post.
           </div>
           <div style={{ marginTop: 10, wordBreak: "break-all" }}>
