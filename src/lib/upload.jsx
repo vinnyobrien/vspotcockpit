@@ -1,15 +1,15 @@
 import React, { useState, useRef } from "react";
-import { UploadCloud, Copy, Check } from "lucide-react";
+import { uploadCloud, Copy, Check } from "lucide-react";
 import { C, MONO, Mono, Card, Pill, Field, Empty, Problem } from "./ui.jsx";
 import { mediaPresign, mediaRegister } from "../api.js";
 
 /* ============================================================
-   src/lib/Upload.jsx
+   src/lib/upload.jsx
 
    Live: POST /api/media/presign, PUT straight to R2, POST /api/media/register
 
    The bytes bypass Netlify entirely. A 19MB clip would break the 6MB
-   function limit in both directions, so the browser Uploads to R2 on a
+   function limit in both directions, so the browser uploads to R2 on a
    presigned URL and only the registry entry comes back here.
 
    The three tag fields are not optional decoration. Origin, correspondent
@@ -40,7 +40,7 @@ const BEATS = [
   ["uk", "UK"],
 ];
 
-export default function Upload({ onUploaded }) {
+export default function upload({ onuploaded }) {
   const [file, setFile] = useState(null);
   const [meta, setMeta] = useState(null);
   const [tags, setTags] = useState({ origin: "", correspondent: "house", beat: "general" });
@@ -70,30 +70,30 @@ export default function Upload({ onUploaded }) {
     v.src = URL.createObjectURL(f);
   };
 
-  const Upload = async () => {
+  const upload = async () => {
     if (!file || !tags.origin) return;
-    setBusy("Upload");
+    setBusy("upload");
     setErr("");
     setPct(0);
     try {
-      const { UploadUrl, publicUrl, key, contentType } = await mediaPresign({
+      const { uploadUrl, publicUrl, key, contentType } = await mediaPresign({
         filename: file.name,
         contentType: file.type || "video/mp4",
       });
 
-      /* XHR rather than fetch, purely for Upload progress. A 19MB PUT with no
+      /* XHR rather than fetch, purely for upload progress. A 19MB PUT with no
          feedback looks identical to a hang. */
       await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open("PUT", UploadUrl, true);
+        xhr.open("PUT", uploadUrl, true);
         xhr.setRequestHeader("Content-Type", contentType || file.type || "video/mp4");
-        xhr.Upload.onprogress = (e) => {
+        xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) setPct(Math.round((e.loaded / e.total) * 100));
         };
         xhr.onload = () => (xhr.status >= 200 && xhr.status < 300
           ? resolve()
-          : reject(new Error(`R2 refused the Upload: ${xhr.status}. Check the bucket name and keys.`)));
-        xhr.onerror = () => reject(new Error("Upload failed. Usually CORS on the bucket, not the file."));
+          : reject(new Error(`R2 refused the upload: ${xhr.status}. Check the bucket name and keys.`)));
+        xhr.onerror = () => reject(new Error("upload failed. Usually CORS on the bucket, not the file."));
         xhr.send(file);
       });
 
@@ -106,9 +106,9 @@ export default function Upload({ onUploaded }) {
       setFile(null);
       setPct(100);
       if (inputRef.current) inputRef.current.value = "";
-      onUploaded?.(rec.media);
+      onuploaded?.(rec.media);
     } catch (e) {
-      setErr(e.message || "Upload failed. Nothing was stored.");
+      setErr(e.message || "upload failed. Nothing was stored.");
     }
     setBusy("");
   };
@@ -120,7 +120,7 @@ export default function Upload({ onUploaded }) {
       <Problem onDismiss={() => setErr("")}>{err}</Problem>
 
       <Card pad={16} style={{ marginBottom: 12 }}>
-        <Mono>Upload a clip</Mono>
+        <Mono>upload a clip</Mono>
 
         <div style={{ marginTop: 12 }}>
           <input
@@ -175,19 +175,19 @@ export default function Upload({ onUploaded }) {
           <Field value={note} onChange={setNote} placeholder="What it is, one line" />
         </div>
 
-        {busy === "Upload" && (
+        {busy === "upload" && (
           <div style={{ marginTop: 14 }}>
             <div style={{ height: 6, background: "rgba(20,24,51,.08)", borderRadius: 3, overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${pct}%`, background: C.red, transition: "width .2s" }} />
             </div>
-            <div style={{ marginTop: 6 }}><Mono s={9} c={C.red}>{pct}% Uploaded</Mono></div>
+            <div style={{ marginTop: 6 }}><Mono s={9} c={C.red}>{pct}% uploaded</Mono></div>
           </div>
         )}
 
         <div className="flex items-center justify-between gap-3" style={{ marginTop: 16 }}>
           <Mono s={9}>{tags.origin ? "Straight to R2, not through Netlify" : "Set an origin first"}</Mono>
-          <Pill sm icon={UploadCloud} disabled={!file || !tags.origin || !!busy} onClick={Upload}>
-            Upload
+          <Pill sm icon={uploadCloud} disabled={!file || !tags.origin || !!busy} onClick={upload}>
+            upload
           </Pill>
         </div>
       </Card>
@@ -195,7 +195,7 @@ export default function Upload({ onUploaded }) {
       {done && (
         <Card tint={C.mint} pad={16}>
           <div style={{ fontSize: 14, color: C.ink, lineHeight: 1.6 }}>
-            Uploaded and tagged. This URL is what Metricool fetches from, so it can go
+            uploaded and tagged. This URL is what Metricool fetches from, so it can go
             straight into a scheduled post.
           </div>
           <div style={{ marginTop: 10, wordBreak: "break-all" }}>
