@@ -153,8 +153,8 @@ export async function publishEssay(payload) {
 
 const QUEUE = "/api/queue";
 
-async function queueFetch(path, { method = "GET", body, token, base = QUEUE } = {}) {
-  const res = await fetch(`${QUEUE}/${path}`, {
+async function queueFetch(path, { method = "GET", body, token } = {}, base = QUEUE) {
+  const res = await fetch(`${base}/${path}`, {
     method,
     headers: {
       "content-type": "application/json",
@@ -172,6 +172,15 @@ async function queueFetch(path, { method = "GET", body, token, base = QUEUE } = 
 export const queueGet = (path, token) => queueFetch(path, { token });
 
 export const queuePost = (path, body, token) =>
+  /* ---------------------------------------------------------------- media --- */
+
+export const mediaPresign = (body, token) =>
+  queueFetch("presign", { method: "POST", body, token }, "/api/media");
+
+export const mediaRegister = (body, token) =>
+  queueFetch("register", { method: "POST", body, token }, "/api/media");
+
+export const mediaList = (token) => queueFetch("list", { token }, "/api/media");
   queueFetch(path, { method: "POST", body, token });
 
 export const queuePatch = (id, body, token) =>
