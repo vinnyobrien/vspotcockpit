@@ -168,6 +168,3 @@ export const mediaRegister = (body, token) =>
   queueFetch("register", { method: "POST", body, token }, "/api/media");
 
 export const mediaList = (token) => queueFetch("list", { token }, "/api/media");
-
-export const queuePatch = (id, body, token) =>
-  queueFetch(`actions/${id}`, { method: "PATCH", body, token });
