@@ -146,3 +146,33 @@ export async function publishEssay(payload) {
   if (!res.ok) throw new Error(data.error || `Publish failed (${res.status})`);
   return data;
 }
+/* ---------------------------------------------------------------- queue --- */
+/* The action queue speaks bearer, not session, because the Cowork skills call
+   the same endpoints from outside the browser. Until it shares _auth with the
+   rest of the Cockpit, the room passes a token held in React state only. */
+
+const QUEUE = "/api/queue";
+
+async function queueFetch(path, { method = "GET", body, token } = {}) {
+  const res = await fetch(`${QUEUE}/${path}`, {
+    method,
+    headers: {
+      "content-type": "application/json",
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || data?.ok === false) {
+    throw new Error(data?.error || `Queue returned ${res.status}`);
+  }
+  return data;
+}
+
+export const queueGet = (path, token) => queueFetch(path, { token });
+
+export const queuePost = (path, body, token) =>
+  queueFetch(path, { method: "POST", body, token });
+
+export const queuePatch = (id, body, token) =>
+  queueFetch(`actions/${id}`, { method: "PATCH", body, token });
