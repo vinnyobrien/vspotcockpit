@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   MessageSquare, Film, PenLine, Users, TrendingUp, Mic, Hammer,
-  Drama, LineChart, ChevronLeft, CalendarDays, Scale, Inbox as InboxIcon,
+  Drama, LineChart, ChevronLeft, CalendarDays, Scale, Inbox as InboxIcon,ListChecks,
 } from "lucide-react";
 import {
   C, BODY, MONO, SH, R, Mono, Big, Card, Section, Pill, Problem,
@@ -22,8 +22,8 @@ import Build from "./rooms/Build.jsx";
 import Analysis from "./rooms/Analysis.jsx";
 import Week from "./rooms/Week.jsx";
 import SubEditor from "./rooms/SubEditor.jsx";
-import Inbox from "./rooms/Inbox.jsx";
-
+import Inbox from "./rooms/Inbox.jsx"; 
+import Actions from "./rooms/Actions.jsx";
 /* ============================================================
    THE COCKPIT · A V SPOT NETWORK PRODUCTION
 
@@ -99,6 +99,7 @@ const TITLES = {
 };
 
 const ROOMS = [
+  { id: "actions",  name: "Actions",  icon: ListChecks,    tint: C.apricot, blurb: "What the rules say to do" },
   { id: "desk",     name: "The Desk", icon: MessageSquare, tint: C.sky,     blurb: "Wire, conversation, studio" },
   { id: "video",    name: "Video",    icon: Film,          tint: C.mint,    blurb: "Shorts and calendar" },
   { id: "inbox",    name: "Inbox",    icon: InboxIcon,     tint: C.mint,    blurb: "What needs answering" },
@@ -425,6 +426,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
             {ROOMS.map((r) => {
               const I = r.icon;
+              {room === "actions" && <Actions />}
               const on = room === r.id;
               return (
                 <button key={r.id} onClick={() => setRoom(r.id)} className="tap"
