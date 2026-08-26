@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
-import { UploadCloud, Copy, Check } from "lucide-react";
+import { UploadCloud, Copy, Check, Send } from "lucide-react";
 import { C, MONO, Mono, Card, Pill, Field, Empty, Problem } from "./ui.jsx";
-import { mediaPresign, mediaRegister } from "../api.js";
+import { mediaPresign, mediaRegister, mediaSchedule, mediaShare } from "../api.js";
 
 /* ============================================================
    src/lib/Upload.jsx
@@ -40,7 +40,26 @@ const BEATS = [
   ["uk", "UK"],
 ];
 
-export default function Upload({ onUploaded }) {
+
+const DESTINATIONS = [
+  ["twitter", "X", "video+image"],
+  ["tiktok", "TikTok", "video+image"],
+  ["youtube", "YouTube", "video"],
+];
+
+/* Your own 90 days say 21:30 Irish medians 644 views against 34 for
+   mid-afternoon. Default to the next 21:30, or tomorrow 07:30 if that
+   window has already gone — never stack two inside six hours. */
+function defaultSlot() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const at = (day, h, m) => `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}T${pad(h)}:${pad(m)}:00`;
+  if (d.getHours() < 21) return at(d, 21, 30);
+  const t = new Date(d.getTime() + 864e5);
+  return at(t, 7, 30);
+}
+
+export default function Upload({ onUploaded, token }) {
   const [file, setFile] = useState(null);
   const [meta, setMeta] = useState(null);
   const [tags, setTags] = useState({ origin: "", correspondent: "house", beat: "general" });
@@ -50,6 +69,13 @@ export default function Upload({ onUploaded }) {
   const [err, setErr] = useState("");
   const [done, setDone] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [kind, setKind] = useState("video");
+  const [nets, setNets] = useState([]);
+  const [caption, setCaption] = useState("");
+  const [ytTitle, setYtTitle] = useState("");
+  const [ai, setAi] = useState(true);
+  const [when, setWhen] = useState(defaultSlot());
+  const [sched, setSched] = useState(null);
   const inputRef = useRef(null);
 
   /* Read duration and dimensions client side, so the record carries them
@@ -60,6 +86,21 @@ export default function Upload({ onUploaded }) {
     setDone(null);
     setErr("");
     setPct(0);
+    setSched(null);
+    const isImage = (f.type || "").startsWith("image/");
+    setKind(isImage ? "image" : "video");
+    /* A still has no duration, and reading it through a <video> element
+       returns nothing rather than failing loudly. Branch on the type. */
+    if (isImage) {
+      const img = new Image();
+      img.onload = () => {
+        setMeta({ durationSeconds: null, width: img.naturalWidth, height: img.naturalHeight });
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror = () => setMeta(null);
+      img.src = URL.createObjectURL(f);
+      return;
+    }
     const v = document.createElement("video");
     v.preload = "metadata";
     v.onloadedmetadata = () => {
@@ -76,31 +117,46 @@ export default function Upload({ onUploaded }) {
     setErr("");
     setPct(0);
     try {
-      const { uploadUrl, publicUrl, key, contentType } = await mediaPresign({
+      const { uploadUrl, key, contentType } = await mediaPresign({
         filename: file.name,
-        contentType: file.type || "video/mp4",
-      });
+        contentType: file.type || (kind === "image" ? "image/jpeg" : "video/mp4"),
+      }, token);
 
       /* XHR rather than fetch, purely for upload progress. A 19MB PUT with no
          feedback looks identical to a hang. */
-      await new Promise((resolve, reject) => {
+      const fileId = await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("PUT", uploadUrl, true);
         xhr.setRequestHeader("Content-Type", contentType || file.type || "video/mp4");
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) setPct(Math.round((e.loaded / e.total) * 100));
         };
-        xhr.onload = () => (xhr.status >= 200 && xhr.status < 300
-          ? resolve()
-          : reject(new Error(`R2 refused the upload: ${xhr.status}. Check the bucket name and keys.`)));
-        xhr.onerror = () => reject(new Error("Upload failed. Usually CORS on the bucket, not the file."));
+        /* Drive's resumable PUT returns the file resource in the body on
+           success. The id only exists here — presign cannot know it. */
+        xhr.onload = () => {
+          if (xhr.status < 200 || xhr.status >= 300) {
+            return reject(new Error(`Drive refused the upload: ${xhr.status}. ${(xhr.responseText || "").slice(0, 180)}`));
+          }
+          try {
+            const r = JSON.parse(xhr.responseText || "{}");
+            if (!r.id) return reject(new Error("Drive accepted the bytes but returned no file id."));
+            resolve(r.id);
+          } catch {
+            reject(new Error("Drive returned something that was not the file record."));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Upload failed before Drive answered. Usually the network, not the file."));
         xhr.send(file);
-      });
+      }, token);
+
+      /* Link-readable, then registered. Sharing is its own call because it
+         needs the id the PUT just produced. */
+      const shared = await mediaShare({ fileId }, token);
 
       const rec = await mediaRegister({
-        key, publicUrl, filename: file.name, bytes: file.size,
-        ...meta, ...tags, note: note.trim(),
-      });
+        key, fileId, publicUrl: shared.publicUrl, filename: file.name, bytes: file.size,
+        ...meta, ...tags, kind, note: note.trim(),
+      }, token);
 
       setDone(rec.media);
       setFile(null);
@@ -109,6 +165,36 @@ export default function Upload({ onUploaded }) {
       onUploaded?.(rec.media);
     } catch (e) {
       setErr(e.message || "Upload failed. Nothing was stored.");
+    }
+    setBusy("");
+  };
+
+
+  const toggleNet = (n) => {
+    if (n === "youtube" && kind === "image") return;
+    setNets(nets.includes(n) ? nets.filter((x) => x !== n) : [...nets, n]);
+  };
+
+  const schedule = async () => {
+    if (!done || !nets.length) return;
+    setBusy("schedule");
+    setErr("");
+    try {
+      const r = await mediaSchedule({
+        mediaUrl: done.publicUrl,
+        kind,
+        text: caption.trim(),
+        networks: nets,
+        when,
+        youtubeTitle: ytTitle.trim(),
+        aiGenerated: ai,
+        durationSeconds: meta?.durationSeconds ?? done.durationSeconds ?? null,
+        width: meta?.width ?? done.width ?? null,
+        height: meta?.height ?? done.height ?? null,
+      }, token);
+      setSched(r);
+    } catch (e) {
+      setErr(e.message || "Metricool refused the schedule. Nothing was queued.");
     }
     setBusy("");
   };
@@ -126,7 +212,8 @@ export default function Upload({ onUploaded }) {
           <input
             ref={inputRef}
             type="file"
-            accept="video/*"
+            accept="video/*,image/*"
+            capture={undefined}
             onChange={(e) => pick(e.target.files?.[0])}
             style={{ fontSize: 13, color: C.ink2, width: "100%" }}
           />
@@ -185,7 +272,7 @@ export default function Upload({ onUploaded }) {
         )}
 
         <div className="flex items-center justify-between gap-3" style={{ marginTop: 16 }}>
-          <Mono s={9}>{tags.origin ? "Straight to R2, not through Netlify" : "Set an origin first"}</Mono>
+          <Mono s={9}>{tags.origin ? "Straight to Drive, not through Netlify" : "Set an origin first"}</Mono>
           <Pill sm icon={UploadCloud} disabled={!file || !tags.origin || !!busy} onClick={upload}>
             Upload
           </Pill>
@@ -195,8 +282,8 @@ export default function Upload({ onUploaded }) {
       {done && (
         <Card tint={C.mint} pad={16}>
           <div style={{ fontSize: 14, color: C.ink, lineHeight: 1.6 }}>
-            Uploaded and tagged. This URL is what Metricool fetches from, so it can go
-            straight into a scheduled post.
+            Uploaded and tagged. Uploaded to Drive and shared read-only. Metricool pulls the file
+            through its own Drive link, so this goes straight into a post.
           </div>
           <div style={{ marginTop: 10, wordBreak: "break-all" }}>
             <a href={done.publicUrl} target="_blank" rel="noopener noreferrer"
@@ -213,12 +300,85 @@ export default function Upload({ onUploaded }) {
               {copied ? "Copied" : "Copy URL"}
             </Pill>
           </div>
+          <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid rgba(20,24,51,.10)" }}>
+            <Mono s={9}>Send it to</Mono>
+            <div className="flex gap-2" style={{ marginTop: 6, flexWrap: "wrap" }}>
+              {DESTINATIONS.map(([v, l, takes]) => {
+                const blocked = v === "youtube" && kind === "image";
+                return (
+                  <Pill key={v} sm
+                    tone={nets.includes(v) ? "solid" : "ghost"}
+                    disabled={blocked}
+                    onClick={() => toggleNet(v)}>
+                    {l}{blocked ? " · video only" : ""}
+                  </Pill>
+                );
+              })}
+            </div>
+
+            {nets.length > 0 && (
+              <>
+                <div style={{ marginTop: 12 }}>
+                  <Field value={caption} onChange={setCaption}
+                    placeholder={nets.every((n) => n === "youtube")
+                      ? "Description (optional for YouTube)"
+                      : "Caption — X and TikTok both use this"} />
+                </div>
+
+                {nets.includes("youtube") && (
+                  <div style={{ marginTop: 10 }}>
+                    <Field value={ytTitle} onChange={setYtTitle}
+                      placeholder="YouTube title — required, and separate from the caption" />
+                  </div>
+                )}
+
+                <div style={{ marginTop: 12 }}>
+                  <Mono s={9}>Publish at · Europe/Dublin</Mono>
+                  <div style={{ marginTop: 6 }}>
+                    <input type="datetime-local" value={when}
+                      onChange={(e) => setWhen(e.target.value)}
+                      style={{ fontFamily: MONO, fontSize: 12, padding: "7px 9px",
+                        border: "1px solid rgba(20,24,51,.16)", borderRadius: 4,
+                        background: "#fff", color: C.ink }} />
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 12 }}>
+                  <Pill sm tone={ai ? "solid" : "ghost"} onClick={() => setAi(!ai)}>
+                    {ai ? "Declared AI-generated" : "Not AI-generated"}
+                  </Pill>
+                  <div style={{ marginTop: 6 }}>
+                    <Mono s={9}>
+                      Both TikTok and YouTube require this declaration. Leave it on for
+                      anything with a correspondent in it.
+                    </Mono>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3" style={{ marginTop: 16 }}>
+                  <Mono s={9}>{nets.length} destination{nets.length === 1 ? "" : "s"}</Mono>
+                  <Pill sm icon={Send} disabled={!!busy} onClick={schedule}>
+                    {busy === "schedule" ? "Scheduling…" : "Schedule"}
+                  </Pill>
+                </div>
+              </>
+            )}
+
+            {sched?.ok && (
+              <div style={{ marginTop: 14, fontSize: 13, color: C.ink, lineHeight: 1.6 }}>
+                Queued for {sched.scheduled.join(", ")} at {sched.at} Irish
+                {sched.youtubeType ? ` · YouTube as a ${sched.youtubeType}` : ""}.
+                It is in the Metricool planner, not published yet.
+              </div>
+            )}
+          </div>
+
         </Card>
       )}
 
       {!file && !done && (
         <Empty>
-          Nothing selected. Files go straight to R2 rather than through the Cockpit,
+          Nothing selected. Files go straight to Google Drive rather than through the Cockpit,
           so size is not a constraint here.
         </Empty>
       )}
