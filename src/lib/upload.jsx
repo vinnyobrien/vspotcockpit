@@ -59,6 +59,8 @@ function defaultSlot() {
   return at(t, 7, 30);
 }
 
+/* token is optional. In the browser the session cookie authenticates;
+   the prop exists only for callers outside a browser. */
 export default function Upload({ onUploaded, token }) {
   const [file, setFile] = useState(null);
   const [meta, setMeta] = useState(null);

@@ -230,7 +230,6 @@ export default function Video({
   shorts, setShorts, dayKey, published, onPublish, busy, cal, onSetCal, today, K,
 }) {
   const [tab, setTab] = useState("shorts");
-  const [token, setToken] = useState("");
   const [err, setErr] = useState("");
   const [warn, setWarn] = useState("");
   const [pulling, setPulling] = useState(false);
@@ -303,15 +302,7 @@ export default function Video({
             filed untagged today cannot be attributed in December.
           </Note>
           <div style={{ height: 12 }} />
-          <Card pad={14} style={{ marginBottom: 12 }}>
-            <Mono>Cockpit token</Mono>
-            <div style={{ marginTop: 6 }}>
-              <Field value={token} onChange={setToken} placeholder="Held for this session only" />
-            </div>
-          </Card>
-          {token.trim()
-            ? <Upload token={token.trim()} onUploaded={() => {}} />
-            : <Empty>Paste the Cockpit token above to open the uploader.</Empty>}
+          <Upload onUploaded={() => {}} />
         </>
       )}
       {tab === "shorts" && (

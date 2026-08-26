@@ -14,6 +14,8 @@
  * browser is where a rule quietly stops being true.
  * ------------------------------------------------------------------ */
 
+import { requireAuth } from './_auth.js';
+
 export const config = { path: '/api/schedule' };
 
 const BASE = 'https://app.metricool.com/api';
@@ -25,10 +27,14 @@ const json = (b, s = 200) => new Response(JSON.stringify(b, null, 2), {
 });
 const bad = (m, s = 400) => json({ ok: false, error: m }, s);
 
+/* Two ways in, deliberately. The browser is already logged in with the
+   session cookie every other function uses, so the room needs no token
+   pasted into it. The bearer stays for the Cowork skills, which call these
+   endpoints from outside a browser and have no cookie. */
 function authorised(req) {
-  const t = process.env.COCKPIT_TOKEN;
-  if (!t) return true;
-  return (req.headers.get('authorization') || '') === `Bearer ${t}`;
+  const token = process.env.COCKPIT_TOKEN;
+  if (token && (req.headers.get('authorization') || '') === `Bearer ${token}`) return true;
+  return requireAuth(req) === null;
 }
 
 export default async (req) => {
@@ -52,7 +58,7 @@ export default async (req) => {
   /* ---- validation, in the order that fails cheapest first ---- */
 
   if (!mediaUrl || !/^https:\/\//.test(mediaUrl)) {
-    return bad('mediaUrl must be a public https URL. Upload to R2 first.');
+    return bad('mediaUrl must be a public https URL. Upload to Drive first.');
   }
   if (!Array.isArray(networks) || networks.length === 0) {
     return bad('Pick at least one destination.');

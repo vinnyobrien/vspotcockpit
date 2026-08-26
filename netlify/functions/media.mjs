@@ -1,5 +1,6 @@
 import { getStore } from '@netlify/blobs';
 import { getAccessToken } from './_google.js';
+import { requireAuth } from './_auth.js';
 
 export const config = { path: '/api/media/*' };
 
@@ -36,10 +37,14 @@ const json = (body, status = 200) =>
 
 const bad = (msg, status = 400) => json({ ok: false, error: msg }, status);
 
+/* Two ways in, deliberately. The browser is already logged in with the
+   session cookie every other function uses, so the room needs no token
+   pasted into it. The bearer stays for the Cowork skills, which call these
+   endpoints from outside a browser and have no cookie. */
 function authorised(req) {
   const token = process.env.COCKPIT_TOKEN;
-  if (!token) return true;
-  return (req.headers.get('authorization') || '') === `Bearer ${token}`;
+  if (token && (req.headers.get('authorization') || '') === `Bearer ${token}`) return true;
+  return requireAuth(req) === null;
 }
 
 const FOLDER_KEY = 'drive/folder-id';
