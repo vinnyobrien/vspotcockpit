@@ -147,6 +147,28 @@ export async function publishEssay(payload) {
   return data;
 }
 /* ---------------------------------------------------------------- queue --- */
+
+const QUEUE = "/api/queue";
+
+/* Called by every transport below. It was missing from this file entirely,
+   so all six threw ReferenceError on first call — which is what made the
+   upload button look dead while the code around it looked fine. */
+async function queueFetch(path, { method = "GET", body, token } = {}, base = QUEUE) {
+  const url = path ? `${base}/${path}` : base;
+  const headers = {};
+  if (token) headers.authorization = `Bearer ${token}`;
+  if (body !== undefined) headers["content-type"] = "application/json";
+
+  const res = await req(url, {
+    method,
+    headers,
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `${method} ${url} failed (${res.status})`);
+  return data;
+}
 /* The action queue speaks bearer, not session, because the Cowork skills call
    the same endpoints from outside the browser. Until it shares _auth with the
    rest of the Cockpit, the room passes a token held in React state only. */
@@ -168,3 +190,10 @@ export const mediaRegister = (body, token) =>
   queueFetch("register", { method: "POST", body, token }, "/api/media");
 
 export const mediaList = (token) => queueFetch("list", { token }, "/api/media");
+
+export const mediaShare = (body, token) =>
+  queueFetch("share", { method: "POST", body, token }, "/api/media");
+
+export const mediaSchedule = (body, token) =>
+  queueFetch("", { method: "POST", body, token }, "/api/schedule");
+
