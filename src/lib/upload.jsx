@@ -122,6 +122,7 @@ export default function Upload({ onUploaded, token }) {
       const { uploadUrl, key, contentType } = await mediaPresign({
         filename: file.name,
         contentType: file.type || (kind === "image" ? "image/jpeg" : "video/mp4"),
+        bytes: file.size,
       }, token);
 
       /* XHR rather than fetch, purely for upload progress. A 19MB PUT with no
@@ -147,7 +148,7 @@ export default function Upload({ onUploaded, token }) {
             reject(new Error("Drive returned something that was not the file record."));
           }
         };
-        xhr.onerror = () => reject(new Error("Upload failed before Drive answered. Usually the network, not the file."));
+        xhr.onerror = () => reject(new Error("The browser blocked the upload before it reached Drive. That is CORS on the session, not the file or the connection."));
         xhr.send(file);
       }, token);
 

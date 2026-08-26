@@ -95,17 +95,24 @@ export default async (req) => {
   if (!authorised(req)) return bad('unauthorised', 401);
 
   try {
-    /* POST /presign - mint a one-shot upload URL. The browser PUTs to it. */
     /* POST /presign - open a resumable session. The browser PUTs to the
        returned uploadUrl and reads the file id out of the final response. */
     if (route === 'presign' && req.method === 'POST') {
-      const { filename, contentType = 'application/octet-stream' } = await req.json();
+      const { filename, contentType = 'application/octet-stream', bytes = null } = await req.json();
       if (!filename) return bad('filename is required');
 
       const token = await driveToken();
       const parent = await folderId(token);
       const key = safeKey(filename);
       const name = key.split('/').pop();
+
+      /* Google only makes a resumable session CORS-enabled if the ORIGIN of
+         the eventual browser PUT is declared on the INITIATION request. Omit
+         it and the session still opens, the Location header still comes back,
+         and the browser then refuses the PUT with an opaque network error
+         before a byte leaves the phone. It has to be sent from here, because
+         this call is server side and carries no origin of its own. */
+      const origin = req.headers.get('origin') || new URL(req.url).origin;
 
       const res = await fetch(
         'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,name,mimeType,size',
@@ -114,7 +121,9 @@ export default async (req) => {
           headers: {
             authorization: `Bearer ${token}`,
             'content-type': 'application/json; charset=UTF-8',
-            'X-Upload-Content-Type': contentType
+            'X-Upload-Content-Type': contentType,
+            ...(bytes ? { 'X-Upload-Content-Length': String(bytes) } : {}),
+            origin
           },
           body: JSON.stringify({ name, parents: [parent] })
         }
@@ -124,7 +133,7 @@ export default async (req) => {
       const uploadUrl = res.headers.get('location');
       if (!uploadUrl) return bad('Drive opened a session but returned no Location header.', 502);
 
-      return json({ ok: true, uploadUrl, key, contentType, resumable: true });
+      return json({ ok: true, uploadUrl, key, contentType, origin, resumable: true });
     }
 
     /* POST /share - make the uploaded file link-readable and hand back the
