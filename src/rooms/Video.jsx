@@ -5,7 +5,7 @@ import {
   Field, Note, Empty, Problem, Chips, Confirm, iso, DAYS, parseJSON,
 } from "../lib/ui.jsx";
 import { callOp, sGet, sSet } from "../api.js";
-import upload from "../lib/upload.jsx";
+import Upload from "../lib/upload.jsx";
 
 /* ============================================================
    src/rooms/Video.jsx
@@ -230,6 +230,7 @@ export default function Video({
   shorts, setShorts, dayKey, published, onPublish, busy, cal, onSetCal, today, K,
 }) {
   const [tab, setTab] = useState("shorts");
+  const [token, setToken] = useState("");
   const [err, setErr] = useState("");
   const [warn, setWarn] = useState("");
   const [pulling, setPulling] = useState(false);
@@ -291,18 +292,26 @@ export default function Video({
 
   return (
     <div>
-            <Chips items={[["shorts", "The Shorts"], ["upload", "upload"], ["cal", "Calendar"]]} value={tab} onChange={setTab} />
+            <Chips items={[["shorts", "The Shorts"], ["upload", "Upload"], ["cal", "Calendar"]]} value={tab} onChange={setTab} />
       <div style={{ height: 18 }} />
       <Problem onDismiss={() => setErr("")}>{err}</Problem>
       {tab === "upload" && (
         <>
           <Note>
-            Straight to R2, not through the Cockpit — a 19MB clip breaks the 6MB function
-            limit in both directions. Origin is required because a clip filed untagged
-            today cannot be attributed in December.
+            Straight to Google Drive, not through the Cockpit — a 19MB clip breaks the
+            6MB function limit in both directions. Origin is required because a clip
+            filed untagged today cannot be attributed in December.
           </Note>
           <div style={{ height: 12 }} />
-          <upload onuploaded={() => {}} />
+          <Card pad={14} style={{ marginBottom: 12 }}>
+            <Mono>Cockpit token</Mono>
+            <div style={{ marginTop: 6 }}>
+              <Field value={token} onChange={setToken} placeholder="Held for this session only" />
+            </div>
+          </Card>
+          {token.trim()
+            ? <Upload token={token.trim()} onUploaded={() => {}} />
+            : <Empty>Paste the Cockpit token above to open the uploader.</Empty>}
         </>
       )}
       {tab === "shorts" && (
