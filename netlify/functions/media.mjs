@@ -1,5 +1,5 @@
 import { getStore } from '@netlify/blobs';
-import { AwsClient } from 'aws4fetch';
+import { getAccessToken } from './_google.js';
 
 export const config = { path: '/api/media/*' };
 
@@ -10,10 +10,18 @@ export const config = { path: '/api/media/*' };
  * video breaks that in both directions, and chunking only fixes the
  * inbound half - Metricool still needs to FETCH a public file.
  *
- * So the bytes never touch Netlify. This function mints a presigned
- * PUT against Cloudflare R2, the browser uploads straight there, and
- * what comes back is a public URL Metricool can pull from. The size
- * limit stops applying because nothing large passes through here.
+ * So the bytes never touch Netlify. This function opens a Google Drive
+ * RESUMABLE upload session, the browser PUTs straight to the session
+ * URI, and what comes back is a Drive file Metricool pulls from through
+ * its own Drive integration. The size limit stops applying because
+ * nothing large passes through here.
+ *
+ * Drive rather than object storage for two reasons. The Cockpit's Google
+ * consent already carries drive.file - the narrowest write scope Google
+ * offers, granting access ONLY to files this app itself creates - so
+ * there is no new account and no new secret. And a linked Drive means
+ * Metricool authenticates and pulls the real bytes; an unlinked one
+ * returns the HTML viewer page and fails at publish time.
  *
  * Blobs holds only the registry - key, URL, size, tags. Small JSON.
  * ------------------------------------------------------------------ */
@@ -34,18 +42,31 @@ function authorised(req) {
   return (req.headers.get('authorization') || '') === `Bearer ${token}`;
 }
 
-function config_() {
-  const {
-    R2_ACCOUNT_ID: account,
-    R2_ACCESS_KEY_ID: accessKeyId,
-    R2_SECRET_ACCESS_KEY: secretAccessKey,
-    R2_BUCKET: bucket,
-    R2_PUBLIC_URL: publicBase
-  } = process.env;
-  const missing = Object.entries({ R2_ACCOUNT_ID: account, R2_ACCESS_KEY_ID: accessKeyId, R2_SECRET_ACCESS_KEY: secretAccessKey, R2_BUCKET: bucket, R2_PUBLIC_URL: publicBase })
-    .filter(([, v]) => !v).map(([k]) => k);
-  if (missing.length) throw new Error(`Not set on this site: ${missing.join(', ')}`);
-  return { account, accessKeyId, secretAccessKey, bucket, publicBase: publicBase.replace(/\/$/, '') };
+const FOLDER_KEY = 'drive/folder-id';
+const FOLDER_NAME = 'VSpot Cockpit Media';
+
+async function driveToken() {
+  const t = await getAccessToken('default');
+  if (!t) throw new Error('Google is not connected in the Cockpit. Press Connect Google in Settings, then try again.');
+  return t;
+}
+
+/* One folder, created once, id cached. drive.file can see the folder it
+   made and nothing else, so there is no search across the real Drive. */
+async function folderId(token) {
+  const store = media();
+  const cached = await store.get(FOLDER_KEY, { type: 'json' });
+  if (cached?.id) return cached.id;
+
+  const res = await fetch('https://www.googleapis.com/drive/v3/files?fields=id', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ name: FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' })
+  });
+  if (!res.ok) throw new Error(`Drive refused the folder: ${res.status} ${await res.text()}`);
+  const { id } = await res.json();
+  await store.setJSON(FOLDER_KEY, { id, name: FOLDER_NAME, createdAt: new Date().toISOString() });
+  return id;
 }
 
 /* Slug the filename rather than trusting it. Spaces and punctuation in an
@@ -70,35 +91,61 @@ export default async (req) => {
 
   try {
     /* POST /presign - mint a one-shot upload URL. The browser PUTs to it. */
+    /* POST /presign - open a resumable session. The browser PUTs to the
+       returned uploadUrl and reads the file id out of the final response. */
     if (route === 'presign' && req.method === 'POST') {
-      const { filename, contentType = 'video/mp4' } = await req.json();
+      const { filename, contentType = 'application/octet-stream' } = await req.json();
       if (!filename) return bad('filename is required');
 
-      const cfg = config_();
+      const token = await driveToken();
+      const parent = await folderId(token);
       const key = safeKey(filename);
-      const target = `https://${cfg.account}.r2.cloudflarestorage.com/${cfg.bucket}/${key}`;
+      const name = key.split('/').pop();
 
-      const aws = new AwsClient({
-        accessKeyId: cfg.accessKeyId,
-        secretAccessKey: cfg.secretAccessKey,
-        service: 's3',
-        region: 'auto'
-      });
-
-      /* Presigned for 15 minutes. Long enough for a slow upload on Kerry
-         broadband, short enough that a leaked URL is worthless by teatime. */
-      const signed = await aws.sign(
-        new Request(`${target}?X-Amz-Expires=900`, { method: 'PUT' }),
-        { aws: { signQuery: true, allHeaders: false } }
+      const res = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,name,mimeType,size',
+        {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${token}`,
+            'content-type': 'application/json; charset=UTF-8',
+            'X-Upload-Content-Type': contentType
+          },
+          body: JSON.stringify({ name, parents: [parent] })
+        }
       );
+      if (!res.ok) return bad(`Drive refused the session: ${res.status} ${await res.text()}`, 502);
 
+      const uploadUrl = res.headers.get('location');
+      if (!uploadUrl) return bad('Drive opened a session but returned no Location header.', 502);
+
+      return json({ ok: true, uploadUrl, key, contentType, resumable: true });
+    }
+
+    /* POST /share - make the uploaded file link-readable and hand back the
+       URL. Separate from register because it needs the Drive id, which only
+       exists once the PUT has finished. */
+    if (route === 'share' && req.method === 'POST') {
+      const { fileId } = await req.json();
+      if (!fileId) return bad('fileId is required');
+      const token = await driveToken();
+
+      const perm = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ role: 'reader', type: 'anyone' })
+      });
+      if (!perm.ok) return bad(`Drive refused the share: ${perm.status} ${await perm.text()}`, 502);
+
+      /* Metricool's Drive integration takes the standard file URL. The
+         direct-download form is returned alongside it as a fallback, because
+         which one Metricool prefers has not been confirmed against a real
+         scheduled post yet. */
       return json({
         ok: true,
-        key,
-        uploadUrl: signed.url,
-        contentType,
-        publicUrl: `${cfg.publicBase}/${key}`,
-        expiresIn: 900
+        fileId,
+        publicUrl: `https://drive.google.com/file/d/${fileId}/view?usp=sharing`,
+        directUrl: `https://drive.google.com/uc?export=download&id=${fileId}`
       });
     }
 
@@ -109,6 +156,8 @@ export default async (req) => {
       const rec = {
         key: body.key,
         publicUrl: body.publicUrl,
+        fileId: body.fileId ?? null,
+        kind: body.kind ?? null,
         filename: body.filename ?? null,
         bytes: body.bytes ?? null,
         durationSeconds: body.durationSeconds ?? null,
@@ -140,17 +189,25 @@ export default async (req) => {
       return json({ ok: true, count: out.length, media: out.slice(0, 40) });
     }
 
-    /* GET /check - is R2 wired up? Answers before you upload 19MB and find out. */
+    /* GET /check - is Drive wired up? Answers before you upload 19MB and
+       find out. It proves the token refreshes; it cannot prove Metricool's
+       own Drive link is on, which is a setting in their UI. */
     if (route === 'check') {
       try {
-        const cfg = config_();
-        return json({ ok: true, bucket: cfg.bucket, publicBase: cfg.publicBase, ready: true });
+        const token = await driveToken();
+        const me = await fetch('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)', {
+          headers: { authorization: `Bearer ${token}` }
+        });
+        if (!me.ok) return json({ ok: false, ready: false, error: `Drive rejected the token: ${me.status}` });
+        const { user } = await me.json();
+        const parent = await folderId(token);
+        return json({ ok: true, ready: true, drive: user?.emailAddress ?? null, folderId: parent, folder: FOLDER_NAME });
       } catch (e) {
         return json({ ok: false, ready: false, error: e.message });
       }
     }
 
-    return bad(`unknown route "${route}". Try check, presign, register, list.`, 404);
+    return bad(`unknown route "${route}". Try check, presign, share, register, list.`, 404);
   } catch (err) {
     return bad(err.message, 500);
   }
