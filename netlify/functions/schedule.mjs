@@ -201,7 +201,13 @@ export default async (req) => {
     confirmedNetworks: (post.providers || []).map((p) => ({
       network: p.network, status: p.detailedStatus || p.status
     })),
-    mediaIngested: post.saveExternalMediaFiles === true,
+    /* saveExternalMediaFiles is a REQUEST flag; Metricool always echoes it
+       false, so reading the echo says nothing. The real proof is that it
+       rewrote the media URL onto its own CDN. Verified 27 Aug 2026: with the
+       flag, media comes back as static.metricool.com/planner/...; without it,
+       the raw Drive link survives and the network cannot fetch it. */
+    mediaIngested: String((post.media || [])[0] || '').includes('static.metricool.com'),
+    storedMedia: (post.media || [])[0] ?? null,
     at: when,
     youtubeType: networks.includes('youtube') ? (isShort ? 'short' : 'video') : null,
     metricool: out
