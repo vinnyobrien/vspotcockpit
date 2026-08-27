@@ -39,8 +39,44 @@ function authorised(req) {
 
 export default async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204 });
-  if (req.method !== 'POST') return bad('POST only', 405);
   if (!authorised(req)) return bad('Unauthorised', 401);
+
+  /* GET - read the queue back from Metricool rather than trusting a local
+     record of what we think we sent. A post is scheduled when Metricool says
+     it is, not when our POST returned 200. */
+  if (req.method === 'GET') {
+    const token = process.env.METRICOOL_TOKEN;
+    const userId = process.env.METRICOOL_USER_ID;
+    if (!token || !userId) return bad('METRICOOL_TOKEN or METRICOOL_USER_ID is not set', 500);
+
+    const now = new Date();
+    const from = new Date(now.getTime() - 7 * 864e5);
+    const to = new Date(now.getTime() + 60 * 864e5);
+    const stamp = (d) => d.toISOString().slice(0, 19);
+
+    const u = new URL(`${BASE}/v2/scheduler/posts`);
+    u.searchParams.set('userId', userId);
+    u.searchParams.set('blogId', BLOG_ID);
+    u.searchParams.set('start', stamp(from));
+    u.searchParams.set('end', stamp(to));
+
+    const r = await fetch(u, { headers: { 'X-Mc-Auth': token, accept: 'application/json' } });
+    if (!r.ok) return json({ ok: false, error: `Metricool refused the read: ${r.status}` }, 502);
+    const { data = [] } = await r.json();
+
+    const posts = data.map((p) => ({
+      id: p.id,
+      at: p.publicationDate?.dateTime ?? null,
+      text: (p.text || '').slice(0, 120),
+      draft: !!p.draft,
+      media: Array.isArray(p.media) ? p.media.length : 0,
+      networks: (p.providers || []).map((x) => ({ network: x.network, status: x.detailedStatus || x.status }))
+    })).sort((a, b) => String(a.at).localeCompare(String(b.at)));
+
+    return json({ ok: true, count: posts.length, posts });
+  }
+
+  if (req.method !== 'POST') return bad('GET or POST only', 405);
 
   const token = process.env.METRICOOL_TOKEN;
   const userId = process.env.METRICOOL_USER_ID;
@@ -154,9 +190,18 @@ export default async (req) => {
     return json({ ok: false, status: res.status, error: out }, 502);
   }
 
+  const post = out?.data ?? {};
   return json({
     ok: true,
     scheduled: networks,
+    postId: post.id ?? null,
+    /* Echo back what Metricool RECORDED, not what we sent. If it silently
+       dropped or moved something, this is where it shows. */
+    confirmedAt: post.publicationDate?.dateTime ?? null,
+    confirmedNetworks: (post.providers || []).map((p) => ({
+      network: p.network, status: p.detailedStatus || p.status
+    })),
+    mediaIngested: post.saveExternalMediaFiles === true,
     at: when,
     youtubeType: networks.includes('youtube') ? (isShort ? 'short' : 'video') : null,
     metricool: out

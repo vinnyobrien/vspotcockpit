@@ -79,6 +79,7 @@ export default function Upload({ onUploaded, token }) {
   const [when, setWhen] = useState(defaultSlot());
   const [sched, setSched] = useState(null);
   const inputRef = useRef(null);
+  const schedRef = useRef(null);
 
   /* Read duration and dimensions client side, so the record carries them
      without anyone typing them in. */
@@ -196,6 +197,9 @@ export default function Upload({ onUploaded, token }) {
         height: meta?.height ?? done.height ?? null,
       }, token);
       setSched(r);
+      /* It sits under the Drive URL and the destination pills, which on a phone
+         is well below the fold. A confirmation nobody scrolls to is not one. */
+      setTimeout(() => schedRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
     } catch (e) {
       setErr(e.message || "Metricool refused the schedule. Nothing was queued.");
     }
@@ -368,10 +372,38 @@ export default function Upload({ onUploaded, token }) {
             )}
 
             {sched?.ok && (
-              <div style={{ marginTop: 14, fontSize: 13, color: C.ink, lineHeight: 1.6 }}>
-                Queued for {sched.scheduled.join(", ")} at {sched.at} Irish
-                {sched.youtubeType ? ` · YouTube as a ${sched.youtubeType}` : ""}.
-                It is in the Metricool planner, not published yet.
+              <div ref={schedRef} style={{
+                marginTop: 16, padding: "14px 16px", borderRadius: 4,
+                background: "#f0f7f1", border: "1px solid rgba(30,132,73,.28)",
+                borderLeft: "4px solid #1E8449",
+              }}>
+                <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: ".9px",
+                  textTransform: "uppercase", color: "#1E8449", fontWeight: 700 }}>
+                  Scheduled
+                </div>
+                <div style={{ fontSize: 15, color: C.ink, marginTop: 6, lineHeight: 1.5 }}>
+                  {(sched.confirmedNetworks?.length
+                    ? sched.confirmedNetworks.map((n) => n.network).join(", ")
+                    : sched.scheduled.join(", "))}
+                  {" \u00b7 "}
+                  {(sched.confirmedAt || sched.at || "").replace("T", " ")} Irish
+                  {sched.youtubeType ? " \u00b7 YouTube as a " + sched.youtubeType : ""}
+                </div>
+                <div style={{ marginTop: 8, display: "grid", gap: 3 }}>
+                  {(sched.confirmedNetworks || []).map((n) => (
+                    <Mono key={n.network} s={10}>{n.network} \u2014 {n.status}</Mono>
+                  ))}
+                  <Mono s={10}>
+                    {sched.mediaIngested
+                      ? "Metricool has pulled the file into its own storage."
+                      : "Warning: Metricool kept the Drive link, not the file. It will not publish."}
+                  </Mono>
+                  {sched.postId ? <Mono s={10}>Metricool post {sched.postId}</Mono> : null}
+                </div>
+                <div style={{ marginTop: 9, fontSize: 12.5, color: C.ink2, lineHeight: 1.5 }}>
+                  In the planner, not published. Confirmed by reading Metricool back,
+                  not by our own request returning 200.
+                </div>
               </div>
             )}
           </div>
