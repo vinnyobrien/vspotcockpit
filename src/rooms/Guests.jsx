@@ -23,7 +23,20 @@ import {
 const STAGES = ["idea", "approached", "booked", "recorded", "published"];
 const ASSETS = ["headshot", "logo", "bio", "questions"];
 const SHOWS = ["The Struggle Bus", "The Ostrich Report", "The Sunday Supplement"];
-const CALENDLY = "https://calendly.com/vinnyandco";
+/* One booking link per show, verified live against the Calendly account on
+   27 Aug 2026. The single link this replaced pointed at calendly.com/vinnyandco,
+   which 404s — the account slug is vinnyob. Every guest sent a pre-call or
+   recording invite from this room got a dead link. */
+const BOOKINGS = {
+  "The Struggle Bus": "https://calendly.com/vinnyob/struggle-bus-recording-1",
+  "The Sunday Supplement": "https://calendly.com/vinnyob/sunday-supplement-recording",
+  "The Ostrich Report": "https://calendly.com/vinnyob/sunday-supplement-recording-clone",
+};
+const PRECALL = "https://calendly.com/vinnyob/podcast-precall-discussion";
+
+/* Falls back to the pre-call rather than to nothing: a guest with the wrong
+   link still reaches a real page and a real conversation. */
+const recordingLink = (show) => BOOKINGS[show] || PRECALL;
 
 const first = (n) => String(n || "").trim().split(" ")[0] || "there";
 
@@ -61,7 +74,7 @@ Vinny`,
 
 Before we record, a short call to agree what we're actually arguing about. Fifteen minutes, no prep needed.
 
-Pick a time here: ${CALENDLY}
+Pick a time here: ${PRECALL}
 
 Vinny`,
   },
@@ -70,7 +83,7 @@ Vinny`,
     subject: (g) => `${g.show} — booking the recording`,
     body: (g) => `Hi ${first(g.name)},
 
-Ready to record. Pick a slot: ${CALENDLY}
+Ready to record. Pick a slot: ${recordingLink(g.show)}
 
 It's StreamYard, browser only, nothing to install. Headphones if you have them, and somewhere without a hard echo.
 

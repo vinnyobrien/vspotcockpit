@@ -159,11 +159,11 @@ export default function Today({
 
       <div className="flex justify-end" style={{ marginBottom: 10 }}>
         <button className="tap" onClick={() => {
-          navigator.clipboard?.writeText("https://calendly.com/vinnyandco");
+          navigator.clipboard?.writeText("https://calendly.com/vinnyob/podcast-precall-discussion");
           setCopied(true); setTimeout(() => setCopied(false), 1600);
         }}
           style={{ display: "inline-flex", alignItems: "center", gap: 6, background: C.card, border: "1.5px solid rgba(20,24,51,.1)", borderRadius: 999, padding: "8px 14px", cursor: "pointer", fontFamily: BODY, fontSize: 12.5, fontWeight: 600, color: C.ink }}>
-          <Link2 size={14} strokeWidth={2.3} />{copied ? "Link copied" : "Send my Calendly"}
+          <Link2 size={14} strokeWidth={2.3} />{copied ? "Link copied" : "Send pre-call link"}
         </button>
       </div>
 
