@@ -115,6 +115,13 @@ export default async (req) => {
   const info = {
     autoPublish: true,
     draft: false,
+    /* Without this, Metricool keeps the Drive link as a LINK and hands that to
+       X/TikTok/YouTube at publish time. They cannot fetch a Drive viewer page,
+       so the post sits PENDING and then fails on the network side - scheduled
+       successfully, published never. Setting it true makes Metricool pull the
+       bytes into its own storage at schedule time, which is the whole point of
+       having Drive linked in the first place. Defaults to false. */
+    saveExternalMediaFiles: true,
     descendants: [],
     firstCommentText: '',
     hasNotReadNotes: false,
