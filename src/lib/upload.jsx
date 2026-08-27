@@ -168,7 +168,7 @@ export default function Upload({ onUploaded, token }) {
       if (inputRef.current) inputRef.current.value = "";
       onUploaded?.(rec.media);
     } catch (e) {
-      setErr(e.message || "Upload failed. Nothing was stored.");
+      setErr(String(e?.message || e || "Upload failed. Nothing was stored."));
     }
     setBusy("");
   };
@@ -201,7 +201,10 @@ export default function Upload({ onUploaded, token }) {
          is well below the fold. A confirmation nobody scrolls to is not one. */
       setTimeout(() => schedRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
     } catch (e) {
-      setErr(e.message || "Metricool refused the schedule. Nothing was queued.");
+      /* String() so a thrown object can never reach the banner as
+         "[object Object]". If the message is still opaque, the function
+         also returns `detail` with Metricool's own wording. */
+      setErr(String(e?.message || e || "Metricool refused the schedule. Nothing was queued."));
     }
     setBusy("");
   };

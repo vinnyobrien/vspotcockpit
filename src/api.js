@@ -115,7 +115,7 @@ export async function saveToGoogleDoc(title, body) {
     body: JSON.stringify({ title, body }),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Could not save (${res.status})`);
+  if (!res.ok) throw new Error(errText(data.error, `Could not save (${res.status})`));
   return data;
 }
 
@@ -127,7 +127,7 @@ export async function publishClipDirect(payload) {
     body: JSON.stringify(payload),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Publish failed (${res.status})`);
+  if (!res.ok) throw new Error(errText(data.error, `Publish failed (${res.status})`));
   return data;
 }
 
@@ -143,9 +143,26 @@ export async function publishEssay(payload) {
     body: JSON.stringify(payload),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Publish failed (${res.status})`);
+  if (!res.ok) throw new Error(errText(data.error, `Publish failed (${res.status})`));
   return data;
 }
+/* Server errors are not always strings. schedule.mjs relays Metricool's
+   rejection verbatim because the field name is the useful part, and that
+   arrives as an object — `new Error({...})` gives the user "[object Object]"
+   and throws away the only sentence that explains the failure. */
+function errText(e, fallback) {
+  if (typeof e === "string" && e.trim()) return e;
+  if (e && typeof e === "object") {
+    const direct = e.message || e.detail || e.title || e.error;
+    if (typeof direct === "string" && direct.trim()) return direct;
+    try {
+      const j = JSON.stringify(e);
+      if (j && j !== "{}") return j.slice(0, 300);
+    } catch { /* circular; fall through */ }
+  }
+  return fallback;
+}
+
 /* ---------------------------------------------------------------- queue --- */
 
 const QUEUE = "/api/queue";
@@ -166,7 +183,7 @@ async function queueFetch(path, { method = "GET", body, token } = {}, base = QUE
   });
 
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `${method} ${url} failed (${res.status})`);
+  if (!res.ok) throw new Error(errText(data.error, `${method} ${url} failed (${res.status})`));
   return data;
 }
 /* The action queue speaks bearer, not session, because the Cowork skills call

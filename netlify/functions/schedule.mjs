@@ -185,9 +185,17 @@ export default async (req) => {
   let out; try { out = JSON.parse(raw); } catch { out = raw.slice(0, 500); }
 
   if (!res.ok) {
-    /* Relayed unaltered. Metricool's rejections name the field, and
-       rewriting them into something friendlier loses the field name. */
-    return json({ ok: false, status: res.status, error: out }, 502);
+    /* error must be a STRING - the browser puts it straight into an Error, and
+       an object there renders as "[object Object]", which is worse than useless.
+       The raw rejection still travels alongside it as `detail`, because
+       Metricool's messages name the offending field and that is the useful part. */
+    const message =
+      (typeof out === 'string' && out.trim()) ? out.slice(0, 300)
+      : (out?.detail || out?.message || out?.title || null)
+        ? String(out.detail || out.message || out.title).slice(0, 300)
+        : `Metricool rejected the schedule (${res.status}).`;
+
+    return json({ ok: false, status: res.status, error: message, detail: out }, 502);
   }
 
   const post = out?.data ?? {};
