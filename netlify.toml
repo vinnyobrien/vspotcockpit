@@ -44,7 +44,7 @@
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     # Opus serves clip thumbnails and previews from its signed CDN, so img-src
     # and media-src have to name it or the cards render blank with no error.
-    Content-Security-Policy = "default-src 'self'; connect-src 'self' https://signed-ext.cdn.opus.pro; img-src 'self' data: https://signed-ext.cdn.opus.pro; media-src 'self' blob: https://signed-ext.cdn.opus.pro; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    Content-Security-Policy = "default-src 'self'; connect-src 'self' https://signed-ext.cdn.opus.pro https://www.googleapis.com https://storage.googleapis.com; img-src 'self' data: https://signed-ext.cdn.opus.pro; media-src 'self' blob: https://signed-ext.cdn.opus.pro; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
 # The LinkedIn archive payload contains his published contact address, published in the
 # Le Sunday Supplement piece. It matches RESEND_REPLY_TO and trips the scanner.
