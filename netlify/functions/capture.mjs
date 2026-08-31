@@ -56,7 +56,10 @@ export default async (req) => {
     return json({ error: "url_required_for_clip" }, 400);
   }
 
-  const store = getStore("captures");
+  const store = getStore({
+    name: process.env.CAPTURE_STORE || "captures",
+    consistency: "strong"
+  });
   const now = new Date().toISOString();
 
   // --- notes: always new, no dedupe ---
