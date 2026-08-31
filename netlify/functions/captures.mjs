@@ -1,143 +1,149 @@
-import { getStore } from "@netlify/blobs";
-import { createHash, randomUUID } from "node:crypto";
+import { getStore } from '@netlify/blobs';
+import { requireAuth } from './_auth.js';
 
-const STRIP_PARAMS = [
-  "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
-  "fbclid", "gclid", "mc_cid", "mc_eid", "ref", "source", "_hsenc", "igshid"
-];
+export const config = { path: ['/api/captures', '/api/captures/*'] };
 
-function normaliseUrl(raw) {
-  const u = new URL(raw);
-  u.hostname = u.hostname.toLowerCase().replace(/^www\./, "");
-  u.protocol = "https:";
-  for (const p of STRIP_PARAMS) u.searchParams.delete(p);
-  if (!u.hash.startsWith("#/")) u.hash = "";
-  u.pathname = u.pathname.replace(/\/+$/, "") || "/";
-  return u.toString();
+/* ------------------------------------------------------------------ *
+ * Clip Desk — read and edit side of the capture store.
+ *
+ * Writes come in via /api/capture (phone Shortcut, bookmarklet).
+ * This file is what the room reads, and how a clip moves through
+ * parked -> reading -> used | dropped.
+ *
+ * Two ways in, matching media.mjs: the browser is already logged in
+ * with the session cookie, so the room needs no token pasted into it.
+ * The bearer stays for the Shortcut and any Cowork skill calling from
+ * outside a browser.
+ * ------------------------------------------------------------------ */
+
+const store = () => getStore({
+  name: process.env.CAPTURE_STORE || 'captures',
+  consistency: 'strong'
+});
+
+const json = (body, status = 200) =>
+  new Response(JSON.stringify(body, null, 2), {
+    status,
+    headers: { 'content-type': 'application/json', 'cache-control': 'no-store' }
+  });
+
+const bad = (msg, status = 400) => json({ ok: false, error: msg }, status);
+
+function authorised(req) {
+  const token = process.env.CAPTURE_TOKEN;
+  if (token && (req.headers.get('authorization') || '') === `Bearer ${token}`) return true;
+  return requireAuth(req) === null;
 }
 
-const clipKey = (normalised) =>
-  "clip_" + createHash("sha1").update(normalised).digest("hex").slice(0, 16);
+const STATES = ['parked', 'reading', 'used', 'dropped'];
 
 function slugifyAll(threads) {
   if (!Array.isArray(threads)) return [];
   return [...new Set(threads
     .map(t => String(t).toLowerCase().trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-"))
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-'))
     .filter(Boolean))];
 }
 
-function json(obj, status) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { "content-type": "application/json" }
-  });
-}
-
 export default async (req) => {
-  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+  const url = new URL(req.url);
+  const id = url.pathname.replace(/^\/api\/captures\/?/, '').split('/').filter(Boolean)[0] ?? '';
 
-  const auth = req.headers.get("authorization") || "";
-  if (!process.env.CAPTURE_TOKEN || auth !== `Bearer ${process.env.CAPTURE_TOKEN}`) {
-    return json({ error: "unauthorized" }, 401);
-  }
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204 });
+  if (!authorised(req)) return bad('unauthorised', 401);
 
-  let body;
+  const s = store();
+
   try {
-    body = await req.json();
-  } catch {
-    return json({ error: "invalid_json" }, 400);
-  }
+    /* GET /api/captures — the desk view.
+       Filters: status, thread, type, q, limit. */
+    if (!id && req.method === 'GET') {
+      const p          = url.searchParams;
+      const wantStatus = p.get('status');
+      const wantThread = p.get('thread');
+      const wantType   = p.get('type');
+      const q          = (p.get('q') || '').toLowerCase().trim();
+      const limit      = Math.min(parseInt(p.get('limit') || '100', 10), 500);
 
-  const type = body.type === "note" ? "note" : "clip";
-  if (type === "clip" && !body.url) {
-    return json({ error: "url_required_for_clip" }, 400);
-  }
+      const { blobs } = await s.list();
+      const records = await Promise.all(
+        blobs.map(b => s.get(b.key, { type: 'json' }).catch(() => null))
+      );
 
-  const store = getStore({
-    name: process.env.CAPTURE_STORE || "captures",
-    consistency: "strong"
-  });
-  const now = new Date().toISOString();
+      const all = records.filter(Boolean);
 
-  // --- notes: always new, no dedupe ---
-  if (type === "note") {
-    const id = "note_" + randomUUID().replace(/-/g, "").slice(0, 16);
-    await store.setJSON(id, {
-      id,
-      type: "note",
-      title: (body.note || "").split("\n")[0].slice(0, 80) || "Untitled note",
-      note: body.note || null,
-      note_source: body.note_source || "typed",
-      threads: slugifyAll(body.threads),
-      status: "parked",
-      source: body.source || "unknown",
-      captured_at: body.captured_at || now,
-      received_at: now
-    });
-    return json({ id, type: "note", status: "parked" }, 201);
-  }
+      const filtered = all
+        .filter(r => !wantStatus || r.status === wantStatus)
+        .filter(r => !wantType   || r.type === wantType)
+        .filter(r => !wantThread || (r.threads || []).includes(wantThread))
+        .filter(r => !q || `${r.title} ${r.note} ${r.url}`.toLowerCase().includes(q))
+        .sort((a, b) => (b.captured_at || '').localeCompare(a.captured_at || ''))
+        .slice(0, limit);
 
-  // --- clips: dedupe on normalised url ---
-  let normalised;
-  try {
-    normalised = normaliseUrl(body.url);
-  } catch {
-    return json({ error: "invalid_url" }, 400);
-  }
+      /* Thread counts come from everything parked, not the filtered slice —
+         otherwise selecting a thread makes every other thread vanish from
+         the sidebar and you cannot navigate back out. */
+      const threads = {};
+      for (const r of all) {
+        if (r.status !== 'parked') continue;
+        for (const t of r.threads || []) threads[t] = (threads[t] || 0) + 1;
+      }
 
-  const id = clipKey(normalised);
-  const existing = await store.get(id, { type: "json" });
+      const counts = { parked: 0, reading: 0, used: 0, dropped: 0 };
+      for (const r of all) if (counts[r.status] !== undefined) counts[r.status]++;
 
-  if (existing) {
-    // upgrade a placeholder title if a real one arrives later
-    if (body.title && (!existing.title || existing.title === existing.url_normalised)) {
-      existing.title = body.title;
+      return json({ ok: true, count: filtered.length, counts, threads, captures: filtered });
     }
-    // backfill selection if the first capture didn't carry one
-    if (body.selection && !existing.selection) {
-      existing.selection = String(body.selection).slice(0, 2000);
+
+    /* GET /api/captures/:id — one record */
+    if (id && req.method === 'GET') {
+      const rec = await s.get(id, { type: 'json' });
+      if (!rec) return bad('not found', 404);
+      return json({ ok: true, capture: rec });
     }
-    // append the note, but don't repeat text already recorded
-    if (body.note && !(existing.note || "").includes(body.note)) {
-      existing.note = [existing.note, `[${now.slice(0, 10)}] ${body.note}`]
-        .filter(Boolean).join("\n");
+
+    /* PATCH /api/captures/:id — status, threads, note, used_in */
+    if (id && req.method === 'PATCH') {
+      const rec = await s.get(id, { type: 'json' });
+      if (!rec) return bad('not found', 404);
+
+      const body = await req.json();
+      if (body.status && !STATES.includes(body.status)) {
+        return bad(`status must be one of ${STATES.join(', ')}`);
+      }
+
+      const next = {
+        ...rec,
+        status:  body.status  ?? rec.status,
+        note:    body.note    ?? rec.note,
+        used_in: body.used_in ?? rec.used_in ?? null,
+        threads: body.threads ? slugifyAll(body.threads) : rec.threads,
+        updated_at: new Date().toISOString(),
+        /* Stamp when it left the pile. This is the number that tells you
+           whether the desk is working: captured vs actually used. */
+        closed_at: body.status && body.status !== 'parked' && body.status !== 'reading'
+          ? new Date().toISOString()
+          : rec.closed_at ?? null
+      };
+
+      await s.setJSON(id, next);
+      return json({ ok: true, capture: next });
     }
-    existing.threads = [...new Set([
-      ...(existing.threads || []),
-      ...slugifyAll(body.threads)
-    ])];
-    existing.seen_count = (existing.seen_count || 1) + 1;
-    existing.last_seen = now;
-    await store.setJSON(id, existing);
-    return json({
-      id, type: "clip", status: existing.status,
-      duplicate: true, seen_count: existing.seen_count
-    }, 200);
+
+    /* DELETE /api/captures/:id — for test rows and genuine mistakes.
+       Prefer status "dropped" for real decisions; a dropped clip is
+       evidence about what you decline, a deleted one is nothing. */
+    if (id && req.method === 'DELETE') {
+      const rec = await s.get(id, { type: 'json' });
+      if (!rec) return bad('not found', 404);
+      await s.delete(id);
+      return json({ ok: true, deleted: id });
+    }
+
+    return bad(`unsupported ${req.method} on ${url.pathname}`, 405);
+  } catch (err) {
+    return bad(`captures error: ${err.message}`, 500);
   }
-
-  await store.setJSON(id, {
-    id,
-    type: "clip",
-    url: body.url,
-    url_normalised: normalised,
-    title: body.title || normalised,
-    selection: body.selection ? String(body.selection).slice(0, 2000) : null,
-    note: body.note ? `[${now.slice(0, 10)}] ${body.note}` : null,
-    note_source: body.note_source || "typed",
-    threads: slugifyAll(body.threads),
-    status: "parked",
-    summary: null,
-    source: body.source || "unknown",
-    seen_count: 1,
-    captured_at: body.captured_at || now,
-    received_at: now,
-    last_seen: now
-  });
-
-  return json({ id, type: "clip", status: "parked", duplicate: false }, 201);
 };
-
-export const config = { path: "/api/capture" };
