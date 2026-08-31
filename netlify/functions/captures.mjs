@@ -15,7 +15,10 @@ export default async (req) => {
   const wantType   = params.get("type");
   const limit      = Math.min(parseInt(params.get("limit") || "100", 10), 500);
 
-  const store = getStore("captures");
+  const store = getStore({
+    name: process.env.CAPTURE_STORE || "captures",
+    consistency: "strong"
+  });
   const { blobs } = await store.list();
 
   const records = await Promise.all(
