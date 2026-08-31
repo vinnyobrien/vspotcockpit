@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { createHash, randomUUID } from "node:crypto";
+import { requireAuth } from "./_auth.js";
 
 const STRIP_PARAMS = [
   "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
@@ -29,6 +30,14 @@ function slugifyAll(threads) {
     .filter(Boolean))];
 }
 
+/* Bearer for the Shortcut and the bookmarklet, session cookie for the
+   Clip Desk room. Same pattern as media.mjs. */
+function authorised(req) {
+  const token = process.env.CAPTURE_TOKEN;
+  if (token && (req.headers.get("authorization") || "") === `Bearer ${token}`) return true;
+  return requireAuth(req) === null;
+}
+
 function json(obj, status) {
   return new Response(JSON.stringify(obj), {
     status,
@@ -39,10 +48,7 @@ function json(obj, status) {
 export default async (req) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
-  const auth = req.headers.get("authorization") || "";
-  if (!process.env.CAPTURE_TOKEN || auth !== `Bearer ${process.env.CAPTURE_TOKEN}`) {
-    return json({ error: "unauthorized" }, 401);
-  }
+  if (!authorised(req)) return json({ error: "unauthorized" }, 401);
 
   let body;
   try {
