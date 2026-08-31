@@ -92,7 +92,16 @@ export default async (req) => {
   const existing = await store.get(id, { type: "json" });
 
   if (existing) {
-    if (body.note) {
+    // upgrade a placeholder title if a real one arrives later
+    if (body.title && (!existing.title || existing.title === existing.url_normalised)) {
+      existing.title = body.title;
+    }
+    // backfill selection if the first capture didn't carry one
+    if (body.selection && !existing.selection) {
+      existing.selection = String(body.selection).slice(0, 2000);
+    }
+    // append the note, but don't repeat text already recorded
+    if (body.note && !(existing.note || "").includes(body.note)) {
       existing.note = [existing.note, `[${now.slice(0, 10)}] ${body.note}`]
         .filter(Boolean).join("\n");
     }
@@ -116,7 +125,7 @@ export default async (req) => {
     url_normalised: normalised,
     title: body.title || normalised,
     selection: body.selection ? String(body.selection).slice(0, 2000) : null,
-    note: body.note || null,
+    note: body.note ? `[${now.slice(0, 10)}] ${body.note}` : null,
     note_source: body.note_source || "typed",
     threads: slugifyAll(body.threads),
     status: "parked",
