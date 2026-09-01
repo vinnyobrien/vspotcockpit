@@ -572,7 +572,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               )}
 
               {room === "guests" && (
-                <Guests guests={guests} setGuests={setGuests} sSet={sSet} K={K} today={today} />
+                <Guests guests={guests} setGuests={setGuests} sSet={sSet} K={K} today={today} />{room === "clipdesk" && <ClipDesk onClose={() => setRoom(null)} />
               )}
 
               {room === "growth" && (
