@@ -11,6 +11,7 @@ import Diary from "./lib/Diary.jsx";
 import { sGet, sSet, callOp, publishClipDirect } from "./api.js";
 
 import Today from "./rooms/Today.jsx";
+import ClipDesk from "./rooms/ClipDesk";
 import Desk from "./rooms/Desk.jsx";
 import Video from "./rooms/Video.jsx";
 import Guests from "./rooms/Guests.jsx";
@@ -18,8 +19,8 @@ import Growth from "./rooms/Growth.jsx";
 import Essay from "./rooms/Essay.jsx";
 import Cast from "./rooms/Cast.jsx";
 import Shows from "./rooms/Shows.jsx";
-import Build from "./rooms/Build.jsx";
-import Analysis from "./rooms/Analysis.jsx";
+ Build from "./rooms/Build.jsx";
+ Analysis from "./rooms/Analysis.jsx";
 import Week from "./rooms/Week.jsx";
 import SubEditor from "./rooms/SubEditor.jsx";
 import Inbox from "./rooms/Inbox.jsx"; 
@@ -571,9 +572,11 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 />
               )}
 
-              {room === "guests" && (
-                <Guests guests={guests} setGuests={setGuests} sSet={sSet} K={K} today={today} />{room === "clipdesk" && <ClipDesk onClose={() => setRoom(null)} />
-              )}
+             {room === "guests" && (
+  <Guests guests={guests} setGuests={setGuests} sSet={sSet} K={K} today={today} />
+)}
+
+{room === "clipdesk" && <ClipDesk onClose={() => setRoom(null)} />}
 
               {room === "growth" && (
                 <Growth assets={assets} setAssets={setAssets} sSet={sSet} K={K} today={today}
