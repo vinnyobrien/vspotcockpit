@@ -115,7 +115,12 @@ export default async (req) => {
       const url = `https://example.com/_health/${Date.now()}`;
       const origin = new URL(req.url).origin;
       const auth = req.headers.get('authorization');
-      const headers = { 'content-type': 'application/json', ...(auth ? { authorization: auth } : {}) };
+      const cookie = req.headers.get('cookie');
+      const headers = {
+        'content-type': 'application/json',
+        ...(auth ? { authorization: auth } : {}),
+        ...(cookie ? { cookie } : {})
+      };
 
       const first = await fetch(`${origin}/api/capture`, {
         method: 'POST', headers,

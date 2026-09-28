@@ -34,8 +34,8 @@ const Recognition =
   typeof window !== "undefined" &&
   (window.SpeechRecognition || window.webkitSpeechRecognition);
 
-export default function Essay({ threads, threadContext, K }) {
-  const [thread, setThread] = useState("");
+export default function Essay({ threads, threadContext, K, initialThread = "" }) {
+  const [thread, setThread] = useState(initialThread);
   const [draft, setDraft] = useState("");
   const [capture, setCapture] = useState([]);
   const [scratch, setScratch] = useState("");

@@ -8,6 +8,7 @@ import {
   Empty, Working, Problem, DAYS, iso, daysSince, parseJSON,
 } from "../lib/ui.jsx";
 import { callOp } from "../api.js";
+import EditorialCall from "./EditorialCall.jsx";
 
 /* ============================================================
    src/rooms/Today.jsx
@@ -77,6 +78,7 @@ export default function Today({
   today, dayKey, tasks, done, toggle, extras, addExtra,
   gaps, three, setThree, weekRows, weekAvg, calibration, pct, doneW, totalW, offAir,
   brief, setBrief, briefAt, setBriefAt, onDecisionKeep,
+  threads, onEditorialNavigate,
 }) {
   const [capture, setCapture] = useState("");
   const [just, setJust] = useState("");
@@ -156,6 +158,8 @@ export default function Today({
           </div>
         )}
       </Card>
+
+      <EditorialCall gaps={gaps} threads={threads} onNavigate={onEditorialNavigate} />
 
       <div className="flex justify-end" style={{ marginBottom: 10 }}>
         <button className="tap" onClick={() => {

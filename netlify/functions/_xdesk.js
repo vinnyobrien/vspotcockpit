@@ -240,7 +240,7 @@ async function pullOne(f) {
 
 /** Pulls every feed in parallel, drops anything already used, returns the
     freshest candidates plus a per source report so failures are visible. */
-export async function pullStories({ hours = 30, limit = 70 } = {}) {
+export async function pullStories({ hours = 30, limit = 70, includeSeen = false } = {}) {
   const list = await feeds();
   const results = await Promise.all(list.map(pullOne));
 
@@ -250,7 +250,7 @@ export async function pullStories({ hours = 30, limit = 70 } = {}) {
 
   for (const r of results) {
     for (const it of r.items) {
-      if (seen.has(it.id)) continue;
+      if (!includeSeen && seen.has(it.id)) continue;
       if (it.at < cutoff) continue;
       if (JUNK.test(it.title)) continue;
       if (!byId.has(it.id)) byId.set(it.id, it);

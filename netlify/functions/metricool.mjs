@@ -1,4 +1,5 @@
 import { getStore } from '@netlify/blobs';
+import { requireAuth } from './_auth.js';
 
 export const config = { path: '/api/metricool/*' };
 
@@ -56,8 +57,8 @@ const bad = (m, s = 400) => json({ ok: false, error: m }, s);
 
 function authorised(req) {
   const t = process.env.COCKPIT_TOKEN;
-  if (!t) return true;
-  return (req.headers.get('authorization') || '') === `Bearer ${t}`;
+  if (t && (req.headers.get('authorization') || '') === `Bearer ${t}`) return true;
+  return requireAuth(req) === null;
 }
 
 async function mc(path, params = {}) {
