@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import {
   MessageSquare, Film, PenLine, Users, TrendingUp, Mic, Hammer,
   Drama, LineChart, ChevronLeft, CalendarDays, Scale, Inbox as InboxIcon,ListChecks,
+  Lightbulb,
 } from "lucide-react";
 import {
   C, BODY, MONO, SH, R, Mono, Big, Card, Section, Pill, Problem,
@@ -20,6 +21,7 @@ import Essay from "./rooms/Essay.jsx";
 import Cast from "./rooms/Cast.jsx";
 import Shows from "./rooms/Shows.jsx";
 import Build from "./rooms/Build.jsx";
+import EpisodeIntelligence from "./rooms/EpisodeIntelligence.jsx";
 import Analysis from "./rooms/Analysis.jsx";
 import Week from "./rooms/Week.jsx";
 import SubEditor from "./rooms/SubEditor.jsx";
@@ -111,6 +113,7 @@ const ROOMS = [
   { id: "growth",   name: "Growth",   icon: TrendingUp,    tint: C.apricot, blurb: "Sponsors and Camp Tralee" },
   { id: "shows",    name: "Shows",    icon: Mic,           tint: C.sand,    blurb: "Feeds and episodes" },
   { id: "build",    name: "Build",    icon: Hammer,        tint: C.sky,     blurb: "Transcript in, channels out" },
+  { id: "episode",  name: "Episode Intelligence", icon: Lightbulb, tint: C.sand, blurb: "Conversation to insight" },
   { id: "cast",     name: "The Cast", icon: Drama,         tint: C.lilac,   blurb: "Murt, Reagan, Jimmy" },
   { id: "analysis", name: "Analysis", icon: LineChart,     tint: C.mint,    blurb: "Monthly" },
 ];
@@ -146,6 +149,7 @@ function useWide() {
 
 export default function Cockpit({ onLogout, googleConnected }) {
   const today = useMemo(() => new Date(), []);
+  const [episodeSeed, setEpisodeSeed] = useState(null);
   const dayKey = iso(today);
   const dow = today.getDay();
 
@@ -601,7 +605,8 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
               {room === "shows" && <Shows K={K} />}
 
-              {room === "build" && <Build />}
+              {room === "episode" && <EpisodeIntelligence guests={guests} onBuild={(seed) => { setEpisodeSeed(seed); setRoom("build"); }} />}
+              {room === "build" && <Build seed={episodeSeed} />}
 
               {room === "analysis" && (
                 <Analysis ledger={ledger} published={published} threads={threads}
