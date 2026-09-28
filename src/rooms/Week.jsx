@@ -32,6 +32,7 @@ const SLOTS = [
   { id: "substack", name: "Substack long form", at: "13:00", tint: C.blush, dow: [4], kind: "written", note: "The week's essay." },
   { id: "supp",     name: "Sunday Supplement",  at: "11:00", tint: C.lilac, dow: [5], kind: "show",    note: "Record the long form." },
   { id: "corr",     name: "Correspondent film", at: "14:00", tint: C.sand,  dow: [3], kind: "video",   note: "One of the three." },
+  { id: "subscriber-live", name: "Paid subscriber live", at: "15:00", tint: C.mint, dow: [3], kind: "show", note: "Four-week pilot · 30 minutes, then recap.", dates: ["2026-10-07", "2026-10-14", "2026-10-21", "2026-10-28"] },
 ];
 
 const KINDS = {
@@ -62,6 +63,7 @@ export default function Week({ today, cal, onSetCal, published }) {
     const dow = d.getDay();
     const weekend = dow === 0 || dow === 6;
     return SLOTS.filter((s) => {
+      if (s.dates && !s.dates.includes(iso(d))) return false;
       if (s.dow) return s.dow.includes(dow);
       return s.daily && !weekend;
     }).filter((s) => filter === "all" || s.kind === filter);
