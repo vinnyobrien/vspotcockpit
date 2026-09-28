@@ -17,6 +17,7 @@ import Desk from "./rooms/Desk.jsx";
 import Video from "./rooms/Video.jsx";
 import Guests from "./rooms/Guests.jsx";
 import Growth from "./rooms/Growth.jsx";
+import Subscribers from "./rooms/Subscribers.jsx";
 import Essay from "./rooms/Essay.jsx";
 import Cast from "./rooms/Cast.jsx";
 import Shows from "./rooms/Shows.jsx";
@@ -54,6 +55,7 @@ const K = {
   guests: "guests",
   essay: (t) => `essay:${t || "untitled"}`,
   assets: "sponsor-assets",
+  subscriberSeries: "subscriber-series",
 };
 
 const DAILY = [
@@ -113,6 +115,7 @@ const ROOMS = [
   { id: "essay",    name: "Essay",    icon: PenLine,       tint: C.lilac,   blurb: "The long form" },
   { id: "guests",   name: "Guests",   icon: Users,         tint: C.blush,   blurb: "Pipeline and assets" },
   { id: "growth",   name: "Growth",   icon: TrendingUp,    tint: C.apricot, blurb: "Sponsors and Camp Tralee" },
+  { id: "subscribers", name: "Subscribers", icon: Users, tint: C.mint, blurb: "Paid tier and live sessions" },
   { id: "shows",    name: "Shows",    icon: Mic,           tint: C.sand,    blurb: "Feeds and episodes" },
   { id: "build",    name: "Build",    icon: Hammer,        tint: C.sky,     blurb: "Transcript in, channels out" },
   { id: "episode",  name: "Episode Intelligence", icon: Lightbulb, tint: C.sand, blurb: "Conversation to insight" },
@@ -593,6 +596,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 <Growth assets={assets} setAssets={setAssets} sSet={sSet} K={K} today={today}
                   onGenerate={generate} busy={busy} />
               )}
+              {room === "subscribers" && <Subscribers sGet={sGet} sSet={sSet} storageKey={K.subscriberSeries} />}
 
               {room === "essay" && (
                 <Essay threads={threads} threadContext={threadContext} K={K} initialThread={editorThread} />
