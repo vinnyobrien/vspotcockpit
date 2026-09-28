@@ -8,6 +8,7 @@ import { containsClientMaterial, applyOverrides, haltMessage } from "./_contract
 import { listProjects, listClips } from "./_opus.js";
 import { selectCandidates, normalise } from "./_selector.js";          // NEW
 import { recentMeetings, firefliesConfigured } from "./_fireflies.js";  // NEW
+import { pullStories } from "./_xdesk.js";
 
 /**
  * Netlify runs any *-background function asynchronously with a long budget,
@@ -73,6 +74,16 @@ export default async (req) => {
       // and returned the same six clips every day.
       exclude: Array.isArray(body.exclude) ? body.exclude.slice(0, 600).map(String) : [],
       dateStr: new Date().toDateString(),
+      news: Array.isArray(body.news) ? body.news.slice(0, 8).map((s) => ({
+        id: String(s.id || "").slice(0, 500),
+        url: String(s.url || "").slice(0, 500),
+        title: String(s.title || "").slice(0, 250),
+        source: String(s.source || "").slice(0, 100),
+        region: String(s.region || "").slice(0, 20),
+        summary: String(s.summary || "").slice(0, 500),
+        why: String(s.why || "").slice(0, 300),
+        angle: String(s.angle || "").slice(0, 300),
+      })) : [],
     };
     if (body.op === "generate" && !["post", "script", "substack", "ideas", "sponsor", "foundrae"].includes(args.kind)) {
       throw new Error("Unknown generator");
@@ -207,6 +218,15 @@ export default async (req) => {
       args.data = await fetchBriefing(token);
     }
 
+    if (body.op === "breaking_shortlist") {
+      args.data = await pullStories({ hours: 48, limit: 45, includeSeen: true });
+      if (!args.data.stories.length) throw new Error("No recent stories came back. Check the news feeds and try again.");
+    }
+
+    if (body.op === "breaking_script" && (args.news.length < 5 || args.news.length > 8)) {
+      throw new Error("Pick between five and eight stories for the rundown.");
+    }
+
     const payload = {
       model: "claude-sonnet-4-6",
       max_tokens: op.maxTokens,
@@ -246,6 +266,10 @@ export default async (req) => {
     await finish(id, {
       status: "done",
       text: blocks.filter((b) => b.type === "text").map((b) => b.text).join("\n").trim(),
+      ...(body.op === "breaking_shortlist" ? {
+        candidates: args.data.stories,
+        feedReport: args.data.report,
+      } : {}),
       calls: blocks.filter((b) => b.type === "mcp_tool_use").length,
       failed: blocks.filter((b) => b.type === "mcp_tool_result" && b.is_error).length,
       note: JOB_TTL_NOTE,

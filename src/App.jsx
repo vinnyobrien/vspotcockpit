@@ -22,6 +22,7 @@ import Cast from "./rooms/Cast.jsx";
 import Shows from "./rooms/Shows.jsx";
 import Build from "./rooms/Build.jsx";
 import EpisodeIntelligence from "./rooms/EpisodeIntelligence.jsx";
+import BreakingNews from "./rooms/BreakingNews.jsx";
 import Analysis from "./rooms/Analysis.jsx";
 import Week from "./rooms/Week.jsx";
 import SubEditor from "./rooms/SubEditor.jsx";
@@ -102,6 +103,7 @@ const TITLES = {
 };
 
 const ROOMS = [
+  { id: "breaking", name: "Breaking News", icon: MessageSquare, tint: C.blush, blurb: "Stories, angles, rundown, archive" },
   { id: "actions",  name: "Actions",  icon: ListChecks,    tint: C.apricot, blurb: "What the rules say to do" },
   { id: "desk",     name: "The Desk", icon: MessageSquare, tint: C.sky,     blurb: "Wire, conversation, studio" },
   { id: "video",    name: "Video",    icon: Film,          tint: C.mint,    blurb: "Shorts and calendar" },
@@ -611,6 +613,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               {room === "shows" && <Shows K={K} />}
 
               {room === "episode" && <EpisodeIntelligence guests={guests} onBuild={(seed) => { setEpisodeSeed(seed); setRoom("build"); }} />}
+              {room === "breaking" && <BreakingNews />}
               {room === "build" && <Build seed={episodeSeed} />}
 
               {room === "analysis" && (
