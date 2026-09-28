@@ -19,6 +19,7 @@ import { VOICE } from "./_prompts.js";
 export const KEY_DAY = (d) => `xdesk:day:${d}`;
 export const KEY_SEEN = "xdesk:seen";
 export const KEY_FEEDS = "xdesk:feeds";
+export const KEY_VOICES = "vspot:voices";
 export const KEY_LEDGER = (m) => `xdesk:ledger:${m}`;
 
 export const DAILY_CALL_CAP = 250; // shared with claude.js, same counter
@@ -262,6 +263,28 @@ export async function pullStories({ hours = 30, limit = 70, includeSeen = false 
     stories,
     report: results.map((r) => ({ source: r.source, ok: r.ok, status: r.status, count: r.items.length })),
   };
+}
+
+/** Public Substack publications chosen by Vinny. These are commentary,
+    never treated as independent confirmation of a reported story. */
+export async function pullCommentary({ hours = 24 * 7, limit = 24 } = {}) {
+  const saved = await readJSON("cockpit", KEY_VOICES, []);
+  const list = (Array.isArray(saved) ? saved : []).slice(0, 20).flatMap((v) => {
+    try {
+      const u = new URL(v.url);
+      if (u.protocol !== "https:" || !/^[a-z0-9-]+\.substack\.com$/i.test(u.hostname)
+        || u.port || u.username || u.password || !["/", "/feed"].includes(u.pathname)) return [];
+      return [{ id: u.hostname, name: String(v.name || u.hostname).slice(0, 80),
+        region: "COMMENTARY", url: `https://${u.hostname}/feed` }];
+    } catch { return []; }
+  });
+  const results = await Promise.all(list.map(pullOne));
+  const cutoff = Date.now() - hours * 3600000;
+  const posts = results.flatMap((r) => r.items)
+    .filter((s) => s.at >= cutoff)
+    .sort((a, b) => b.at - a.at)
+    .slice(0, limit);
+  return { posts, report: results.map((r) => ({ source: r.source, ok: r.ok, status: r.status, count: r.items.length })) };
 }
 
 /** Cheap relevance score so each slot gets a shortlist worth reading. */

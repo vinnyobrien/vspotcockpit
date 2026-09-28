@@ -8,7 +8,7 @@ import { containsClientMaterial, applyOverrides, haltMessage } from "./_contract
 import { listProjects, listClips } from "./_opus.js";
 import { selectCandidates, normalise } from "./_selector.js";          // NEW
 import { recentMeetings, firefliesConfigured } from "./_fireflies.js";  // NEW
-import { pullStories } from "./_xdesk.js";
+import { pullStories, pullCommentary } from "./_xdesk.js";
 
 /**
  * Netlify runs any *-background function asynchronously with a long budget,
@@ -83,6 +83,15 @@ export default async (req) => {
         summary: String(s.summary || "").slice(0, 500),
         why: String(s.why || "").slice(0, 300),
         angle: String(s.angle || "").slice(0, 300),
+      })) : [],
+      commentary: Array.isArray(body.commentary) ? body.commentary.slice(0, 3).map((s) => ({
+        id: String(s.id || "").slice(0, 500),
+        url: String(s.url || "").slice(0, 500),
+        title: String(s.title || "").slice(0, 250),
+        source: String(s.source || "").slice(0, 100),
+        summary: String(s.summary || "").slice(0, 500),
+        claim: String(s.claim || "").slice(0, 350),
+        reaction: String(s.reaction || "").slice(0, 350),
       })) : [],
     };
     if (body.op === "generate" && !["post", "script", "substack", "ideas", "sponsor", "foundrae"].includes(args.kind)) {
@@ -219,7 +228,11 @@ export default async (req) => {
     }
 
     if (body.op === "breaking_shortlist") {
-      args.data = await pullStories({ hours: 48, limit: 45, includeSeen: true });
+      const [news, voices] = await Promise.all([
+        pullStories({ hours: 48, limit: 45, includeSeen: true }),
+        pullCommentary(),
+      ]);
+      args.data = { ...news, commentary: voices.posts, commentaryReport: voices.report };
       if (!args.data.stories.length) throw new Error("No recent stories came back. Check the news feeds and try again.");
     }
 
@@ -269,6 +282,8 @@ export default async (req) => {
       ...(body.op === "breaking_shortlist" ? {
         candidates: args.data.stories,
         feedReport: args.data.report,
+        commentary: args.data.commentary,
+        commentaryReport: args.data.commentaryReport,
       } : {}),
       calls: blocks.filter((b) => b.type === "mcp_tool_use").length,
       failed: blocks.filter((b) => b.type === "mcp_tool_result" && b.is_error).length,
