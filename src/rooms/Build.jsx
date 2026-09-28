@@ -27,7 +27,7 @@ const CHANNELS = [
   { id: "spotify",  label: "Spotify",  note: "Under 200 words. Survives partial attention." },
 ];
 
-export default function Build() {
+export default function Build({ seed }) {
   const [context, setContext] = useState("");
   const [source, setSource] = useState("");
   const [out, setOut] = useState(null);
@@ -42,6 +42,14 @@ export default function Build() {
   const [history, setHistory] = useState({});   // { linkedin: [turns] }
   const [notes, setNotes] = useState({});       // the feedback boxes
   const [saved, setSaved] = useState(null);
+
+  useEffect(() => {
+    if (!seed) return;
+    setContext(seed.context || "");
+    setSource(seed.source || "");
+    setOut(null);
+    setDrafts({});
+  }, [seed]);
 
   const words = source.trim() ? source.trim().split(/\s+/).length : 0;
   const short = words > 0 && words < 500;
