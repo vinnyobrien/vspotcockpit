@@ -18,6 +18,7 @@ import Video from "./rooms/Video.jsx";
 import Guests from "./rooms/Guests.jsx";
 import Growth from "./rooms/Growth.jsx";
 import Essay from "./rooms/Essay.jsx";
+import EssayNotes from "./rooms/EssayNotes.jsx";
 import Cast from "./rooms/Cast.jsx";
 import Shows from "./rooms/Shows.jsx";
 import Build from "./rooms/Build.jsx";
@@ -111,6 +112,7 @@ const ROOMS = [
   { id: "sub",      name: "Sub-Editor", icon: Scale,      tint: C.blush,   blurb: "Voice, claims, contradictions" },
   { id: "week",     name: "The Week", icon: CalendarDays,  tint: C.sand,    blurb: "Every slot, filled or open" },
   { id: "essay",    name: "Essay",    icon: PenLine,       tint: C.lilac,   blurb: "The long form" },
+  { id: "essay-notes", name: "The Note Desk", icon: PenLine, tint: C.apricot, blurb: "Archive lines into Substack Notes" },
   { id: "guests",   name: "Guests",   icon: Users,         tint: C.blush,   blurb: "Pipeline and assets" },
   { id: "growth",   name: "Growth",   icon: TrendingUp,    tint: C.apricot, blurb: "Sponsors and Camp Tralee" },
   { id: "shows",    name: "Shows",    icon: Mic,           tint: C.sand,    blurb: "Feeds and episodes" },
@@ -597,6 +599,8 @@ export default function Cockpit({ onLogout, googleConnected }) {
               {room === "essay" && (
                 <Essay threads={threads} threadContext={threadContext} K={K} initialThread={editorThread} />
               )}
+
+              {room === "essay-notes" && <EssayNotes />}
 
               {room === "cast" && <Cast />}
 
