@@ -1,5 +1,6 @@
 import { requireAuth, json } from "./_auth.js";
 import { scopesFor, googleId, googleRedirect } from "./_google.js";
+import { randomBytes } from "node:crypto";
 
 export default async (req) => {
   const denied = requireAuth(req);
@@ -15,9 +16,17 @@ export default async (req) => {
   url.searchParams.set("response_type", "code");
   const service = new URL(req.url).searchParams.get("service") === "youtube" ? "youtube" : "workspace";
   url.searchParams.set("scope", scopesFor(service));
-  url.searchParams.set("state", service);
+  const state = `${service}.${randomBytes(24).toString("base64url")}`;
+  url.searchParams.set("state", state);
   url.searchParams.set("access_type", "offline");
   url.searchParams.set("prompt", "consent");
 
-  return Response.redirect(url.toString(), 302);
+  return new Response(null, {
+    status: 302,
+    headers: {
+      location: url.toString(),
+      "set-cookie": `vc_oauth_state=${state}; HttpOnly; Secure; SameSite=Lax; Path=/api/oauth-callback; Max-Age=600`,
+      "cache-control": "no-store",
+    },
+  });
 };

@@ -1,5 +1,6 @@
 import { requireAuth, json } from "./_auth.js";
 import { saveTokens, googleId, googleSecret, googleRedirect } from "./_google.js";
+import { safeEqual } from "./_auth.js";
 
 export default async (req) => {
   const denied = requireAuth(req);
@@ -7,7 +8,12 @@ export default async (req) => {
 
   const u = new URL(req.url);
   const code = u.searchParams.get("code");
-  const service = u.searchParams.get("state") === "youtube" ? "youtube" : "workspace";
+  const state = u.searchParams.get("state") || "";
+  const cookie = (req.headers.get("cookie") || "").split(";").map((c) => c.trim())
+    .find((c) => c.startsWith("vc_oauth_state="))?.slice("vc_oauth_state=".length) || "";
+  if (!state || !cookie || !safeEqual(state, cookie)) return json({ error: "Google connection expired. Start Connect Google again." }, 400);
+  const service = state.startsWith("youtube.") ? "youtube" : state.startsWith("workspace.") ? "workspace" : null;
+  if (!service) return json({ error: "Invalid Google connection state." }, 400);
   if (!code) return json({ error: "No code" }, 400);
 
   const res = await fetch("https://oauth2.googleapis.com/token", {
@@ -48,5 +54,8 @@ export default async (req) => {
   }
 
   await saveTokens(await res.json(), service);
-  return new Response(null, { status: 302, headers: { location: `/?connected=${service}` } });
+  return new Response(null, { status: 302, headers: {
+    location: `/?connected=${service}`,
+    "set-cookie": "vc_oauth_state=; HttpOnly; Secure; SameSite=Lax; Path=/api/oauth-callback; Max-Age=0",
+  } });
 };

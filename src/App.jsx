@@ -150,6 +150,7 @@ function useWide() {
 export default function Cockpit({ onLogout, googleConnected }) {
   const today = useMemo(() => new Date(), []);
   const [episodeSeed, setEpisodeSeed] = useState(null);
+  const [editorThread, setEditorThread] = useState("");
   const dayKey = iso(today);
   const dow = today.getDay();
 
@@ -518,6 +519,10 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 pct={pct} doneW={doneW} totalW={totalW} offAir={offAir}
                 brief={brief} setBrief={setBrief} briefAt={briefAt} setBriefAt={setBriefAt}
                 onDecisionKeep={(c) => push({ kind: "reply", title: "Reply draft", sub: c.who, body: c.draft })}
+                threads={threads} onEditorialNavigate={(nextRoom, threadId = "") => {
+                  if (nextRoom === "essay") setEditorThread(threadId);
+                  setRoom(nextRoom);
+                }}
               />
 
               {!wide && <div style={{ padding: "0 16px 24px" }}>
@@ -588,7 +593,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               )}
 
               {room === "essay" && (
-                <Essay threads={threads} threadContext={threadContext} K={K} />
+                <Essay threads={threads} threadContext={threadContext} K={K} initialThread={editorThread} />
               )}
 
               {room === "cast" && <Cast />}

@@ -60,9 +60,11 @@ export async function getAccessToken(service) {
 }
 
 export async function saveTokens(t, service) {
+  const key = keyFor(service);
+  const previous = await readJSON("secrets", key, null);
   await writeJSON("secrets", keyFor(service), {
     access_token: t.access_token,
-    refresh_token: t.refresh_token,
+    refresh_token: t.refresh_token || previous?.refresh_token || null,
     expires_at: Date.now() + (t.expires_in || 3600) * 1000,
   });
 }

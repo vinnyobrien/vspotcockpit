@@ -2,9 +2,10 @@ import { readJSON, writeJSON } from "./_blobs.js";
 import { anthropicKey } from "./_key.js";
 import { recentMeetings, firefliesConfigured } from "./_fireflies.js";
 import { record } from "./_ledger.js";
+import { createHash } from "node:crypto";
 
 /**
- * netlify/functions/fireflies-daily.js  —  scheduled, hourly, acts at 08:00.
+ * netlify/functions/fireflies-daily.js  —  scheduled, hourly, retries from 08:00 to 12:00 Dublin time.
  *
  * Pulls yesterday's meetings, extracts what was committed to and what was
  * decided, gives every action a due date, and files it all before you open the
@@ -23,6 +24,7 @@ import { record } from "./_ledger.js";
 export const config = { schedule: "@hourly" };
 
 const HOUR = 8;                       // Dublin local
+const LAST_RETRY_HOUR = 12;
 const INBOX = "inbox";
 const COMMITMENTS = "commitments";
 const MAX = 300;
@@ -35,6 +37,9 @@ const dublinHour = () =>
 const iso = (d) => d.toISOString().slice(0, 10);
 const today = () => iso(new Date());
 const plus = (n) => iso(new Date(Date.now() + n * 86400000));
+const idFor = (kind, parts) => createHash("sha256")
+  .update([kind, ...parts].join("\u0000")).digest("hex").slice(0, 20);
+const unique = (items) => [...new Map(items.map((item) => [item.id, item])).values()];
 
 /** Next weekday, so nothing lands due on a Saturday nobody works. */
 function nextWorking(days) {
@@ -65,21 +70,19 @@ const parseObj = (t) => {
 };
 
 export default async () => {
-  if (dublinHour() !== HOUR) return new Response("not the hour", { status: 200 });
+  if (dublinHour() < HOUR || dublinHour() > LAST_RETRY_HOUR) return new Response("not the hour", { status: 200 });
 
   const ranKey = `fireflies-ran:${today()}`;
   if (await readJSON("cockpit", ranKey, false)) {
     return new Response("already ran today", { status: 200 });
   }
-  await writeJSON("cockpit", ranKey, true);
-
   try {
     if (!firefliesConfigured()) throw new Error("FIREFLIES_API_KEY is not set.");
     const { clean: key } = anthropicKey();
     if (!key) throw new Error("No Anthropic key set.");
 
-    // 36 hours so a Monday morning still catches Friday afternoon.
-    const meetings = await recentMeetings(36);
+    // Monday's window includes Friday afternoon; other days cover yesterday.
+    const meetings = await recentMeetings(new Date().toLocaleString("en-US", { timeZone: "Europe/Dublin", weekday: "long" }).startsWith("Monday") ? 72 : 36);
     if (!meetings.length) {
       await record("fireflies.quiet", { reason: "no meetings" });
       return new Response("no meetings", { status: 200 });
@@ -128,7 +131,7 @@ than supplying a plausible one. An empty list is a valid answer.`,
     }, key));
 
     const actions = (out.actions || []).map((a) => ({
-      id: Math.random().toString(36).slice(2),
+      id: idFor("action", [a.meeting, a.who, a.what]),
       what: String(a.what || "").slice(0, 300),
       who: String(a.who || "").slice(0, 60),
       meeting: String(a.meeting || "").slice(0, 140),
@@ -140,7 +143,7 @@ than supplying a plausible one. An empty list is a valid answer.`,
     })).filter((a) => a.what);
 
     const decisions = (out.decisions || []).map((d) => ({
-      id: Math.random().toString(36).slice(2),
+      id: idFor("decision", [d.meeting, d.what]),
       what: String(d.what || "").slice(0, 300),
       why: String(d.why || "").slice(0, 300),
       meeting: String(d.meeting || "").slice(0, 140),
@@ -149,14 +152,15 @@ than supplying a plausible one. An empty list is a valid answer.`,
 
     if (!actions.length && !decisions.length) {
       await record("fireflies.quiet", { meetings: meetings.length, reason: "nothing committed" });
+      await writeJSON("cockpit", ranKey, true);
       return new Response("meetings, but nothing committed to", { status: 200 });
     }
 
     // Commitments are the durable record. The inbox is just how you notice.
     const prior = (await readJSON("cockpit", COMMITMENTS, {})) || {};
     await writeJSON("cockpit", COMMITMENTS, {
-      actions: [...actions, ...(prior.actions || [])].slice(0, MAX),
-      decisions: [...decisions, ...(prior.decisions || [])].slice(0, MAX),
+      actions: unique([...actions, ...(prior.actions || [])]).slice(0, MAX),
+      decisions: unique([...decisions, ...(prior.decisions || [])]).slice(0, MAX),
       updated: new Date().toISOString(),
     });
 
@@ -180,15 +184,16 @@ than supplying a plausible one. An empty list is a valid answer.`,
       })),
     ];
 
-    await writeJSON("cockpit", INBOX, [...items, ...inbox].slice(0, MAX));
+    await writeJSON("cockpit", INBOX, unique([...items, ...inbox]).slice(0, MAX));
     await record("fireflies.filed", {
       meetings: meetings.length, actions: actions.length, decisions: decisions.length,
     });
+    await writeJSON("cockpit", ranKey, true);
 
     return new Response(`filed ${actions.length} actions, ${decisions.length} decisions`, { status: 200 });
 
   } catch (e) {
     await record("fireflies.failed", { error: String(e.message || e).slice(0, 300) });
-    return new Response(`failed: ${e.message}`, { status: 200 });
+    return new Response(`failed: ${e.message}`, { status: 500 });
   }
 };
