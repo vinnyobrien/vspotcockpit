@@ -1,3 +1,4 @@
+import RoomSession from "./lib/RoomSession.jsx";
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   MessageSquare, Film, PenLine, Users, TrendingUp, Mic, Hammer,
@@ -434,7 +435,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
             {ROOMS.map((r) => {
               const I = r.icon;
-              {room === "actions" && <Actions />}
+              
               const on = room === r.id;
               return (
                 <button key={r.id} onClick={() => setRoom(r.id)} className="tap"
@@ -563,63 +564,47 @@ export default function Cockpit({ onLogout, googleConnected }) {
             </>
           )}
 
-          {room && (
-            <div className="rm" style={{ padding: wide ? "0 24px 48px" : "0 16px 40px", maxWidth: wide ? 820 : "none" }}>
-              {!wide && <div style={{ marginBottom: 18 }}><Big s={36}>{current.name.toUpperCase()}</Big></div>}
+          {(
+            <div hidden={!room} className="rm" style={{ padding: wide ? "0 24px 48px" : "0 16px 40px", maxWidth: wide ? 820 : "none" }}>
+              {room && !wide && <div style={{ marginBottom: 18 }}><Big s={36}>{current.name.toUpperCase()}</Big></div>}
+              <RoomSession active={room === "actions"}><Actions /></RoomSession>
 
-              {room === "desk" && (
-                <Desk
+              {<RoomSession active={room === "desk"}><Desk
                   threads={threads} today={today} onGenerate={generate} busy={busy}
                   wire={wire} setWire={setWire} wireAt={wireAt} setWireAt={setWireAt}
-                  onOpenEssay={() => setErr("The essay workshop is the next room to be built.")}
-                  onOpenClipDesk={() => setErr("The clip desk is the next room to be built.")}
-                />
-              )}
+                  onOpenRoom={(nextRoom) => setRoom(nextRoom)}
+                /></RoomSession>}
 
-              {room === "video" && (
-                <Video
+              {<RoomSession active={room === "video"}><Video
                   shorts={shorts} setShorts={setShorts} dayKey={dayKey} published={published}
                   onPublish={onPublish} busy={busy} cal={cal} onSetCal={onSetCal} today={today} K={K}
-                />
-              )}
+                /></RoomSession>}
 
-             {room === "guests" && (
-  <Guests guests={guests} setGuests={setGuests} sSet={sSet} K={K} today={today} />
-)}
+             {<RoomSession active={room === "guests"}><Guests guests={guests} setGuests={setGuests} sSet={sSet} K={K} today={today} /></RoomSession>}
 
-{room === "clipdesk" && <ClipDesk onClose={() => setRoom(null)} />}
+{<RoomSession active={room === "clipdesk"}><ClipDesk onClose={() => setRoom(null)} /></RoomSession>}
 
-              {room === "growth" && (
-                <Growth assets={assets} setAssets={setAssets} sSet={sSet} K={K} today={today}
-                  onGenerate={generate} busy={busy} />
-              )}
+              {<RoomSession active={room === "growth"}><Growth assets={assets} setAssets={setAssets} sSet={sSet} K={K} today={today}
+                  onGenerate={generate} busy={busy} /></RoomSession>}
 
-              {room === "essay" && (
-                <Essay threads={threads} threadContext={threadContext} K={K} initialThread={editorThread} />
-              )}
+              {<RoomSession active={room === "essay"}><Essay threads={threads} threadContext={threadContext} K={K} initialThread={editorThread} /></RoomSession>}
 
-              {room === "cast" && <Cast />}
+              {<RoomSession active={room === "cast"}><Cast /></RoomSession>}
 
-              {room === "inbox" && <Inbox threads={threads} ledger={ledger} />}
+              {<RoomSession active={room === "inbox"}><Inbox threads={threads} ledger={ledger} /></RoomSession>}
 
-              {room === "sub" && (
-                <SubEditor threads={threads} ledger={ledger} K={K} />
-              )}
+              {<RoomSession active={room === "sub"}><SubEditor threads={threads} ledger={ledger} K={K} /></RoomSession>}
 
-              {room === "week" && (
-                <Week today={today} cal={cal} onSetCal={onSetCal} published={published} />
-              )}
+              {<RoomSession active={room === "week"}><Week today={today} cal={cal} onSetCal={onSetCal} published={published} /></RoomSession>}
 
-              {room === "shows" && <Shows K={K} />}
+              {<RoomSession active={room === "shows"}><Shows K={K} /></RoomSession>}
 
-              {room === "episode" && <EpisodeIntelligence guests={guests} onBuild={(seed) => { setEpisodeSeed(seed); setRoom("build"); }} />}
-              {room === "breaking" && <BreakingNews />}
-              {room === "build" && <Build seed={episodeSeed} />}
+              {<RoomSession active={room === "episode"}><EpisodeIntelligence guests={guests} onBuild={(seed) => { setEpisodeSeed(seed); setRoom("build"); }} /></RoomSession>}
+              {<RoomSession active={room === "breaking"}><BreakingNews /></RoomSession>}
+              {<RoomSession active={room === "build"}><Build seed={episodeSeed} /></RoomSession>}
 
-              {room === "analysis" && (
-                <Analysis ledger={ledger} published={published} threads={threads}
-                  history={history} today={today} />
-              )}
+              {<RoomSession active={room === "analysis"}><Analysis ledger={ledger} published={published} threads={threads}
+                  history={history} today={today} /></RoomSession>}
             </div>
           )}
         </div>
@@ -688,3 +673,4 @@ function Panel({ entry, onClose }) {
     </div>
   );
 }
+
