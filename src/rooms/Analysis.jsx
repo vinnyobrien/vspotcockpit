@@ -124,9 +124,9 @@ export default function Analysis({ ledger, published, threads, history, today })
         <div className="flex items-start gap-2.5">
           <AlertTriangle size={16} strokeWidth={2.3} color={C.red} style={{ marginTop: 1, flexShrink: 0 }} />
           <p style={{ fontSize: 12.5, color: C.ink2, lineHeight: 1.5 }}>
-            Platform analytics are not wired in. YouTube and Meta both expose them cleanly over the OAuth
-            you already have; Substack has no public API and X charges for it. What you see here is what
-            the Cockpit itself recorded, which is the half nobody else can tell you.
+            This page shows activity recorded inside the Cockpit: logged work, published clips and
+            ongoing threads. Audience reach, views and engagement from Metricool are not yet
+            displayed here. Connecting Google or YouTube does not automatically add those reports.
           </p>
         </div>
       </Card>
