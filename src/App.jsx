@@ -572,8 +572,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               {<RoomSession active={room === "desk"}><Desk
                   threads={threads} today={today} onGenerate={generate} busy={busy}
                   wire={wire} setWire={setWire} wireAt={wireAt} setWireAt={setWireAt}
-                  onOpenEssay={() => setErr("The essay workshop is the next room to be built.")}
-                  onOpenClipDesk={() => setErr("The clip desk is the next room to be built.")}
+                  onOpenRoom={(nextRoom) => setRoom(nextRoom)}
                 /></RoomSession>}
 
               {<RoomSession active={room === "video"}><Video
