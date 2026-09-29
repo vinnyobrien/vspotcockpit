@@ -84,7 +84,22 @@ export default async (req) => {
         why: String(s.why || "").slice(0, 300),
         angle: String(s.angle || "").slice(0, 300),
       })) : [],
+      editorial: body.editorial && typeof body.editorial === "object" ? {
+        question: String(body.editorial.question || "").slice(0, 600),
+        action: String(body.editorial.action || "").slice(0, 400),
+        turns: Array.isArray(body.editorial.turns) ? body.editorial.turns.slice(-16).map((t) => ({
+          role: t.role === "vinny" ? "vinny" : "producer",
+          text: String(t.text || "").slice(0, 3500),
+        })) : [],
+        sources: Array.isArray(body.editorial.sources) ? body.editorial.sources.slice(0, 12).map((s) => ({
+          label: String(s.label || "").slice(0, 120), url: String(s.url || "").slice(0, 500),
+        })) : [],
+        format: ["script", "linkedin", "note"].includes(body.editorial.format) ? body.editorial.format : "note",
+      } : null,
     };
+    if (body.op.startsWith("editorial_") && (!args.editorial?.question || !args.editorial.turns.some((t) => t.role === "vinny" && t.text.trim()))) {
+      throw new Error("Add your own thought before asking the producer to respond.");
+    }
     if (body.op === "generate" && !["post", "script", "substack", "ideas", "sponsor", "foundrae"].includes(args.kind)) {
       throw new Error("Unknown generator");
     }
