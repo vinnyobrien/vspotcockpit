@@ -2,7 +2,7 @@ import RoomSession from "./lib/RoomSession.jsx";
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   MessageSquare, Film, PenLine, Users, TrendingUp, Mic, Hammer,
-  Drama, LineChart, ChevronLeft, CalendarDays, Scale, Inbox as InboxIcon,ListChecks,
+  Drama, LineChart, ChevronLeft, CalendarDays, Scale, ListChecks,
   Lightbulb,
 } from "lucide-react";
 import {
@@ -27,7 +27,7 @@ import BreakingNews from "./rooms/BreakingNews.jsx";
 import Analysis from "./rooms/Analysis.jsx";
 import Week from "./rooms/Week.jsx";
 import SubEditor from "./rooms/SubEditor.jsx";
-import Inbox from "./rooms/Inbox.jsx"; 
+
 import Actions from "./rooms/Actions.jsx";
 /* ============================================================
    THE COCKPIT · A V SPOT NETWORK PRODUCTION
@@ -106,16 +106,15 @@ const TITLES = {
 const ROOMS = [
   { id: "breaking", name: "Breaking News", icon: MessageSquare, tint: C.blush, blurb: "Stories, angles, rundown, archive" },
   { id: "actions",  name: "Actions",  icon: ListChecks,    tint: C.apricot, blurb: "What the rules say to do" },
-  { id: "desk",     name: "The Desk", icon: MessageSquare, tint: C.sky,     blurb: "Wire, conversation, studio" },
+  { id: "desk",     name: "The Desk", icon: MessageSquare, tint: C.sky,     blurb: "Editorial conversation" },
   { id: "video",    name: "Video",    icon: Film,          tint: C.mint,    blurb: "Shorts and calendar" },
-  { id: "inbox",    name: "Inbox",    icon: InboxIcon,     tint: C.mint,    blurb: "What needs answering" },
   { id: "sub",      name: "Sub-Editor", icon: Scale,      tint: C.blush,   blurb: "Voice, claims, contradictions" },
   { id: "week",     name: "The Week", icon: CalendarDays,  tint: C.sand,    blurb: "Every slot, filled or open" },
   { id: "essay",    name: "Essay",    icon: PenLine,       tint: C.lilac,   blurb: "The long form" },
   { id: "guests",   name: "Guests",   icon: Users,         tint: C.blush,   blurb: "Pipeline and assets" },
   { id: "growth",   name: "Growth",   icon: TrendingUp,    tint: C.apricot, blurb: "Sponsors and Camp Tralee" },
   { id: "shows",    name: "Shows",    icon: Mic,           tint: C.sand,    blurb: "Feeds and episodes" },
-  { id: "build",    name: "Build",    icon: Hammer,        tint: C.sky,     blurb: "Transcript in, channels out" },
+  { id: "build",    name: "Production",    icon: Hammer,        tint: C.sky,     blurb: "Transcript in, channels out" },
   { id: "episode",  name: "Episode Intelligence", icon: Lightbulb, tint: C.sand, blurb: "Conversation to insight" },
   { id: "cast",     name: "The Cast", icon: Drama,         tint: C.lilac,   blurb: "Murt, Reagan, Jimmy" },
   { id: "analysis", name: "Analysis", icon: LineChart,     tint: C.mint,    blurb: "Monthly" },
@@ -591,7 +590,6 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
               {<RoomSession active={room === "cast"}><Cast /></RoomSession>}
 
-              {<RoomSession active={room === "inbox"}><Inbox threads={threads} ledger={ledger} /></RoomSession>}
 
               {<RoomSession active={room === "sub"}><SubEditor threads={threads} ledger={ledger} K={K} /></RoomSession>}
 
