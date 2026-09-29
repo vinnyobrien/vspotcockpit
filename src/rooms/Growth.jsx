@@ -1,3 +1,4 @@
+import RateCard from "../lib/RateCard.jsx";
 import React, { useState } from "react";
 import { Lock, Send, Check, ChevronLeft, ExternalLink, Plus } from "lucide-react";
 import {
@@ -35,7 +36,8 @@ export default function Growth({ assets, setAssets, sSet, K, today, onGenerate, 
 
   return (
     <div>
-      <Note>Build the asset first, then send it. That order is the method, not a preference.</Note>
+      <Note>Develop a reusable media kit and tailored sponsor proposals.</Note>
+      <details style={{ margin: "16px 0" }}><summary style={{ cursor: "pointer", padding: 12 }}>Internal rate card & revenue model</summary><p style={{ fontSize: 13 }}>Existing assumptions, not live audience valuations. Review rates before using them in a proposal.</p><RateCard /></details>
 
       <Card tint={C.apricot} style={{ marginBottom: 18, border: `2px solid ${C.red}` }}>
         <Mono c={C.red}>Priority this month</Mono>
