@@ -388,7 +388,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
   if (!ready) return <div style={{ background: C.ground, minHeight: "100vh" }} />;
 
   return (
-    <div style={{ background: "#E8E5DE", minHeight: "100vh", fontFamily: BODY }}>
+    <div className="cockpit-shell" style={{ background: "#ECEEEB", minHeight: "100vh", fontFamily: BODY }}>
       <style>{`
         * { box-sizing: border-box; }
         .tap:active { transform: scale(.97); }
@@ -414,8 +414,9 @@ export default function Cockpit({ onLogout, googleConnected }) {
           <aside style={{
             width: 248, flexShrink: 0, borderRight: "1px solid rgba(20,24,51,.08)",
             height: "100vh", overflowY: "auto", padding: "22px 14px 24px",
-          }} className="sc">
+          }} className="sc cockpit-rail">
             <div style={{ padding: "0 8px 18px" }}>
+              <img src="/cockpit-mark.svg" alt="V Spot" width="44" height="44" style={{ marginBottom: 14 }} />
               <Mono s={9}>{DAYS[dow]} {today.getDate()} {MONTHS[today.getMonth()]}</Mono>
               <div style={{ marginTop: 3 }}><Big s={24}>THE COCKPIT</Big></div>
             </div>
@@ -535,7 +536,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
                       return (
                         <button key={r.id} onClick={() => setRoom(r.id)} className="tap"
                           style={{
-                            background: r.tint, borderRadius: R, padding: 16, border: "none", cursor: "pointer",
+                            background: C.card, borderRadius: 20, padding: 18, border: "1px solid rgba(20,24,51,.08)", cursor: "pointer",
                             boxShadow: SH, minHeight: 108, display: "flex", flexDirection: "column",
                             justifyContent: "space-between", textAlign: "left",
                           }}>
@@ -609,6 +610,10 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
         </div>
 
+        {!wide && <nav className="cockpit-dock sc" aria-label="Rooms">
+          <button onClick={() => setRoom(null)} aria-current={!room ? "page" : undefined} className={!room ? "selected" : ""}>Today</button>
+          {ROOMS.map(r => {const Icon=r.icon;return <button key={r.id} onClick={() => setRoom(r.id)} aria-current={room===r.id ? "page" : undefined} className={room===r.id ? "selected" : ""}><Icon size={16}/>{r.name}</button>;})}
+        </nav>}
         {panel && <Panel entry={panel} onClose={() => setPanel(null)} />}
       </div>
     </div>

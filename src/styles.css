@@ -44,3 +44,15 @@ input::placeholder, textarea::placeholder { color: var(--ck-ink2); opacity: .6; 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* First rollout of the app shell: quiet surfaces, strong navigation. */
+html, body, #root { background:#F4F5F1; }
+.cockpit-rail { background:#141833; border-radius:24px 0 0 24px; }
+.cockpit-rail span { color:#F4F5F1 !important; }
+.cockpit-rail a,.cockpit-rail button { color:#F4F5F1 !important; }
+.cockpit-rail button:hover,.cockpit-rail a:hover { background:rgba(255,255,255,.08) !important; }
+.cockpit-dock { position:fixed; z-index:35; bottom:0; left:50%; transform:translateX(-50%); width:min(100%,460px); display:flex; gap:8px; overflow-x:auto; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); background:rgba(20,24,51,.96); backdrop-filter:blur(18px); border-radius:22px 22px 0 0; box-shadow:0 -8px 32px rgba(20,24,51,.12); }
+.cockpit-dock button { display:flex; align-items:center; gap:7px; flex-shrink:0; border:0; border-radius:14px; min-height:44px; padding:10px 14px; font-size:13px; color:#E8EAF3; background:transparent; }
+.cockpit-dock button.selected { background:#D6EFE0; color:#141833; font-weight:600; }
+@media(max-width:899px) { .cockpit-shell { padding-bottom:100px; } }
+@media(min-width:900px) { .cockpit-shell { padding:24px 0; } }

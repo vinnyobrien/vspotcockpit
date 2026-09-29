@@ -9,7 +9,7 @@ import React, { useState } from "react";
    ============================================================ */
 
 export const C = {
-  ground: "#F5F3EE",
+  ground: "#F4F5F1",
   card: "#FFFFFF",
   ink: "#141833",
   ink2: "#565C82",
@@ -30,7 +30,7 @@ export const MONO = "'IBM Plex Mono',ui-monospace,monospace";
 
 export const SH = "0 1px 2px rgba(20,24,51,.04), 0 6px 20px rgba(20,24,51,.06)";
 export const SH_UP = "0 2px 6px rgba(20,24,51,.06), 0 18px 44px rgba(20,24,51,.14)";
-export const R = 24;
+export const R = 20;
 
 /* ---------- text ---------- */
 
@@ -117,7 +117,7 @@ export function Chips({ items, value, onChange }) {
 export function Field({ value, onChange, placeholder, onEnter, rows, tint = "rgba(20,24,51,.04)" }) {
   const shared = {
     width: "100%", boxSizing: "border-box", background: tint, border: "1.5px solid transparent",
-    borderRadius: 14, padding: rows ? 13 : "13px 15px", fontFamily: BODY, fontSize: 14.5,
+    borderRadius: 14, padding: rows ? 13 : "13px 15px", fontFamily: BODY, fontSize: 16,
     color: C.ink, lineHeight: 1.55, outline: "none",
   };
   if (rows) {
