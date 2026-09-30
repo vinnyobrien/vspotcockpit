@@ -26,6 +26,7 @@ import EpisodeIntelligence from "./rooms/EpisodeIntelligence.jsx";
 import BreakingNews from "./rooms/BreakingNews.jsx";
 import Analysis from "./rooms/Analysis.jsx";
 import Week from "./rooms/Week.jsx";
+import ContentCalendar, { useEditorialCalendar, CalendarPriority } from "./rooms/ContentCalendar.jsx";
 import SubEditor from "./rooms/SubEditor.jsx";
 
 import Actions from "./rooms/Actions.jsx";
@@ -65,7 +66,6 @@ const DAILY = [
   { id: "fnd-listen", slot: "11:30", name: "Listen back", note: "One call recording. Notes into the log, not your head.", w: 1 },
   { id: "post", slot: "12:30", name: "The Post", note: "LinkedIn text post. Second hit of the day.", w: 2 },
   { id: "approach", slot: "14:00", name: "The Approach", note: "One proactive move. Build the thing first, then send it.", w: 2 },
-  { id: "vspot", slot: "16:00", name: "The V Spot", note: "Daily news drop. It is daily now.", w: 3 },
   { id: "shutdown", slot: "17:30", name: "Shutdown", note: "Log the day. Name tomorrow's three before you close the lid.", w: 1 },
 ];
 
@@ -75,6 +75,7 @@ const FIXTURES = {
   3: [{ id: "fnd-session", slot: "14:00", name: "Foundrae client session", note: "Twenty minutes prep before. Agenda sent the night before.", w: 2 }],
   4: [{ id: "longform", slot: "13:00", name: "Substack long form", note: "The week's essay. Write it, do not research it.", w: 3 }],
   5: [
+    { id: "vspot", slot: "16:00", name: "The V Spot", note: "Friday satirical news. Release time to agree in Content Calendar; Vinny’s sign-off required.", w: 3 },
     { id: "supplement", slot: "11:00", name: "The Sunday Supplement", note: "Record the long form. Mark three moments that can be cut as Shorts.", w: 3 },
     { id: "calibrate", slot: "17:00", name: "Week calibration", note: "Read the score. Adjust next week's volume honestly.", w: 1 },
   ],
@@ -104,6 +105,7 @@ const TITLES = {
 };
 
 const ROOMS = [
+  { id: "calendar", name: "Content Calendar", icon: CalendarDays, tint: C.sand, blurb: "Deadlines, ideas and sign-off" },
   { id: "breaking", name: "Breaking News", icon: MessageSquare, tint: C.blush, blurb: "Stories, angles, rundown, archive" },
   { id: "actions",  name: "Actions",  icon: ListChecks,    tint: C.apricot, blurb: "What the rules say to do" },
   { id: "desk",     name: "The Desk", icon: MessageSquare, tint: C.sky,     blurb: "Editorial conversation" },
@@ -150,6 +152,7 @@ function useWide() {
 /* ============================================================ */
 
 export default function Cockpit({ onLogout, googleConnected }) {
+  const editorialCalendar = useEditorialCalendar();
   const today = useMemo(() => new Date(), []);
   const [episodeSeed, setEpisodeSeed] = useState(null);
   const [editorThread, setEditorThread] = useState("");
@@ -511,6 +514,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
         <div className="sc" style={{ height: "calc(100vh - 74px)", overflowY: "auto" }}>
           <div style={{ padding: "0 16px" }}>
             <Problem onDismiss={() => setErr("")}>{err}</Problem>
+            <CalendarPriority calendar={editorialCalendar} onOpen={() => setRoom("calendar")} />
           </div>
 
           {!room && (
@@ -567,6 +571,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
           {(
             <div hidden={!room} className="rm" style={{ padding: wide ? "0 24px 48px" : "0 16px 40px", maxWidth: wide ? 820 : "none" }}>
               {room && !wide && <div style={{ marginBottom: 18 }}><Big s={36}>{current.name.toUpperCase()}</Big></div>}
+              <RoomSession active={room === "calendar"}><ContentCalendar calendar={editorialCalendar} onSubEditor={() => setRoom("sub")} /></RoomSession>
               <RoomSession active={room === "actions"}><Actions /></RoomSession>
 
               {<RoomSession active={room === "desk"}><Desk
