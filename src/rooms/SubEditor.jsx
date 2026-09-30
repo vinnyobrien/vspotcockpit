@@ -151,7 +151,7 @@ export default function SubEditor({ threads, ledger, K }) {
         history: [{
           role: "user",
           content:
-`Act as sub-editor on the draft. Return ONLY JSON, no preamble:
+`Act as sub-editor on the draft. If this is V Spot satirical news or a PSA, assess against Vinny's 30 September 2026 LinkedIn reference: mock-authoritative broadcast delivery, topical commerce satire, self-deprecation, knowingly silly slang and candid production asides. Do not flatten the humour into corporate copy. Distinguish comic premises from checkable factual claims. Mention tone accuracy in your verdict. Return ONLY JSON, no preamble:
 
 {
   "claims": [{ "claim": "", "tier": "primary|official|trade|aggregate|inferred", "why": "" }],

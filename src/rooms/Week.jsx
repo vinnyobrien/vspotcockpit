@@ -25,7 +25,7 @@ const SLOTS = [
   { id: "post",     name: "The Post",        at: "12:30", tint: C.sky,     daily: true,  kind: "written",note: "LinkedIn." },
   { id: "shorts",   name: "Shorts",          at: "13:00", tint: C.mint,    daily: true,  kind: "video",  note: "YouTube, TikTok, X." },
   { id: "x3",       name: "The optimisation",at: "16:00", tint: C.apricot, daily: true,  kind: "post",   note: "X · Reagan." },
-  { id: "vspot",    name: "The V Spot",      at: "16:00", tint: C.sky,     daily: true,  kind: "written",note: "Daily drop." },
+  { id: "vspot",    name: "The V Spot",      at: "16:00", tint: C.sky,     dow: [5],  kind: "video",note: "Friday satire. See Content Calendar for deadlines and sign-off; release time to agree." },
   { id: "x4",       name: "The mechanism",   at: "20:00", tint: C.apricot, daily: true,  kind: "post",   note: "X · Jimmy." },
 
   { id: "ostrich",  name: "The Ostrich Report", at: "15:00", tint: C.lilac, dow: [2], kind: "show",    note: "Record with Hendrik." },
