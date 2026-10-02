@@ -30,6 +30,7 @@ import ContentCalendar, { useEditorialCalendar, CalendarPriority } from "./rooms
 import SubEditor from "./rooms/SubEditor.jsx";
 
 import Actions from "./rooms/Actions.jsx";
+import Followups from "./rooms/Followups.jsx";
 /* ============================================================
    THE COCKPIT · A V SPOT NETWORK PRODUCTION
 
@@ -105,6 +106,7 @@ const TITLES = {
 };
 
 const ROOMS = [
+  { id: "followups", name: "Follow-ups", icon: ListChecks, tint: C.sky, blurb: "Call and email promises, dated" },
   { id: "calendar", name: "Content Calendar", icon: CalendarDays, tint: C.sand, blurb: "Deadlines, ideas and sign-off" },
   { id: "breaking", name: "Breaking News", icon: MessageSquare, tint: C.blush, blurb: "Stories, angles, rundown, archive" },
   { id: "actions",  name: "Actions",  icon: ListChecks,    tint: C.apricot, blurb: "What the rules say to do" },
@@ -160,7 +162,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
   const dow = today.getDay();
 
   const wide = useWide();
-  const [room, setRoom] = useState(null);
+  const [room, setRoom] = useState(() => { const id = new URLSearchParams(location.search).get("room"); return ROOMS.some(r=>r.id===id) ? id : null; });
   const [ready, setReady] = useState(false);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState("");
@@ -572,6 +574,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
             <div hidden={!room} className="rm" style={{ padding: wide ? "0 24px 48px" : "0 16px 40px", maxWidth: wide ? 820 : "none" }}>
               {room && !wide && <div style={{ marginBottom: 18 }}><Big s={36}>{current.name.toUpperCase()}</Big></div>}
               <RoomSession active={room === "calendar"}><ContentCalendar calendar={editorialCalendar} onSubEditor={() => setRoom("sub")} /></RoomSession>
+              <RoomSession active={room === "followups"}><Followups /></RoomSession>
               <RoomSession active={room === "actions"}><Actions /></RoomSession>
 
               {<RoomSession active={room === "desk"}><Desk
