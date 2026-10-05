@@ -49,8 +49,8 @@ function readCookie(req) {
 
 /** Returns null when authenticated, or a Response to return as-is.
     Every function calls this before doing anything else. */
-export function requireAuth(req) {
-  if (OPEN) {
+export function requireAuth(req, { allowOpen = true } = {}) {
+  if (OPEN && allowOpen) {
     console.warn("COCKPIT_OPEN is set — auth bypassed. Do not leave this on.");
     return null;
   }

@@ -31,6 +31,7 @@ import SubEditor from "./rooms/SubEditor.jsx";
 
 import Actions from "./rooms/Actions.jsx";
 import Followups from "./rooms/Followups.jsx";
+import AudienceStats from "./rooms/AudienceStats.jsx";
 /* ============================================================
    THE COCKPIT · A V SPOT NETWORK PRODUCTION
 
@@ -106,6 +107,7 @@ const TITLES = {
 };
 
 const ROOMS = [
+  { id: "audience", name: "Audience Stats", icon: LineChart, tint: C.mint, blurb: "Substack reach and post performance" },
   { id: "followups", name: "Follow-ups", icon: ListChecks, tint: C.sky, blurb: "Call and email promises, dated" },
   { id: "calendar", name: "Content Calendar", icon: CalendarDays, tint: C.sand, blurb: "Deadlines, ideas and sign-off" },
   { id: "breaking", name: "Breaking News", icon: MessageSquare, tint: C.blush, blurb: "Stories, angles, rundown, archive" },
@@ -576,6 +578,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               <RoomSession active={room === "calendar"}><ContentCalendar calendar={editorialCalendar} onSubEditor={() => setRoom("sub")} /></RoomSession>
               <RoomSession active={room === "followups"}><Followups /></RoomSession>
               <RoomSession active={room === "actions"}><Actions /></RoomSession>
+              <RoomSession active={room === "audience"}><AudienceStats /></RoomSession>
 
               {<RoomSession active={room === "desk"}><Desk
                   threads={threads} today={today} onGenerate={generate} busy={busy}
@@ -684,4 +687,3 @@ function Panel({ entry, onClose }) {
     </div>
   );
 }
-
