@@ -9,8 +9,20 @@ export function newItem(date = dateInDublin()) {
   return { id: crypto.randomUUID(), title: '', show: 'The V Spot News', format: 'Satirical news', date, time: '', owner: 'Vinny', channels: 'LinkedIn, Substack, YouTube, TikTok', ideaDate: shiftDate(date,-7), ideaMinutes: 60, briefDate: shiftDate(date,-4), draftDate: shiftDate(date,-3), reviewDate: shiftDate(date,-2), signoffDate: shiftDate(date,-1), sponsor: '', sponsorDate: '', sponsorNeeds: '', sponsorEvidence: '', finalLink: '', notes: '', checks: {ideas:false, brief:false, draft:false, review:false, sponsor:false}, status:'planned', approval:null, history:[] };
 }
 export function seedCalendar() {
-  const dates = ['2026-10-09','2026-10-16','2026-10-23','2026-10-30'];
-  return { revision:0, items:dates.map((date,i)=>({...newItem(date), id:`vspot-return-${date}`, title:i ? 'The V Spot News — topic to develop' : 'The V Spot News returns', notes:i ? 'Proposed Friday slot. Topic and commercial commitments awaiting confirmation.' : 'Confirmed return date from published LinkedIn PSA. Agree release time; develop the first rundown. Sponsors welcome is an invitation, not a confirmed booking.'})) };
+  const slots=[['2026-10-09','V Spot PSAs','PSA','LinkedIn, YouTube, TikTok, Twitter',''],['2026-10-11','The V Spot','Satirical news','LinkedIn, Substack, YouTube, TikTok','18:00'],['2026-10-14','The Struggle Bus','Full episode','Spotify, YouTube, LinkedIn, Substack',''],['2026-10-15','The Ostrich Report','Full episode','Spotify, YouTube, LinkedIn, Substack','']];
+  const items=slots.flatMap(([first,show,format,channels,time])=>Array.from({length:10},(_,week)=>{
+    const date=shiftDate(first,week*7);
+    return {...newItem(date),id:`weekly-release:${show}:${date}`,show,format,channels,time,
+      title:`${show} — ${date}`,
+      notes:'Weekly release cadence confirmed 8 October 2026. Topic, final assets and copy to prepare. Exact time to set unless shown.'};
+  })).sort((a,b)=>a.date.localeCompare(b.date));
+  return {revision:0,items};
+}
+// Retire only untouched generated Friday plans; preserve authored and signed-off records.
+export function applyReleaseCadence(calendar) {
+  const items=calendar.items.filter(i=>!(i.id.startsWith('vspot-return-')&&i.status==='planned'&&!i.approval&&!i.history.length));
+  for(const item of seedCalendar().items) if(!items.some(i=>i.id===item.id||(i.show===item.show&&i.date===item.date))) items.push(item);
+  return {...calendar,items};
 }
 export function blockers(item) {
   const missing = ['ideas','brief','draft','review'].filter(k=>!item.checks[k]);

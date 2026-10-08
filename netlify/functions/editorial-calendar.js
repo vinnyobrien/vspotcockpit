@@ -1,6 +1,6 @@
 import { requireAuth, json } from './_auth.js';
 import { store } from './_blobs.js';
-import { seedCalendar, reviseItem, transition } from '../../src/lib/editorial-calendar.js';
+import { seedCalendar, applyReleaseCadence, reviseItem, transition } from '../../src/lib/editorial-calendar.js';
 
 export default async (req) => {
   const denied = requireAuth(req); if (denied) return denied;
@@ -9,7 +9,7 @@ export default async (req) => {
     // Commercial deadlines stay in the private vault, outside the mirrorable ledger.
     const db = store('vault');
     const saved = await db.get('editorial-calendar-v1',{type:'json'});
-    const current = saved || seedCalendar();
+    const current = saved ? applyReleaseCadence(saved) : seedCalendar();
     if (req.method === 'GET') return json(current);
     const input = await req.json();
     if (input.revision !== current.revision) return json({error:'The calendar changed in another session. Reload before saving.'},409);

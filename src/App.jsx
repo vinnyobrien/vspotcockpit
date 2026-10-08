@@ -32,6 +32,7 @@ import SubEditor from "./rooms/SubEditor.jsx";
 import Actions from "./rooms/Actions.jsx";
 import Followups from "./rooms/Followups.jsx";
 import AudienceStats from "./rooms/AudienceStats.jsx";
+import Publishing from "./rooms/Publishing.jsx";
 /* ============================================================
    THE COCKPIT · A V SPOT NETWORK PRODUCTION
 
@@ -77,11 +78,11 @@ const FIXTURES = {
   3: [{ id: "fnd-session", slot: "14:00", name: "Foundrae client session", note: "Twenty minutes prep before. Agenda sent the night before.", w: 2 }],
   4: [{ id: "longform", slot: "13:00", name: "Substack long form", note: "The week's essay. Write it, do not research it.", w: 3 }],
   5: [
-    { id: "vspot", slot: "16:00", name: "The V Spot", note: "Friday satirical news. Release time to agree in Content Calendar; Vinny’s sign-off required.", w: 3 },
+    { id: "vspot-psa", slot: "16:00", name: "V Spot PSAs", note: "Friday PSA release day. Exact release time to set in Publishing.", w: 3 },
     { id: "supplement", slot: "11:00", name: "The Sunday Supplement", note: "Record the long form. Mark three moments that can be cut as Shorts.", w: 3 },
     { id: "calibrate", slot: "17:00", name: "Week calibration", note: "Read the score. Adjust next week's volume honestly.", w: 1 },
   ],
-  0: [{ id: "supp-out", slot: "10:00", name: "Supplement publishes", note: "Check it went out. Then go and do something else.", w: 1 }],
+  0: [{ id: "vspot-out", slot: "18:00", name: "The V Spot releases", note: "Sunday at 6pm Irish time. Schedule the episode in advance.", w: 1 }],
 };
 
 const SEED_THREADS = [
@@ -107,6 +108,7 @@ const TITLES = {
 };
 
 const ROOMS = [
+  { id: "publishing", name: "Publishing", icon: Film, tint: C.sand, blurb: "Episode assets, release copy and live links" },
   { id: "audience", name: "Audience Stats", icon: LineChart, tint: C.mint, blurb: "Substack reach and post performance" },
   { id: "followups", name: "Follow-ups", icon: ListChecks, tint: C.sky, blurb: "Call and email promises, dated" },
   { id: "calendar", name: "Content Calendar", icon: CalendarDays, tint: C.sand, blurb: "Deadlines, ideas and sign-off" },
@@ -579,6 +581,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               <RoomSession active={room === "followups"}><Followups /></RoomSession>
               <RoomSession active={room === "actions"}><Actions /></RoomSession>
               <RoomSession active={room === "audience"}><AudienceStats /></RoomSession>
+              <RoomSession active={room === "publishing"}><Publishing onProduction={() => setRoom("build")} onCalendar={() => setRoom("calendar")} /></RoomSession>
 
               {<RoomSession active={room === "desk"}><Desk
                   threads={threads} today={today} onGenerate={generate} busy={busy}
