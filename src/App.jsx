@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import {
   MessageSquare, Film, PenLine, Users, TrendingUp, Mic, Hammer,
   Drama, LineChart, ChevronLeft, CalendarDays, Scale, ListChecks,
-  Lightbulb,
+  Lightbulb, Receipt,
 } from "lucide-react";
 import {
   C, BODY, MONO, SH, R, Mono, Big, Card, Section, Pill, Problem,
@@ -30,6 +30,7 @@ import ContentCalendar, { useEditorialCalendar, CalendarPriority } from "./rooms
 import SubEditor from "./rooms/SubEditor.jsx";
 
 import Actions from "./rooms/Actions.jsx";
+import Finance from "./rooms/Finance.jsx";
 import Followups from "./rooms/Followups.jsx";
 import AudienceStats from "./rooms/AudienceStats.jsx";
 import Publishing from "./rooms/Publishing.jsx";
@@ -108,6 +109,7 @@ const TITLES = {
 };
 
 const ROOMS = [
+  { id: "finance", name: "Finance", icon: Receipt, tint: C.mint, blurb: "Receipt photos, invoices and expense review" },
   { id: "publishing", name: "Publishing", icon: Film, tint: C.sand, blurb: "Episode assets, release copy and live links" },
   { id: "audience", name: "Audience Stats", icon: LineChart, tint: C.mint, blurb: "Substack reach and post performance" },
   { id: "followups", name: "Follow-ups", icon: ListChecks, tint: C.sky, blurb: "Call and email promises, dated" },
@@ -580,6 +582,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               <RoomSession active={room === "calendar"}><ContentCalendar calendar={editorialCalendar} onSubEditor={() => setRoom("sub")} /></RoomSession>
               <RoomSession active={room === "followups"}><Followups /></RoomSession>
               <RoomSession active={room === "actions"}><Actions /></RoomSession>
+              <RoomSession active={room === "finance"}><Finance /></RoomSession>
               <RoomSession active={room === "audience"}><AudienceStats /></RoomSession>
               <RoomSession active={room === "publishing"}><Publishing onProduction={() => setRoom("build")} onCalendar={() => setRoom("calendar")} /></RoomSession>
 
