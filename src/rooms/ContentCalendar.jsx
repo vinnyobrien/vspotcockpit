@@ -16,7 +16,7 @@ export function CalendarPriority({calendar,onOpen}) {
   return <div style={{padding:'8px 16px 14px'}}><button onClick={onOpen} style={{width:'100%',textAlign:'left',padding:18,borderRadius:18,border:'2px solid '+C.ink,background:C.sand,color:C.ink,fontFamily:BODY,cursor:'pointer'}}>
     <strong style={{fontSize:17}}>Content Calendar · {waiting} awaiting sign-off</strong>
     <div style={{fontSize:13,marginTop:6}}>{error ? 'Calendar unavailable — open to reload' : !data ? 'Loading deadlines…' : due.length ? `${due.filter(d=>d.date<today).length} overdue · ${due.length} deadlines in view · ${due[0].label}: ${due[0].date} — ${due[0].item.title}` : 'No deadlines in the next seven days. Plan the next idea.'}</div>
-    <div style={{fontSize:12,marginTop:6}}>V Spot returns 9 October · Sponsor deadlines · Thinking time · Vinny’s sign-off →</div>
+    <div style={{fontSize:12,marginTop:6}}>Struggle Bus Wednesday · Ostrich Thursday · PSAs Friday · V Spot Sunday 18:00 →</div>
   </button></div>;
 }
 
@@ -33,7 +33,7 @@ export default function ContentCalendar({calendar,onSubEditor}) {
   const items=(data?.items || []).filter(i=>i.date>=start && i.date<=end && (filter==='all' || filter==='sponsored' ? (filter!=='sponsored'||i.sponsor) : i.status==='review')).sort((a,b)=>`${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
   const agenda=(data?.items || []).flatMap(deadlines).filter(d=>d.date>=start && d.date<=end).sort((a,b)=>a.date.localeCompare(b.date));
   return <div>
-    <p style={{lineHeight:1.6,color:C.ink2}}>Plan the work before the release. All dates and release times are in Ireland. The 9 October return is confirmed; later Friday slots and preparation dates are editable working plans.</p>
+    <p style={{lineHeight:1.6,color:C.ink2}}>Struggle Bus Wednesdays, Ostrich Report Thursdays, V Spot PSAs Fridays, and The V Spot Sundays at 6pm. All times are in Ireland. Preparation dates are editable working plans; Wednesday, Thursday and Friday release times still need to be set.</p>
     {error && <Card><p role="alert">{error}</p><Pill onClick={load} disabled={busy}>Reload calendar</Pill></Card>}
     {!data ? <p>Loading calendar…</p> : <>
     <Card style={{marginBottom:16}}><div style={{display:'flex',gap:10,flexWrap:'wrap',alignItems:'center'}}>
