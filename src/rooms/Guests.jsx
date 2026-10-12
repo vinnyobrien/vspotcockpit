@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Send, Check, Plus, Copy, ExternalLink, X, Clock4, Mail } from "lucide-react";
 import {
   C, BODY, DISPLAY, MONO, Mono, Big, Card, Section, Pill, Field, Note,
@@ -20,7 +20,7 @@ import {
    to the photographer, not to whoever can right-click it.
    ============================================================ */
 
-const STAGES = ["idea", "approached", "booked", "recorded", "published"];
+const STAGES = ["idea", "approached", "confirmed", "booked", "recorded", "published"];
 const ASSETS = ["headshot", "logo", "bio", "questions"];
 const SHOWS = ["The Struggle Bus", "The Ostrich Report", "The Sunday Supplement"];
 /* One booking link per show, verified live against the Calendly account on
@@ -126,6 +126,40 @@ export default function Guests({ guests, setGuests, sSet, K, today }) {
   const [draft, setDraft] = useState(null);
   const [sending, setSending] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [backstage, setBackstage] = useState([]);
+  const [passBusy, setPassBusy] = useState(false);
+  const [assetDetail, setAssetDetail] = useState(null);
+
+  const refreshPasses = async () => {
+    const r = await fetch('/api/guest-pass-admin', {credentials:'same-origin'});
+    if (!r.ok) return;
+    const data = await r.json();
+    setBackstage(data.passes || []);
+  };
+  useEffect(() => {
+    refreshPasses().catch(() => {});
+    const timer = setInterval(() => refreshPasses().catch(() => {}), 30000);
+    return () => clearInterval(timer);
+  }, []);
+  const createPass = async (g) => {
+    setPassBusy(true); setErr('');
+    try {
+      const r = await fetch('/api/guest-pass-admin', {method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({guestId:g.id,name:g.name,email:g.email,show:g.show,why:g.why,scope:g.backstageScope || 'One episode first. Wider collaboration discussed separately.'})});
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Could not create the guest pass');
+      if (!guests.some(row => row.id === g.id || (row.email === g.email && row.show === g.show))) {
+        save([{...g,id:data.pass.id,stage:'approached',assets:{},emails:[],notes:'',date:'',touched:iso(today)},...guests]);
+      }
+      await refreshPasses(); setOpen(g.id || data.pass.id);
+    } catch(e) { setErr(e.message); }
+    finally {setPassBusy(false);}
+  };
+  const passFor = g => backstage.find(p => p.guestId === g.id || (p.email === g.email && p.show === g.show));
+  const visibleGuests = [...guests, ...backstage.filter(p => !guests.some(g => p.guestId === g.id || (p.email === g.email && p.show === g.show))).map(p => ({id:p.guestId || p.id,name:p.name,email:p.email,show:p.show,why:p.why,stage:'approached',assets:{},emails:[],notes:'',date:'',touched:iso(today)}))].map(g => {
+    const p = passFor(g);
+    if (!p) return g;
+    return {...g,backstage:p,assets:{...g.assets,headshot:p.headshotReceived || !!g.assets?.headshot,bio:p.bioReceived || !!g.assets?.bio},stage:['recorded','published'].includes(g.stage)?g.stage:p.bookedAt?'booked':p.acceptedAt?'confirmed':g.stage,date:p.bookedAt?p.bookedAt.slice(0,10):g.date};
+  });
 
   const save = (next) => { setGuests(next); sSet(K.guests, next); };
 
@@ -194,6 +228,12 @@ export default function Guests({ guests, setGuests, sSet, K, today }) {
       <Problem onDismiss={() => setErr("")}>{err}</Problem>
 
       <Card style={{ marginBottom: 16 }}>
+        <div style={{marginBottom:16}}>
+          <Mono>Backstage guest passes</Mono>
+          <p style={{fontSize:13}}>Personal link, guest password, check-in, calendar verification and headshot/bio delivery. Guest steps appear here automatically.</p>
+          <Pill disabled={passBusy} onClick={() => createPass({name:'Shaje Ganny',email:'shahjehan@gmail.com',show:'The Struggle Bus',why:'Friday’s conversation brought us to human agency, AI literacy and how we keep the ability to think, choose and act for ourselves. First, your story and the experiences behind Reframe and Reclaim. Then we can explore a wider programme together.'})}>Create Shaje pilot pass</Pill>
+          <Pill sm tone="ghost" onClick={() => refreshPasses().catch(e => setErr(e.message))}>Refresh guest steps</Pill>
+        </div>
         <Field value={name} onChange={setName} onEnter={add} placeholder="Guest name" />
         <div className="flex gap-2" style={{ marginTop: 10 }}>
           <select value={show} onChange={(e) => setShow(e.target.value)}
@@ -204,9 +244,9 @@ export default function Guests({ guests, setGuests, sSet, K, today }) {
         </div>
       </Card>
 
-      {guests.length === 0 && <Empty>Nobody tracked. The Gap will keep telling you so.</Empty>}
+      {visibleGuests.length === 0 && <Empty>Nobody tracked. The Gap will keep telling you so.</Empty>}
 
-      {[...guests]
+      {[...visibleGuests]
         .sort((a, b) => STAGES.indexOf(a.stage) - STAGES.indexOf(b.stage) || (daysSince(b.touched, today) - daysSince(a.touched, today)))
         .map((g) => {
           const n = count(g);
@@ -256,6 +296,20 @@ export default function Guests({ guests, setGuests, sSet, K, today }) {
 
               {isOpen && (
                 <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(20,24,51,.08)" }}>
+                  <div style={{marginBottom:18}}>
+                    <Mono>Personal backstage room</Mono>
+                    {g.backstage ? <>
+                      <p style={{fontSize:13}}>{g.backstage.acceptedAt?'Checked in':'Awaiting check-in'} / {g.backstage.bookedAt?'Calendar booking verified':'Recording not yet verified'} / {g.backstage.ready?'Ready to record':'Preparation underway'}</p>
+                      <a href={g.backstage.passUrl} target="_blank" rel="noreferrer" style={{fontSize:13}}>Open guest room ↗</a>
+                      <p style={{fontSize:13}}>Guest password: <code>{g.backstage.guestPassword}</code></p>
+                      <Pill sm tone="ghost" onClick={async () => {try {await navigator.clipboard.writeText(g.backstage.passUrl);setCopied(true);}catch {setErr('Open the guest room and copy its address.');}}}>{copied?'Copied':'Copy personal link'}</Pill>
+                      {g.backstage.headshotReceived && <a style={{display:'block',marginTop:10,fontSize:13}} href={`/api/guest-pass-admin?id=${g.backstage.id}&asset=headshot`}>Download received headshot</a>}
+                      {g.backstage.bioReceived && <Pill sm tone="ghost" onClick={async () => {try {const r=await fetch(`/api/guest-pass-admin?id=${g.backstage.id}&asset=bio`);if(!r.ok)throw new Error('Could not read bio');const b=await r.json();setAssetDetail({name:g.name,...b});}catch(e){setErr(e.message);}}}>Read received bio</Pill>}
+                    </> : <>
+                      <Field value={g.backstageScope || ''} onChange={v => patch(g.id,{backstageScope:v})} placeholder="One episode, several episodes or collaboration scope" />
+                      <div style={{marginTop:8}}><Pill sm disabled={!g.email || passBusy} onClick={() => createPass(g)}>Create personal pass</Pill></div>
+                    </>}
+                  </div>
                   <div style={{ display: "grid", gap: 8 }}>
                     <Field value={g.email} onChange={(v) => patch(g.id, { email: v })} placeholder="Email" />
                     <Field value={g.company} onChange={(v) => patch(g.id, { company: v })} placeholder="Company" />
@@ -344,6 +398,7 @@ export default function Guests({ guests, setGuests, sSet, K, today }) {
           );
         })}
 
+      {assetDetail && <div style={{position:'fixed',inset:0,background:'rgba(20,24,51,.5)',zIndex:70,display:'grid',placeItems:'center',padding:24}} onClick={() => setAssetDetail(null)}><div style={{background:C.card,padding:24,borderRadius:20,maxWidth:600,width:'100%',maxHeight:'85vh',overflow:'auto'}} onClick={e => e.stopPropagation()}><Big s={22}>{assetDetail.name}</Big><Mono>Received bio</Mono><p style={{whiteSpace:'pre-wrap'}}>{assetDetail.bio}</p><Mono>Preparation notes</Mono><p style={{whiteSpace:'pre-wrap'}}>{assetDetail.notes || 'None supplied'}</p><Pill onClick={() => setAssetDetail(null)}>Close</Pill></div></div>}
       {/* the draft sheet */}
       {draft && (
         <div onClick={() => !sending && setDraft(null)}
