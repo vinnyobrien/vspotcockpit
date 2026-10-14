@@ -36,6 +36,15 @@ function usableUrl(value) {
   catch { return ""; }
 }
 
+function drivePreviewUrl(value) {
+  try {
+    const url = new URL(String(value || ""));
+    if (url.protocol !== "https:" || url.hostname !== "drive.google.com") return "";
+    const id = url.pathname.match(/^\/file\/d\/([^/]+)/)?.[1];
+    return id ? `https://drive.google.com/file/d/${id}/preview` : "";
+  } catch { return ""; }
+}
+
 export default function ReleaseStudio() {
   const [items, setItems] = useState(null);
   const [selectedId, setSelectedId] = useState("");
@@ -59,6 +68,7 @@ export default function ReleaseStudio() {
   const item = useMemo(() => items?.find((x) => x.id === selectedId) || null, [items, selectedId]);
   const extraAssets = useMemo(() => shortAssets(item?.notes), [item]);
   const videoUrl = usableUrl(item?.videoLink);
+  const driveVideoPreview = drivePreviewUrl(item?.videoLink);
 
   async function copy(value, label) {
     if (!value?.trim()) return;
@@ -104,12 +114,13 @@ export default function ReleaseStudio() {
           <div className="flex items-center justify-between gap-3"><Big s={20}>{item.guest || item.show}</Big><Mono>{item.date || "Date pending"}</Mono></div>
           <p style={{ marginBottom: 0, fontSize: 13, color: C.ink2 }}>{item.show}{item.time ? ` · ${item.time} Ireland` : ""}</p>
         </Card>
-        {videoUrl ? <Card style={{ padding: 10, marginBottom: 12 }}><video controls preload="metadata" src={videoUrl} style={{ display: "block", width: "100%", maxHeight: "68vh", borderRadius: 12, background: "#111" }} /><div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}><Pill sm tone="ghost" icon={ExternalLink} onClick={() => window.open(videoUrl, "_blank", "noopener,noreferrer")}>Open final cut</Pill></div></Card>
+        {driveVideoPreview ? <Card style={{ padding: 10, marginBottom: 12 }}><iframe title={`${item.guest || item.show} final cut`} src={driveVideoPreview} allow="autoplay; encrypted-media" allowFullScreen style={{ display: "block", width: "100%", height: "min(68vh, 700px)", border: 0, borderRadius: 12, background: "#111" }} /><div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}><Pill sm tone="ghost" icon={ExternalLink} onClick={() => window.open(videoUrl, "_blank", "noopener,noreferrer")}>Open final cut in Drive</Pill></div></Card>
+          : videoUrl ? <Card style={{ padding: 10, marginBottom: 12 }}><video controls preload="metadata" src={videoUrl} style={{ display: "block", width: "100%", maxHeight: "68vh", borderRadius: 12, background: "#111" }} /><div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}><Pill sm tone="ghost" icon={ExternalLink} onClick={() => window.open(videoUrl, "_blank", "noopener,noreferrer")}>Open final cut</Pill></div></Card>
           : <Card style={{ marginBottom: 12, borderLeft: `4px solid ${C.red}` }}><div className="flex gap-3"><Film size={19} color={C.red}/><div><Big s={17}>Final cut link needs a permanent address</Big><p style={{ fontSize: 13, lineHeight: 1.5, marginBottom: 4 }}>The saved video path points to a temporary sandbox folder, so the Cockpit cannot play or open it. Replace it in Publishing with a shareable Drive/Library link or a hosted video URL to make the master available here.</p><Mono s={9}>{item.videoLink || "No final video link saved"}</Mono></div></div></Card>}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 10 }}>
           {[["Spotify audio", item.audioLink, Headphones], ["Captions / transcript", item.transcriptLink, FileText], ...extraAssets.map((x) => [x.label, x.url, Film])].map(([label, url, Icon]) => {
             const href = usableUrl(url);
-            return <Card key={label} style={{ marginBottom: 0 }}><div className="flex items-center gap-2"><Icon size={16} color={C.ink2}/><Big s={16}>{label}</Big></div><p style={{ fontSize: 11, color: C.ink2, overflowWrap: "anywhere", lineHeight: 1.45 }}>{url || "Not supplied"}</p><div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>{url && <Pill sm tone="ghost" icon={copied === label ? Check : Copy} onClick={() => copy(url, label)}>{copied === label ? "Copied" : "Copy link"}</Pill>}{href && <a href={href} target="_blank" rel="noreferrer" style={{ color: C.ink, fontSize: 12, alignSelf: "center" }}>Open</a>}</div></Card>;
+            return <Card key={label} style={{ marginBottom: 0 }}><div className="flex items-center gap-2"><Icon size={16} color={C.ink2}/><Big s={16}>{label}</Big></div><p style={{ fontSize: 11, color: C.ink2, overflowWrap: "anywhere", lineHeight: 1.45 }}>{!url ? "Not supplied" : href ? url : "Temporary sandbox path — unavailable from Cockpit"}</p><div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>{href && <Pill sm tone="ghost" icon={copied === label ? Check : Copy} onClick={() => copy(url, label)}>{copied === label ? "Copied" : "Copy link"}</Pill>}{href && <a href={href} target="_blank" rel="noreferrer" style={{ color: C.ink, fontSize: 12, alignSelf: "center" }}>Open</a>}</div></Card>;
           })}
         </div>
         {!!item.notes && <details style={{ marginTop: 14 }}><summary style={{ cursor: "pointer", fontSize: 13, fontWeight: 700 }}>Production notes and QA</summary><Card style={{ marginTop: 9 }}><pre style={{ margin: 0, whiteSpace: "pre-wrap", overflowWrap: "anywhere", font: `12px/1.6 ${BODY}`, color: C.ink2 }}>{item.notes}</pre></Card></details>}

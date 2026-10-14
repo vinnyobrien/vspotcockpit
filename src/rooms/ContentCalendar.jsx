@@ -51,6 +51,7 @@ export default function ContentCalendar({calendar,onSubEditor}) {
       <Mono>{i.date} · {i.time || 'Release time to agree'} · {i.show}</Mono><div style={{marginTop:8}}><Big s={24}>{i.title}</Big></div>
       <p><strong>{statusText[i.status]}</strong> · {i.owner} · {i.format}</p><p style={{fontSize:13}}>{i.channels}</p>
       {i.sponsor && <p style={{background:C.sand,padding:12,borderRadius:12}}>Sponsor: <strong>{i.sponsor}</strong> · Approval due {i.sponsorDate || 'MISSING'}<br/>{i.sponsorNeeds}<br/>Evidence: {i.sponsorEvidence || 'Awaiting approval'}{i.checks?.sponsor && i.sponsorEvidence?.trim() ? <><br/><strong>✓ Sponsor approval recorded — no further sponsor sign-off needed.</strong></> : null}</p>}
+      {i.finalLink && <p style={{fontSize:13}}><a href={i.finalLink} target="_blank" rel="noreferrer" style={{color:C.ink,fontWeight:700}}>Open final asset / copy link ↗</a></p>}
       <p style={{fontSize:13,whiteSpace:'pre-wrap'}}>{i.notes}</p>
       {i.status==='review' && blockers(i).length>0 && <p style={{color:C.red}}>Sign-off blocked: {blockers(i).join(', ')}.</p>}
       {i.approval && <p style={{fontSize:12}}>Signed off by {i.approval.by} · {new Date(i.approval.at).toLocaleString('en-IE',{timeZone:'Europe/Dublin'})}</p>}
