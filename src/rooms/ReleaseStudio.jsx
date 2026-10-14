@@ -10,7 +10,8 @@ const DESTINATIONS = [
   { id: "youtube", label: "YouTube" },
   { id: "substack", label: "Substack" },
   { id: "linkedin", label: "LinkedIn" },
-  { id: "more", label: "Shorts & X" },
+  { id: "shorts", label: "TikTok / Shorts" },
+  { id: "x", label: "X / Twitter" },
 ];
 
 const blocks = [
@@ -130,13 +131,13 @@ export default function ReleaseStudio() {
       {tab === "youtube" && <>{textCard("youtubeTitle", "YouTube title", true)}{textCard("youtubeDescription", "YouTube description")}{textCard("youtubeChapters", "YouTube chapters")}</>}
       {tab === "substack" && <>{textCard("substackTitle", "Substack title", true)}{textCard("substackBody", "Substack article")}</>}
       {tab === "linkedin" && textCard("linkedinPost", "LinkedIn release post")}
-      {tab === "more" && <>
-        {textCard("xPost", "X / Twitter post", false, noteBlock(item.notes, "TWITTER COPY") || undefined)}
+      {tab === "shorts" && <>
         {textCard("shortTitle", "Short title", true, noteBlock(item.notes, "SHORT TITLE") || undefined)}
         {textCard("shortDescription", "Short description", false, noteBlock(item.notes, "SHORT DESCRIPTION") || undefined)}
         {textCard("shortPost", "Short post", false, noteBlock(item.notes, "SHORT POST") || undefined)}
-        {!item.copy?.xPost && !noteBlock(item.notes, "TWITTER COPY") && !noteBlock(item.notes, "SHORT TITLE") && <Card>No extra platform copy is saved for this episode.</Card>}
+        {!noteBlock(item.notes, "SHORT TITLE") && !noteBlock(item.notes, "SHORT DESCRIPTION") && !noteBlock(item.notes, "SHORT POST") && <Card>No short-form copy is saved for this episode.</Card>}
       </>}
+      {tab === "x" && <>{textCard("xPost", "X / Twitter post", false, noteBlock(item.notes, "TWITTER COPY") || undefined)}{!noteBlock(item.notes, "TWITTER COPY") && !item.copy?.xPost && <Card>No X / Twitter copy is saved for this episode.</Card>}</>}
 
       <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
         {blocks.filter(([key]) => item.copy?.[key]).map(([key, label]) => <span key={key} style={{ background: C.mint, borderRadius: 99, padding: "5px 9px", fontSize: 10, color: C.ink }}>{label} ready</span>)}
