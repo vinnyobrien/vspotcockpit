@@ -5,6 +5,7 @@ import {
   Empty, Problem, Chips, iso, parseObject,
 } from "../lib/ui.jsx";
 import { callOp, sGet, sSet } from "../api.js";
+import ReleaseStudio from "./ReleaseStudio.jsx";
 
 /* ============================================================
    src/rooms/Build.jsx
@@ -28,6 +29,7 @@ const CHANNELS = [
 ];
 
 export default function Build({ seed }) {
+  const [studioTab, setStudioTab] = useState("build");
   const [context, setContext] = useState("");
   const [source, setSource] = useState("");
   const [out, setOut] = useState(null);
@@ -155,6 +157,15 @@ export default function Build({ seed }) {
 
   return (
     <div>
+      <div role="tablist" aria-label="Production workspace" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+        {[["build", "Build from transcript"], ["release", "Episode outputs"]].map(([id, label]) => (
+          <button key={id} role="tab" aria-selected={studioTab === id} onClick={() => setStudioTab(id)}
+            className="tap" style={{ border: `1px solid ${studioTab === id ? C.ink : "rgba(20,24,51,.18)"}`, background: studioTab === id ? C.ink : "white", color: studioTab === id ? "white" : C.ink, borderRadius: 999, padding: "9px 14px", font: `600 12px ${BODY}`, cursor: "pointer" }}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {studioTab === "release" ? <ReleaseStudio /> : <>
       <Note>
         Transcript in, every channel out. Publishing here means saved and ready to paste, not sent.
       </Note>
@@ -415,6 +426,7 @@ export default function Build({ seed }) {
           </div>
         </>
       )}
+      </>}
     </div>
   );
 }
