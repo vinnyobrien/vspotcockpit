@@ -1,11 +1,11 @@
 import RateCard from "../lib/RateCard.jsx";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Lock, Send, Check, ChevronLeft, ExternalLink, Plus } from "lucide-react";
 import {
   C, BODY, DISPLAY, MONO, SH, SH_UP, R, Mono, Big, Card, Section, Pill,
   Field, Note, Empty, Problem, Confirm, iso, daysSince,
 } from "../lib/ui.jsx";
-import { callOp } from "../api.js";
+import { callOp, sGet } from "../api.js";
 
 /* ============================================================
    src/rooms/Growth.jsx
@@ -21,10 +21,61 @@ import { callOp } from "../api.js";
 
 const STEPS = ["Brief", "Build", "Preview", "Send", "Reply", "Close"];
 const STATUS = ["built", "sent", "won", "declined"];
+const PARTNER_KEY = "partners";
+const PARTNER_TYPES = ["Strategic", "Media & Distribution", "Event & Venue", "Content & Data"];
+const PARTNER_ASSETS = [
+  ["agreement", "Partnership agreement"],
+  ["logo", "Logo pack"],
+  ["boilerplate", "Approved company copy"],
+  ["urls", "URLs + social handles"],
+  ["guidelines", "Brand / usage guidance"],
+  ["placements", "Site + show placements mapped"],
+];
+const CLOSERSTILL = {
+  id: "closerstill-ecommerce-expo-2027",
+  name: "CloserStill Media / ECommerce Expo",
+  contact: "Alyssia Smith",
+  types: ["Strategic", "Media & Distribution", "Event & Venue"],
+  status: "Framework being drafted",
+  commercial: "Non-commercial",
+  give: "Original VSpot formats, talent/content, audience promotion and event activation.",
+  get: "Audience access, event marketing, ECommerce Expo platform, potential headline-stage slot and workshop space.",
+  properties: "Have I Got News For You · Camp Tralee · ECommerce Expo 2027",
+  next: "Receive Alyssia's draft agreement; review reciprocal roles and confirm 2027 deliverables.",
+  assets: { agreement:false, logo:false, boilerplate:false, urls:false, guidelines:false, placements:false },
+  touched: "2026-10-15",
+};
 
 export default function Growth({ assets, setAssets, sSet, K, today, onGenerate, busy }) {
   const [pack, setPack] = useState(false);
+  const [partners, setPartners] = useState([]);
+  const [partnerName, setPartnerName] = useState("");
   const save = (n) => { setAssets(n); sSet(K.assets, n); };
+  const savePartners = (n) => { setPartners(n); sSet(PARTNER_KEY, n); };
+
+  useEffect(() => {
+    (async () => {
+      const existing = await sGet(PARTNER_KEY, []);
+      if (existing.length) setPartners(existing);
+      else savePartners([CLOSERSTILL]);
+    })();
+  }, []);
+
+  const patchPartner = (id, patch) => savePartners(partners.map((p) => p.id === id ? { ...p, ...patch, touched: iso(today) } : p));
+  const togglePartnerAsset = (id, key) => savePartners(partners.map((p) => p.id === id ? {
+    ...p, touched: iso(today), assets: { ...(p.assets || {}), [key]: !(p.assets || {})[key] }
+  } : p));
+  const addPartner = () => {
+    if (!partnerName.trim()) return;
+    savePartners([{
+      id: Math.random().toString(36).slice(2), name: partnerName.trim(), contact: "",
+      types: [], status: "Exploring", commercial: "TBC", give: "", get: "", properties: "",
+      next: "Define reciprocal value and collect partner marketing materials.",
+      assets: { agreement:false, logo:false, boilerplate:false, urls:false, guidelines:false, placements:false },
+      touched: iso(today),
+    }, ...partners]);
+    setPartnerName("");
+  };
 
   if (pack) return <Pack back={() => setPack(false)} assets={assets} save={save} today={today} />;
 
@@ -48,6 +99,56 @@ export default function Growth({ assets, setAssets, sSet, K, today, onGenerate, 
         </p>
         <div style={{ marginTop: 14 }}><Pill full onClick={() => setPack(true)}>Start a pack</Pill></div>
       </Card>
+
+      <Section label={`Partners · ${partners.length}`}>
+        <Note>Reciprocal relationships sit here, separate from paid sponsorship. Track what each side gives, what each side gets, and whether marketing is actually ready to ship.</Note>
+        <Card style={{ margin: "12px 0" }}>
+          <div className="flex gap-2">
+            <div style={{ flex: 1, minWidth: 0 }}><Field value={partnerName} onChange={setPartnerName} onEnter={addPartner} placeholder="Add a media, event, data or strategic partner" /></div>
+            <Pill icon={Plus} disabled={!partnerName.trim()} onClick={addPartner}>Add</Pill>
+          </div>
+        </Card>
+        {partners.map((p) => {
+          const ready = PARTNER_ASSETS.filter(([k]) => (p.assets || {})[k]).length;
+          return <Card key={p.id} pad={18} accent={ready === PARTNER_ASSETS.length ? C.ink : C.red} style={{ marginBottom: 12 }}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 650, color: C.ink }}>{p.name}</div>
+                <div style={{ marginTop: 4 }}><Mono s={9}>{p.status} · {p.commercial}</Mono></div>
+                {p.contact && <div style={{ marginTop: 4, fontSize: 12.5, color: C.ink2 }}>{p.contact}</div>}
+              </div>
+              <Mono s={9} c={ready === PARTNER_ASSETS.length ? C.ink : C.red}>{ready}/{PARTNER_ASSETS.length} READY</Mono>
+            </div>
+            <div className="sc flex gap-1.5" style={{ overflowX: "auto", marginTop: 12 }}>
+              {PARTNER_TYPES.map((t) => {
+                const on = (p.types || []).includes(t);
+                return <button key={t} className="tap" onClick={() => patchPartner(p.id, { types: on ? p.types.filter(x => x !== t) : [...(p.types || []), t] })}
+                  style={{ flexShrink:0, fontFamily:BODY, fontSize:10.5, padding:"6px 9px", borderRadius:999, cursor:"pointer", background:on?C.ink:"transparent", color:on?"#fff":C.ink2, border:on?"none":"1px solid rgba(20,24,51,.14)" }}>{t}</button>;
+              })}
+            </div>
+            {(p.properties || p.give || p.get) && <div style={{ marginTop: 14, display:"grid", gap:8 }}>
+              {p.properties && <div><Mono s={8}>CONNECTED TO</Mono><div style={{fontSize:12.5,marginTop:3,color:C.ink2}}>{p.properties}</div></div>}
+              {p.give && <div><Mono s={8}>VSPOT GIVES</Mono><div style={{fontSize:12.5,marginTop:3,color:C.ink2}}>{p.give}</div></div>}
+              {p.get && <div><Mono s={8}>VSPOT GETS</Mono><div style={{fontSize:12.5,marginTop:3,color:C.ink2}}>{p.get}</div></div>}
+            </div>}
+            <div style={{ marginTop: 15, paddingTop: 13, borderTop:"1px solid rgba(20,24,51,.08)" }}>
+              <Mono s={8}>MARKETING MATERIALS</Mono>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:7, marginTop:9 }}>
+                {PARTNER_ASSETS.map(([k,label]) => {
+                  const on = !!(p.assets || {})[k];
+                  return <button key={k} className="tap" onClick={() => togglePartnerAsset(p.id,k)}
+                    style={{textAlign:"left",cursor:"pointer",border:"1px solid rgba(20,24,51,.1)",borderRadius:11,padding:"8px 9px",background:on?C.mint:C.card,fontFamily:BODY,fontSize:11.5,color:C.ink}}>
+                    {on ? "✓ " : "○ "}{label}
+                  </button>;
+                })}
+              </div>
+            </div>
+            {p.next && <div style={{ marginTop:13, padding:"10px 12px", borderRadius:12, background:C.sand }}>
+              <Mono s={8}>NEXT ACTION</Mono><div style={{fontSize:12.5,marginTop:4,lineHeight:1.45}}>{p.next}</div>
+            </div>}
+          </Card>;
+        })}
+      </Section>
 
       <Section label={`Prospects · ${assets.length}`}>
         <AddRow onAdd={add} />
