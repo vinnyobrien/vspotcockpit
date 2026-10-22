@@ -32,7 +32,8 @@ export function gregorRelease() {
   item.copy.substackBody='We keep waiting for the spectacular AI moment in commerce. Gregor Kiddie at Rithum offers a more useful picture: the accumulation of small improvements. A clearer product title. Better sizing information. Returns patterns that would otherwise be missed. One or two percent at a time, compounded across a business.\\n\\nGregor also explains why enterprise customers do not necessarily want another chatbot. They want better outcomes through tools and workflows they already trust. That puts data readiness, reliable product content and practical delivery mechanisms at the centre of the conversation.\\n\\nThere is a fascinating cultural collision here too: engineers increasingly need to explain the commercial story in data, while marketers need to understand the logic behind the systems.\\n\\nNot AI theatre. Useful intelligence, quietly compounded. The full conversation is on The Ostrich Report, sponsored by Rithum. [Add live link before publishing]';
   return item;
 }
-\nexport function seedPublishing() {
+
+export function seedPublishing() {
   return [gregorRelease(),newRelease('struggle-bus-2026-10-14','','2026-10-14')];
 }
 export function releaseBlockers(item) {
