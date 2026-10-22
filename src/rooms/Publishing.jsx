@@ -5,7 +5,7 @@ import {PUBLISHING_KEY,RELEASE_SCHEDULE,COPY_FIELDS,newRelease,seedPublishing,re
 
 export default function Publishing({onProduction,onCalendar}) {
   const [items,setItems]=useState(null),[draft,setDraft]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[notice,setNotice]=useState('');
-  async function load(){try{const rows=await readKey(PUBLISHING_KEY,seedPublishing());if(!Array.isArray(rows))throw new Error('Publishing records are invalid.');setItems(rows);setDraft(rows[0]||null);setError('');}catch(e){setError(e.message);}}
+  async function load(){try{const rows=await readKey(PUBLISHING_KEY,seedPublishing());if(!Array.isArray(rows))throw new Error('Publishing records are invalid.');const missing=seedPublishing().filter(seed=>seed.id.startsWith('ostrich-gregor-kiddie-')&&!rows.some(row=>row.id===seed.id));const merged=missing.length?[...missing,...rows]:rows;if(missing.length)await writeKey(PUBLISHING_KEY,merged);setItems(merged);setDraft(merged[0]||null);setError('');}catch(e){setError(e.message);}}
   useEffect(()=>{load();},[]);
   const set=(key,value)=>setDraft(d=>({...d,[key]:value}));
   async function save(){setBusy(true);try{const latest=await readKey(PUBLISHING_KEY,seedPublishing());if(!Array.isArray(latest))throw new Error('Reload the publishing records.');const next=latest.some(x=>x.id===draft.id)?latest.map(x=>x.id===draft.id?draft:x):[draft,...latest];await writeKey(PUBLISHING_KEY,next);setItems(next);setNotice('Release pack saved.');setError('');}catch(e){setError(e.message);}finally{setBusy(false);}}
