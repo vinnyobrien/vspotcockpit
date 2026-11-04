@@ -29,7 +29,12 @@ function noteBlock(notes, heading) {
 function shortAssets(notes) {
   const delivered = noteBlock(notes, "DELIVERED EXPORTS");
   const matches = [...delivered.matchAll(/(Captioned master|Captioned 50\.5-second short|Clean master|Updated Spotify audio):\s*(https?:\/\/\S+|sandbox:\/\/\S+)/gi)];
-  return matches.map(([, label, url]) => ({ label: label.replace(/^Captioned /i, ""), url }));
+  const legacy = matches.map(([, label, url]) => ({ label: label.replace(/^Captioned /i, ""), url }));
+  const outputs = noteBlock(notes, "PRODUCTION OUTPUTS");
+  const files = [...outputs.matchAll(/^(.+?):\s*(https?:\/\/\S+)\s*$/gm)]
+    .map(([, label, url]) => ({ label: label.trim(), url }));
+  return [...legacy, ...files].filter((asset, index, all) =>
+    all.findIndex((candidate) => candidate.url === asset.url) === index);
 }
 
 function usableUrl(value) {
@@ -60,7 +65,8 @@ export default function ReleaseStudio() {
       if (!Array.isArray(rows)) throw new Error("Release packs are not available.");
       const ordered = [...rows].sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
       setItems(ordered);
-      setSelectedId(ordered.find((x) => /cindy marshall/i.test(`${x.guest} ${x.show}`))?.id || ordered[0]?.id || "");
+      const requestedId = new URLSearchParams(window.location.search).get("release");
+      setSelectedId(ordered.find((x) => x.id === requestedId)?.id || ordered.find((x) => /cindy marshall/i.test(`${x.guest} ${x.show}`))?.id || ordered[0]?.id || "");
       setError("");
     }).catch((e) => { if (live) setError(e.message || "Could not load release packs."); });
     return () => { live = false; };
@@ -114,6 +120,7 @@ export default function ReleaseStudio() {
         <Card style={{ marginBottom: 12 }}>
           <div className="flex items-center justify-between gap-3"><Big s={20}>{item.guest || item.show}</Big><Mono>{item.date || "Date pending"}</Mono></div>
           <p style={{ marginBottom: 0, fontSize: 13, color: C.ink2 }}>{item.show}{item.time ? ` · ${item.time} Ireland` : ""}</p>
+          {!item.checks?.edit && <p style={{ marginBottom: 0, fontSize: 12, color: C.red }}>Review pending — full edit listening check remains open.</p>}
         </Card>
         {driveVideoPreview ? <Card style={{ padding: 10, marginBottom: 12 }}><iframe title={`${item.guest || item.show} final cut`} src={driveVideoPreview} allow="autoplay; encrypted-media" allowFullScreen style={{ display: "block", width: "100%", height: "min(68vh, 700px)", border: 0, borderRadius: 12, background: "#111" }} /><div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}><Pill sm tone="ghost" icon={ExternalLink} onClick={() => window.open(videoUrl, "_blank", "noopener,noreferrer")}>Open final cut in Drive</Pill></div></Card>
           : videoUrl ? <Card style={{ padding: 10, marginBottom: 12 }}><video controls preload="metadata" src={videoUrl} style={{ display: "block", width: "100%", maxHeight: "68vh", borderRadius: 12, background: "#111" }} /><div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}><Pill sm tone="ghost" icon={ExternalLink} onClick={() => window.open(videoUrl, "_blank", "noopener,noreferrer")}>Open final cut</Pill></div></Card>
