@@ -29,7 +29,7 @@ const CHANNELS = [
 ];
 
 export default function Build({ seed }) {
-  const [studioTab, setStudioTab] = useState("build");
+  const [studioTab, setStudioTab] = useState(() => new URLSearchParams(window.location.search).has("release") ? "release" : "build");
   const [context, setContext] = useState("");
   const [source, setSource] = useState("");
   const [out, setOut] = useState(null);
