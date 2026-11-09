@@ -36,14 +36,14 @@ const CLOSERSTILL = {
   name: "CloserStill Media / ECommerce Expo",
   contact: "Alyssia Smith",
   types: ["Strategic", "Media & Distribution", "Event & Venue"],
-  status: "Framework being drafted",
-  commercial: "Non-commercial",
+  status: "Proposal sent — awaiting agreement",
+  commercial: "Contra + referral revenue share proposed; split TBC",
   give: "Original VSpot formats, talent/content, audience promotion and event activation.",
   get: "Audience access, event marketing, ECommerce Expo platform, potential headline-stage slot and workshop space.",
   properties: "Have I Got News For You · Camp Tralee · ECommerce Expo 2027",
-  next: "Receive Alyssia's draft agreement; review reciprocal roles and confirm 2027 deliverables.",
+  next: "Agree promotion, scope, lead attribution and revenue share. Working record prepared; Alyssia’s Google visitor access is pending.",
   assets: { agreement:false, logo:false, boilerplate:false, urls:false, guidelines:false, placements:false },
-  touched: "2026-10-15",
+  touched: "2026-11-09",
 };
 
 export default function Growth({ assets, setAssets, sSet, K, today, onGenerate, busy }) {
@@ -56,8 +56,14 @@ export default function Growth({ assets, setAssets, sSet, K, today, onGenerate, 
   useEffect(() => {
     (async () => {
       const existing = await sGet(PARTNER_KEY, []);
-      if (existing.length) setPartners(existing);
-      else savePartners([CLOSERSTILL]);
+      if (existing.length) {
+        setPartners(existing.map((p) => p.id !== CLOSERSTILL.id ? p : ({
+          ...p,
+          status: p.status === "Framework being drafted" ? CLOSERSTILL.status : p.status,
+          commercial: p.commercial === "Non-commercial" ? CLOSERSTILL.commercial : p.commercial,
+          next: p.next === "Receive Alyssia's draft agreement; review reciprocal roles and confirm 2027 deliverables." ? CLOSERSTILL.next : p.next,
+        })));
+      } else savePartners([CLOSERSTILL]);
     })();
   }, []);
 
@@ -126,6 +132,15 @@ export default function Growth({ assets, setAssets, sSet, K, today, onGenerate, 
                   style={{ flexShrink:0, fontFamily:BODY, fontSize:10.5, padding:"6px 9px", borderRadius:999, cursor:"pointer", background:on?C.ink:"transparent", color:on?"#fff":C.ink2, border:on?"none":"1px solid rgba(20,24,51,.14)" }}>{t}</button>;
               })}
             </div>
+            {p.id === CLOSERSTILL.id && <div style={{ marginTop: 14, padding: "12px", borderRadius: 12, background: C.sky }}>
+              <Mono s={8}>PARTNERSHIP RECORD</Mono>
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 12.5 }}>
+                <a href="https://docs.google.com/document/d/1Ld4PUppF0ZWFfusObG3BxQkTNtcqy2hrb9NF104r4Bs/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer">Opportunities, meeting notes and actions</a>
+                <a href="https://drive.google.com/drive/folders/1NvRTKwX0_Zg5gD5IBuViNSWJdofrPsiA" target="_blank" rel="noopener noreferrer">Correspondence and agreements</a>
+                <a href="https://mail.google.com/mail/u/?authuser=vinny%40vinnyandco.com#all/1a1c103b04bca198" target="_blank" rel="noopener noreferrer">Sent proposal</a>
+              </div>
+              <p style={{ fontSize: 12, lineHeight: 1.5, margin: "10px 0 0", color: C.ink2 }}>Proposal sent 9 November 2026. Commercial split and attribution await agreement. Partner document access needs a Google visitor invitation.</p>
+            </div>}
             {(p.properties || p.give || p.get) && <div style={{ marginTop: 14, display:"grid", gap:8 }}>
               {p.properties && <div><Mono s={8}>CONNECTED TO</Mono><div style={{fontSize:12.5,marginTop:3,color:C.ink2}}>{p.properties}</div></div>}
               {p.give && <div><Mono s={8}>VSPOT GIVES</Mono><div style={{fontSize:12.5,marginTop:3,color:C.ink2}}>{p.give}</div></div>}
