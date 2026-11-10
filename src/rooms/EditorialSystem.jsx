@@ -27,6 +27,7 @@ export default function EditorialSystem() {
   const [after, setAfter] = useState("");
   const [title, setTitle] = useState("");
   const [source, setSource] = useState("");
+  const [ruleSearch, setRuleSearch] = useState("");
   useEffect(() => {
     let active = true;
     sGet(KEY, null).then(v => { if (active) { setData(v && typeof v === "object" ? { ...initial, ...v } : initial); setLoaded(true); } });
@@ -42,7 +43,8 @@ export default function EditorialSystem() {
     const next = { ...data, rules: [{ id: uid(), text: rule.trim(), scope, before: before.trim(), after: after.trim(), approved: true, at: new Date().toISOString() }, ...data.rules] };
     if (await persist(next)) { setRule(""); setBefore(""); setAfter(""); }
   };
-  const removeRule = async id => { await persist({ ...data, rules: data.rules.filter(r => r.id !== id) }); };
+  const removeRule = async id => { await persist({ ...data, rules: data.rules.map(r => r.id === id ? { ...r, approved: false, revokedAt: new Date().toISOString() } : r) }); };
+  const restoreRule = async id => { await persist({ ...data, rules: data.rules.map(r => r.id === id ? { ...r, approved: true, revokedAt: null } : r) }); };
   const addTalk = async () => {
     if (!title.trim()) return;
     const next = { ...data, talks: [...data.talks, { id: uid(), title: title.trim(), source: source.trim(), pitch: "", stage: "idea" }] };
@@ -62,7 +64,7 @@ export default function EditorialSystem() {
     {tab === "rules" && <>
       <Card style={{ marginBottom: 12 }}>
         <Mono>Approve a reusable editorial rule</Mono>
-        <p style={{ fontSize: 13, color: C.ink2, margin: "10px 0" }}>Only rules you explicitly save are applied to your editorial reference. Edits elsewhere do not silently become global preferences.</p>
+        <p style={{ fontSize: 13, color: C.ink2, margin: "10px 0" }}>Only rules you explicitly approve enter this reference. AI generation is not yet connected to this registry; edits elsewhere do not silently become global preferences.</p>
         <Field rows={3} value={rule} onChange={setRule} placeholder="e.g. Avoid corporate filler; lead with the actual point." />
         <label style={{ display: "block", fontSize: 12, marginTop: 10 }}>Applies to</label>
         <select value={scope} onChange={e => setScope(e.target.value)} style={inputStyle}>
@@ -74,11 +76,12 @@ export default function EditorialSystem() {
         </div>
         <div style={{ marginTop: 12 }}><Pill sm disabled={!rule.trim()} onClick={addRule}>Approve & save rule</Pill></div>
       </Card>
-      {data.rules.length === 0 ? <Card>No saved rules yet. Start with a phrase you routinely replace.</Card> : data.rules.map(r => <Card key={r.id} style={{ marginBottom: 9 }}>
-        <Mono>{r.scope} · Approved {new Date(r.at).toLocaleDateString()}</Mono>
+      <div style={{ marginBottom: 10 }}><Field value={ruleSearch} onChange={setRuleSearch} placeholder="Find a saved rule or phrase" /></div>
+      {data.rules.length === 0 ? <Card>No saved rules yet. Start with a phrase you routinely replace.</Card> : data.rules.filter(r => [r.text,r.before,r.after,r.scope].join(" ").toLowerCase().includes(ruleSearch.toLowerCase())).map(r => <Card key={r.id} style={{ marginBottom: 9, opacity: r.approved ? 1 : 0.6 }}>
+        <Mono>{r.scope} · {r.approved ? "Active" : "Revoked"} · {new Date(r.at).toLocaleDateString()}</Mono>
         <p style={{ margin: "10px 0", fontSize: 14 }}>{r.text}</p>
         {r.before && <p style={{ fontSize: 12, color: C.ink2 }}>Before: {r.before} → After: {r.after || "(omit)"}</p>}
-        <Pill sm tone="ghost" onClick={() => removeRule(r.id)}>Revoke rule</Pill>
+        <Pill sm tone="ghost" onClick={() => r.approved ? removeRule(r.id) : restoreRule(r.id)}>{r.approved ? "Revoke rule" : "Restore rule"}</Pill>
       </Card>)}
     </>}
     {tab === "assets" && <>
