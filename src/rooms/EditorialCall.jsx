@@ -24,11 +24,12 @@ export default function EditorialCall() {
   const [day, setDay] = useState(today), [session, setSession] = useState(null);
   const [thought, setThought] = useState(""), [label, setLabel] = useState(""), [url, setUrl] = useState("");
   const [draftText, setDraftText] = useState(""), [busy, setBusy] = useState(""), [error, setError] = useState("");
+  const [handoff, setHandoff] = useState(null);
   useEffect(() => {
     let active = true;
-    setSession(null); setDraftText(""); setError("");
+    setSession(null); setDraftText(""); setError(""); setHandoff(null);
     readKey("editor-call:" + day, null).then((saved) => {
-      if (active) { const value = saved || initial(day); setSession(value); setDraftText(value.drafts?.at(-1)?.text || ""); }
+      if (active) { const value = saved || initial(day); setSession(value); setDraftText(value.drafts?.at(-1)?.text || ""); setHandoff(value.workflowProposal || null); }
     }).catch((e) => { if (active) setError(e.message); });
     return () => { active = false; };
   }, [day]);
@@ -74,6 +75,37 @@ export default function EditorialCall() {
     } catch (e) { setError("No draft was saved: " + e.message); }
     setBusy("");
   };
+  // Deliberate handoff. A draft is not a production task, and this action
+  // never creates calendar entries or grants publication permission.
+  const proposeWorkflow = async () => {
+    if (!session?.drafts?.length || busy) return;
+    setBusy("workflow"); setError("");
+    try {
+      const latest = session.drafts.at(-1);
+      const proposal = {
+        id: session.workflowProposal?.id || crypto.randomUUID(),
+        sourceDay: day, sourceDraftId: latest.id,
+        title: session.question.slice(0, 120),
+        format: latest.format, draft: draftText,
+        destination: latest.format === "script" ? "The V Spot News" : latest.format === "linkedin" ? "LinkedIn" : "Substack",
+        tasks: ["Subeditor review", "Resolve factual claims and editorial concerns", "Vinny approves production", "Prepare assets and scheduling", "Final publication sign-off"],
+        status: "awaiting_subeditor", createdAt: new Date().toISOString(),
+        subeditor: null, productionApproved: false, publicationApproved: false,
+      };
+      await persist({ ...session, workflowProposal: proposal });
+      setHandoff(proposal);
+    } catch (e) { setError("Workflow proposal could not be saved: " + e.message); }
+    setBusy("");
+  };
+  const sendToSubeditor = async () => {
+    if (!handoff || busy) return;
+    setBusy("handoff"); setError("");
+    try {
+      await writeKey("subeditor:handoff", { ...handoff, status: "awaiting_subeditor", queuedAt: new Date().toISOString() });
+      setError("Sent to Sub-Editor. Open the Sub-Editor room for its review. No production task has been created.");
+    } catch(e) { setError("Subeditor handoff failed: " + e.message); }
+    setBusy("");
+  };
   const saveEdit = async () => {
     if (!session?.drafts.length) return;
     const last = session.drafts.at(-1);
@@ -108,6 +140,12 @@ export default function EditorialCall() {
           {[["script", "Script"], ["linkedin", "LinkedIn post"], ["note", "Substack Note"]].map(([format, title]) => <Pill key={format} sm disabled={!!busy || !session.turns.some((t) => t.role === "vinny")} onClick={() => generate(format)}>{busy === "draft" ? "Working…" : "Draft " + title}</Pill>)}
         </div>
         {!!session.drafts.length && <div style={{ marginTop: 15 }}>
+          <Card tint={C.sand} pad={12}>
+            <Mono>Production gate · nothing advances automatically</Mono>
+            <p style={{fontSize:13}}>A draft is not a workflow. Create a proposal only when this idea deserves production. It must pass the Sub-Editor and your approval before tasks or dates are created.</p>
+            <Pill sm disabled={!!busy} onClick={proposeWorkflow}>Turn into workflow proposal</Pill>
+            {handoff && <div style={{marginTop:10}}><Mono>Proposal: {handoff.status.replaceAll("_"," ")} · {handoff.destination}</Mono><p style={{fontSize:12}}>Subeditor → your production approval → tasks → separate publication sign-off.</p><Pill sm tone="ghost" disabled={!!busy} onClick={sendToSubeditor}>Send to Sub-Editor</Pill></div>}
+          </Card>
           <Mono s={9}>Working draft · {session.drafts.at(-1).format} · {session.drafts.at(-1).origin} · version {session.drafts.length}</Mono>
           <textarea rows={10} aria-label="Editable draft" value={draftText} onChange={(e) => setDraftText(e.target.value)} style={{ ...style, marginTop: 8, resize: "vertical" }} />
           <Pill sm onClick={saveEdit} disabled={draftText === session.drafts.at(-1).text}>Save my edit</Pill>
