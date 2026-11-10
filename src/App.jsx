@@ -19,6 +19,7 @@ import Video from "./rooms/Video.jsx";
 import Guests from "./rooms/Guests.jsx";
 import Growth from "./rooms/Growth.jsx";
 import Essay from "./rooms/Essay.jsx";
+import EditorialSystem from "./rooms/EditorialSystem.jsx";
 import Cast from "./rooms/Cast.jsx";
 import Shows from "./rooms/Shows.jsx";
 import Build from "./rooms/Build.jsx";
@@ -120,6 +121,7 @@ const ROOMS = [
   { id: "video",    name: "Video",    icon: Film,          tint: C.mint,    blurb: "Shorts and calendar" },
   { id: "sub",      name: "Sub-Editor", icon: Scale,      tint: C.blush,   blurb: "Voice, claims, contradictions" },
   { id: "week",     name: "The Week", icon: CalendarDays,  tint: C.sand,    blurb: "Every slot, filled or open" },
+  { id: "editorial", name: "Editorial System", icon: PenLine, tint: C.sand, blurb: "Voice rules, approved artwork and speaking catalogue" },
   { id: "essay",    name: "Essay",    icon: PenLine,       tint: C.lilac,   blurb: "The long form" },
   { id: "guests",   name: "Guests",   icon: Users,         tint: C.blush,   blurb: "Pipeline and assets" },
   { id: "growth",   name: "Growth",   icon: TrendingUp,    tint: C.apricot, blurb: "Sponsors and Camp Tralee" },
@@ -128,6 +130,18 @@ const ROOMS = [
   { id: "episode",  name: "Episode Intelligence", icon: Lightbulb, tint: C.sand, blurb: "Conversation to insight" },
   { id: "cast",     name: "The Cast", icon: Drama,         tint: C.lilac,   blurb: "Murt, Reagan, Jimmy" },
   { id: "analysis", name: "Analysis", icon: LineChart,     tint: C.mint,    blurb: "Monthly" },
+];
+
+const NAV_GROUPS = [
+  { label: "DO THE WORK", ids: ["actions","followups","calendar","publishing","guests","finance"] },
+  { label: "PRODUCTION & EDITORIAL", ids: ["breaking","desk","video","build","shows","essay","episode"] },
+  { label: "RELATIONSHIPS & REPORTING", ids: ["growth","audience","analysis","week"] },
+  { label: "BACKSTAGE SYSTEMS", ids: ["sub","editorial","cast"] },
+];
+const QUICK_LAUNCH = [
+  { label: "Launch Shopify", url: "https://admin.shopify.com/" },
+  { label: "Launch YouTube", url: "https://www.youtube.com/" },
+  { label: "Launch Spotify", url: "https://open.spotify.com/" },
 ];
 
 const railLink = {
@@ -440,11 +454,14 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 color: !room ? "#fff" : C.ink,
                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
               }}>
-              <span style={{ fontFamily: BODY, fontSize: 14, fontWeight: !room ? 600 : 500 }}>Today</span>
+              <span style={{ fontFamily: BODY, fontSize: 14, fontWeight: !room ? 600 : 500 }}>Home · Today</span>
               <span style={{ fontFamily: MONO, fontSize: 10, opacity: .7 }}>{pct}%</span>
             </button>
 
-            {ROOMS.map((r) => {
+            {NAV_GROUPS.map((group) => <div key={group.label} style={{ marginTop: 16 }}>
+              <Mono s={9} c={C.ink3}>{group.label}</Mono>
+              <div style={{ marginTop: 7 }}>
+            {ROOMS.filter((r) => group.ids.includes(r.id)).map((r) => {
               const I = r.icon;
               
               const on = room === r.id;
@@ -468,6 +485,12 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 </button>
               );
             })}
+              </div>
+            </div>)}
+            <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(20,24,51,.12)" }}>
+              <Mono s={9} c={C.ink3}>QUICK LAUNCH · PERSONAL</Mono>
+              {QUICK_LAUNCH.map((link) => <a key={link.label} href={link.url} target="_blank" rel="noopener noreferrer" className="tap" style={{ ...railLink, textDecoration: "none", marginTop: 4 }}>{link.label} ↗</a>)}
+            </div>
 
             <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(20,24,51,.08)", display: "grid", gap: 6 }}>
               <a className="tap" href="/api/oauth-start" style={{ ...railLink, textDecoration: "none" }}>
@@ -476,6 +499,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               <a className="tap" href="/api/oauth-start?service=youtube" style={{ ...railLink, textDecoration: "none" }}>
                 {googleConnected === "youtube" ? "YouTube connected" : "Connect YouTube"}
               </a>
+              <a className="tap" href="https://claude.ai/artifact/EcRWbk3eVKua7H3bWk9vDc" target="_blank" rel="noopener noreferrer" style={{ ...railLink, textDecoration: "none" }}>FoundRae dashboard ↗</a>
               <button className="tap" onClick={onLogout} style={railLink}>Sign out</button>
             </div>
           </aside>
@@ -527,6 +551,19 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
           {!room && (
             <>
+              <section style={{ margin: "0 16px 18px", borderRadius: 22, background: "#1A1F3C", color: "#F3F1EC", padding: "22px 22px 20px", borderTop: "4px solid #E8272A" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                  <img src="/cockpit-mark.svg" alt="V Spot Media mark" width="48" height="48" style={{ objectFit: "contain" }} />
+                  <div><div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 2, color: "#D2B48C" }}>V SPOT MEDIA · MISSION CONTROL</div><div style={{ fontFamily: BODY, fontSize: 24, fontWeight: 800 }}>Today's running order</div></div>
+                </div>
+                <div style={{ fontSize: 13, color: "#D8D9E2", lineHeight: 1.6, marginBottom: 16 }}>The decisions, the people and the production. All the useful chaos, one desk.</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 8 }}>
+                  {[{ label: "Tasks left", value: all.filter(t => !done[t.id]).length, room: "actions" }, { label: "Guest records", value: guests.length, room: "guests" }, { label: "Calendar items", value: editorialCalendar.items?.length ?? "—", room: "calendar" }].map(stat => <button key={stat.label} onClick={() => setRoom(stat.room)} className="tap" style={{ textAlign: "left", background: "#2B3150", color: "#fff", border: "1px solid #454C6B", borderRadius: 12, padding: "12px 10px", cursor: "pointer" }}><div style={{ fontSize: 23, fontWeight: 800 }}>{stat.value}</div><div style={{ fontSize: 10, color: "#D2B48C" }}>{stat.label}</div></button>)}
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
+                  {[{ label: "Action queue", room: "actions" }, { label: "Guest desk", room: "guests" }, { label: "Money & admin", room: "finance" }, { label: "Production", room: "build" }].map(link => <button key={link.room} className="tap" onClick={() => setRoom(link.room)} style={{ border: "1px solid #626B87", background: "transparent", color: "#F3F1EC", padding: "8px 11px", borderRadius: 10, fontSize: 12, cursor: "pointer" }}>{link.label} ↗</button>)}
+                </div>
+              </section>
               <Today
                 today={today} dayKey={dayKey} tasks={all} done={done} toggle={toggle}
                 extras={extras} addExtra={addExtra} gaps={gaps} three={three} setThree={setThree}
@@ -603,6 +640,8 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
               {<RoomSession active={room === "growth"}><Growth assets={assets} setAssets={setAssets} sSet={sSet} K={K} today={today}
                   onGenerate={generate} busy={busy} /></RoomSession>}
+
+              <RoomSession active={room === "editorial"}><EditorialSystem /></RoomSession>
 
               {<RoomSession active={room === "essay"}><Essay threads={threads} threadContext={threadContext} K={K} initialThread={editorThread} /></RoomSession>}
 

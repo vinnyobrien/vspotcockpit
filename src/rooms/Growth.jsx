@@ -20,7 +20,15 @@ import { callOp, sGet } from "../api.js";
    ============================================================ */
 
 const STEPS = ["Brief", "Build", "Preview", "Send", "Reply", "Close"];
-const STATUS = ["built", "sent", "won", "declined"];
+const STATUS = ["built", "sent", "replied", "meeting", "proposal", "won", "declined", "deferred"];
+const AFTERCARE = [
+  ["delivered", "Delivery confirmed"],
+  ["promotion", "Client promotion checked"],
+  ["testimonial", "Testimonial requested"],
+  ["permission", "Testimonial / case study permission confirmed"],
+  ["followon", "Follow-on opportunity reviewed"],
+];
+const dayOffset = (value, days) => { const d = new Date(value + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + days); return d.toISOString().slice(0,10); };
 const PARTNER_KEY = "partners";
 const PARTNER_TYPES = ["Strategic", "Media & Distribution", "Event & Venue", "Content & Data"];
 const PARTNER_ASSETS = [
@@ -89,11 +97,53 @@ export default function Growth({ assets, setAssets, sSet, K, today, onGenerate, 
     if (!name.trim()) return;
     save([{ id: Math.random().toString(36).slice(2), name: name.trim(), url: "", status: "built", camp: false, touched: iso(today) }, ...assets]);
   };
-  const patch = (id, p) => save(assets.map((a) => (a.id === id ? { ...a, ...p, touched: iso(today) } : a)));
+  const patch = (id, p) => save(assets.map((a) => {
+    if (a.id !== id) return a;
+    const changed = p.status && p.status !== a.status;
+    return { ...a, ...p, touched: iso(today),
+      history: changed ? [...(a.history || []), { from: a.status, to: p.status, at: new Date().toISOString(), source: "manual" }] : (a.history || []) };
+  }));
 
+  const setAftercare = (id, key, checked) => save(assets.map(a => {
+    if (a.id !== id) return a;
+    const aftercare = { ...(a.aftercare || {}), [key]: checked ? iso(today) : null };
+    if (key === "delivered" && checked && !a.aftercare?.delivered) {
+      aftercare.promotionDue = dayOffset(iso(today), 3);
+      aftercare.testimonialDue = dayOffset(iso(today), 10);
+      aftercare.followonDue = dayOffset(iso(today), 30);
+    }
+    return { ...a, aftercare, touched: iso(today) };
+  }));
+  const aftercareDue = assets.flatMap(a => {
+    const ac = a.aftercare || {};
+    if (!ac.delivered) return [];
+    return [["promotion", "Check client promotion", ac.promotionDue], ["testimonial", "Request testimonial", ac.testimonialDue], ["followon", "Review follow-on work", ac.followonDue]]
+      .filter(([key, , due]) => !ac[key] && due && due <= iso(today))
+      .map(([key, label, due]) => ({ id: a.id, name: a.name, key, label, due, camp: !!a.camp }));
+  });
+  const weeklySummary = assets.reduce((out, a) => {
+    out[a.status] = (out[a.status] || 0) + 1;
+    if (a.aftercare?.delivered) out.delivered = (out.delivered || 0) + 1;
+    if (a.aftercare?.promotion) out.promoted = (out.promoted || 0) + 1;
+    if (a.aftercare?.testimonial) out.testimonialRequested = (out.testimonialRequested || 0) + 1;
+    if (a.aftercare?.followon) out.followonReviewed = (out.followonReviewed || 0) + 1;
+    return out;
+  }, {});
   return (
     <div>
       <Note>Develop a reusable media kit and tailored sponsor proposals.</Note>
+      <Card style={{ margin: "12px 0" }} pad={16}>
+        <Mono s={10}>WEEKLY SPONSOR & AFTERCARE VIEW · MANUAL RECORDS</Mono>
+        <div style={{ fontSize: 12, lineHeight: 1.6, marginTop: 7 }}>
+          {["built","sent","replied","meeting","proposal","won","declined","deferred","delivered","promoted","testimonialRequested","followonReviewed"].map(k => <span key={k} style={{ display:"inline-block", marginRight: 13 }}>{k}: <strong>{weeklySummary[k] || 0}</strong></span>)}
+        </div>
+        <div style={{ fontSize: 12, marginTop: 8 }}>Camp Tralee prospects: {assets.filter(a => a.camp).length} (separate business). Open aftercare actions: {aftercareDue.length}.</div>
+        {aftercareDue.map(x => <div key={x.id + x.key} style={{ fontSize: 12, padding:"7px 0", borderTop:"1px solid rgba(20,24,51,.08)" }}>
+          <strong>{x.name}</strong> · {x.label} · due {x.due}{x.camp ? " · CAMP TRALEE" : ""}
+          <Pill sm tone="ghost" onClick={() => setAftercare(x.id, x.key, true)}>Mark done</Pill>
+        </div>)}
+        <div style={{ fontSize: 11, color: C.ink2, marginTop: 8 }}>This is an in-app summary of saved records, not evidence of email delivery or automatic external reconciliation.</div>
+      </Card>
       <details style={{ margin: "16px 0" }}><summary style={{ cursor: "pointer", padding: 12 }}>Internal rate card & revenue model</summary><p style={{ fontSize: 13 }}>Existing assumptions, not live audience valuations. Review rates before using them in a proposal.</p><RateCard /></details>
 
       <Card tint={C.apricot} style={{ marginBottom: 18, border: `2px solid ${C.red}` }}>
@@ -137,7 +187,7 @@ export default function Growth({ assets, setAssets, sSet, K, today, onGenerate, 
               <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 12.5 }}>
                 <a href="https://docs.google.com/document/d/1Ld4PUppF0ZWFfusObG3BxQkTNtcqy2hrb9NF104r4Bs/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer">Opportunities, meeting notes and actions</a>
                 <a href="https://drive.google.com/drive/folders/1NvRTKwX0_Zg5gD5IBuViNSWJdofrPsiA" target="_blank" rel="noopener noreferrer">Correspondence and agreements</a>
-                <a href="https://mail.google.com/mail/u/?authuser=vinny%40vinnyandco.com#all/1a1c103b04bca198" target="_blank" rel="noopener noreferrer">Sent proposal</a>
+                <a href="https://mail.google.com/mail/#all/1a1c103b04bca198" target="_blank" rel="noopener noreferrer">Sent proposal</a>
               </div>
               <p style={{ fontSize: 12, lineHeight: 1.5, margin: "10px 0 0", color: C.ink2 }}>Proposal sent 9 November 2026. Commercial split and attribution await agreement. Partner document access needs a Google visitor invitation.</p>
             </div>}
@@ -182,6 +232,51 @@ export default function Growth({ assets, setAssets, sSet, K, today, onGenerate, 
                     <ExternalLink size={16} strokeWidth={2.2} />
                   </a>
                 )}
+              </div>
+              <div style={{ marginTop: 12, padding: 12, borderRadius: 12, border: "1px solid rgba(20,24,51,.12)" }}>
+                <Mono s={9}>COMMERCIAL CONTROL · {a.camp ? "CAMP TRALEE (SEPARATE BUSINESS)" : "V SPOT MEDIA"}</Mono>
+                <div style={{ fontSize: 12, color: C.ink2, margin: "7px 0" }}>Agreed SOW governs delivery. Additional work needs an approved change or recorded goodwill decision.</div>
+                <Field value={a.sowUrl || ""} onChange={v => patch(a.id, { sowUrl: v })} placeholder="Link to signed statement of work" />
+                <div style={{ height: 7 }} />
+                <Field value={a.clientResponsibilities || ""} onChange={v => patch(a.id, { clientResponsibilities: v })} placeholder="Client responsibilities and promotion commitments" />
+                <div style={{ height: 7 }} />
+                <Field value={a.nextAction || ""} onChange={v => patch(a.id, { nextAction: v })} placeholder="Next action / follow-up" />
+                <div style={{ height: 7 }} />
+                <Field value={a.testimonialStatus || ""} onChange={v => patch(a.id, { testimonialStatus: v })} placeholder="Testimonial / case study permission status" />
+                {a.sowUrl && <a href={a.sowUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12 }}>Open agreed SOW</a>}
+                <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(20,24,51,.1)" }}>
+                  <Mono s={9}>SCOPE CHANGE REGISTER</Mono>
+                  <div style={{ fontSize: 12, color: C.ink2, margin: "5px 0 9px" }}>Record requests before accepting extra work. Pending requests are not approved for delivery.</div>
+                  <Field value={a.changeDraft || ""} onChange={v => patch(a.id, { changeDraft: v })} placeholder="Describe requested extra work and impact" />
+                  <div style={{ height: 7 }} />
+                  <Field value={a.changeValue || ""} onChange={v => patch(a.id, { changeValue: v })} placeholder="Proposed additional fee or goodwill value" />
+                  <div style={{ marginTop: 8 }}><Pill sm disabled={!String(a.changeDraft || "").trim()} onClick={() => patch(a.id, {
+                    changeOrders: [...(a.changeOrders || []), { id: Math.random().toString(36).slice(2), description: a.changeDraft.trim(), value: a.changeValue || "", status: "pending", createdAt: new Date().toISOString(), history: [] }],
+                    changeDraft: "", changeValue: ""
+                  })}>Log change request</Pill></div>
+                  {(a.changeOrders || []).map(co => <div key={co.id} style={{ marginTop: 10, padding: 10, borderRadius: 9, background: C.sand }}>
+                    <div style={{ fontSize: 12, fontWeight: 600 }}>{co.description}</div>
+                    <div style={{ fontSize: 11, marginTop: 4 }}>{co.value || "Value not recorded"} · {co.status.toUpperCase()}</div>
+                    {co.status === "pending" && <div className="flex gap-2 flex-wrap" style={{ marginTop: 8 }}>
+                      {[["approved_paid","Approve paid"],["approved_goodwill","Approve goodwill"],["rejected","Decline"]].map(([status,label]) =>
+                        <Pill key={status} sm tone="ghost" onClick={() => patch(a.id, { changeOrders: (a.changeOrders || []).map(x => x.id === co.id ? {...x, status, decidedAt: new Date().toISOString(), history: [...(x.history || []), {status, at: new Date().toISOString(), source: "manual"}]} : x) })}>{label}</Pill>
+                      )}
+                    </div>}
+                  </div>)}
+                </div>
+
+                <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(20,24,51,.1)" }}>
+                  <Mono s={9}>DELIVERY → PROMOTION → TESTIMONIAL → FOLLOW-ON</Mono>
+                  <div style={{ fontSize: 12, color: C.ink2, margin: "5px 0 8px" }}>Confirm actual delivery to start suggested follow-up dates. Check actions only when genuinely completed; testimonial permission is separate from the request.</div>
+                  {AFTERCARE.map(([key,label]) => <label key={key} style={{ display:"flex", alignItems:"center", gap:8, fontSize:12, marginTop:7 }}>
+                    <input type="checkbox" checked={!!a.aftercare?.[key]} onChange={e => setAftercare(a.id,key,e.target.checked)} />
+                    {label} {a.aftercare?.[key] ? "· " + a.aftercare[key] : ""}
+                  </label>)}
+                  {a.aftercare?.delivered && <div style={{ marginTop: 8, fontSize: 11, color: C.ink2 }}>
+                    Promotion check: {a.aftercare.promotionDue || "—"} · Testimonial request: {a.aftercare.testimonialDue || "—"} · Follow-on review: {a.aftercare.followonDue || "—"}
+                  </div>}
+                </div>
+                {(a.history || []).length > 0 && <div style={{ marginTop: 8 }}><Mono s={8}>STATUS HISTORY</Mono>{a.history.slice(-3).reverse().map((h, i) => <div key={i} style={{ fontSize: 11, marginTop: 4 }}>{h.from} → {h.to} · {h.at.slice(0, 10)}</div>)}</div>}
               </div>
               <div className="sc flex gap-1.5" style={{ overflowX: "auto", marginTop: 11 }}>
                 {STATUS.map((s) => (

@@ -127,9 +127,10 @@ export default function SubEditor({ threads, ledger, K }) {
   const [read, setRead] = useState(null);
   const [claims, setClaims] = useState([]);
   const [loaded, setLoaded] = useState(false);
+  const [handoff, setHandoff] = useState(null);
 
   React.useEffect(() => {
-    (async () => { setClaims(await sGet("claims", [])); setLoaded(true); })();
+    (async () => { setClaims(await sGet("claims", [])); const pending = await sGet("subeditor:handoff", null); if (pending?.status === "awaiting_subeditor") { setHandoff(pending); setText(pending.draft || ""); } setLoaded(true); })();
   }, []);
 
   const saveClaims = (next) => { setClaims(next); sSet("claims", next); };
@@ -173,12 +174,20 @@ does not find. Not general improvements.
 
 verdict: one sentence. Blunt.` }],
       });
-      setRead(parseObject(r.text));
+      const review = parseObject(r.text);
+      setRead(review);
+      if (handoff) {
+        const next = { ...handoff, status: "reviewed_awaiting_vinny", subeditor: { ...review, voice: analyse(text), reviewedAt: new Date().toISOString() } };
+        const current = await sGet("editor-call:" + handoff.sourceDay, null);
+        if (current?.workflowProposal?.id === handoff.id) await sSet("editor-call:" + handoff.sourceDay, { ...current, workflowProposal: next });
+        await sSet("subeditor:handoff", next);
+        setHandoff(next);
+      }
     } catch (e) {
       setErr(e.message || "The read did not come back.");
     }
     setBusy("");
-  }, [text, ledger, threads]);
+  }, [text, ledger, threads, handoff]);
 
   const addClaim = (c) => {
     saveClaims([{
@@ -199,6 +208,7 @@ verdict: one sentence. Blunt.` }],
     <div>
       <Note>Everything goes through here before it leaves. Voice is checked instantly; the rest costs a call.</Note>
       <Problem onDismiss={() => setErr("")}>{err}</Problem>
+      {handoff && <Card tint={C.sand} style={{marginBottom:12}}><Mono>Editor\u2019s Call handoff · {handoff.status.replaceAll("_"," ")}</Mono><p style={{fontSize:13}}>Review the proposed {handoff.format} for {handoff.destination}. Full read records findings back on the original thought. Production and publication remain blocked.</p></Card>}
 
       <Chips items={[["check", "The read"], ["claims", `Claims${open.length ? ` · ${open.length}` : ""}`]]} value={tab} onChange={setTab} />
       <div style={{ height: 14 }} />

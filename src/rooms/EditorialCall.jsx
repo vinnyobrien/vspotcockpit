@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { C, BODY, Mono, Card, Section, Pill } from "../lib/ui.jsx";
 import { callOp } from "../api.js";
 import { readKey, writeKey } from "../lib/api.js";
+import { newItem, shiftDate } from "../lib/editorial-calendar.js";
 
 const dateInDublin = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Dublin", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 const prompts = [
@@ -24,11 +25,13 @@ export default function EditorialCall() {
   const [day, setDay] = useState(today), [session, setSession] = useState(null);
   const [thought, setThought] = useState(""), [label, setLabel] = useState(""), [url, setUrl] = useState("");
   const [draftText, setDraftText] = useState(""), [busy, setBusy] = useState(""), [error, setError] = useState("");
+  const [handoff, setHandoff] = useState(null);
+  const [releaseDate, setReleaseDate] = useState("");
   useEffect(() => {
     let active = true;
-    setSession(null); setDraftText(""); setError("");
+    setSession(null); setDraftText(""); setError(""); setHandoff(null);
     readKey("editor-call:" + day, null).then((saved) => {
-      if (active) { const value = saved || initial(day); setSession(value); setDraftText(value.drafts?.at(-1)?.text || ""); }
+      if (active) { const value = saved || initial(day); setSession(value); setDraftText(value.drafts?.at(-1)?.text || ""); setHandoff(value.workflowProposal || null); }
     }).catch((e) => { if (active) setError(e.message); });
     return () => { active = false; };
   }, [day]);
@@ -74,6 +77,75 @@ export default function EditorialCall() {
     } catch (e) { setError("No draft was saved: " + e.message); }
     setBusy("");
   };
+  // Deliberate handoff. A draft is not a production task, and this action
+  // never creates calendar entries or grants publication permission.
+  const proposeWorkflow = async () => {
+    if (!session?.drafts?.length || busy || handoff?.status === "production_planned") return;
+    setBusy("workflow"); setError("");
+    try {
+      const latest = session.drafts.at(-1);
+      const proposal = {
+        id: session.workflowProposal?.id || crypto.randomUUID(),
+        sourceDay: day, sourceDraftId: latest.id,
+        title: session.question.slice(0, 120),
+        format: latest.format, draft: draftText,
+        destination: latest.format === "script" ? "The V Spot News" : latest.format === "linkedin" ? "LinkedIn" : "Substack",
+        tasks: ["Subeditor review", "Resolve factual claims and editorial concerns", "Vinny approves production", "Prepare assets and scheduling", "Final publication sign-off"],
+        status: "awaiting_subeditor", createdAt: new Date().toISOString(),
+        subeditor: null, productionApproved: false, publicationApproved: false,
+      };
+      await persist({ ...session, workflowProposal: proposal });
+      setHandoff(proposal);
+    } catch (e) { setError("Workflow proposal could not be saved: " + e.message); }
+    setBusy("");
+  };
+  const sendToSubeditor = async () => {
+    if (!handoff || busy) return;
+    setBusy("handoff"); setError("");
+    try {
+      await writeKey("subeditor:handoff", { ...handoff, status: "awaiting_subeditor", queuedAt: new Date().toISOString() });
+      setError("Sent to Sub-Editor. Open the Sub-Editor room for its review. No production task has been created.");
+    } catch(e) { setError("Subeditor handoff failed: " + e.message); }
+    setBusy("");
+  };
+  const refreshReview = async () => {
+    try {
+      const fresh = await readKey("editor-call:" + day, null);
+      if (!fresh) throw new Error("Source thought not found");
+      setSession(fresh); setHandoff(fresh.workflowProposal || null); setError("");
+    } catch(e) { setError("Could not refresh subeditor review: " + e.message); }
+  };
+  const decide = async (decision) => {
+    if (!handoff || busy) return;
+    setBusy("decision"); setError("");
+    try {
+      const fresh = await readKey("editor-call:" + day, null);
+      const proposal = fresh?.workflowProposal;
+      if (!proposal || proposal.id !== handoff.id) throw new Error("Proposal changed. Refresh before deciding.");
+      if (proposal.status !== "reviewed_awaiting_vinny" || !proposal.subeditor?.reviewedAt) throw new Error("Complete the Sub-Editor full read first.");
+      if (decision === "approved" && (!/^\\d{4}-\\d{2}-\\d{2}$/.test(releaseDate) || releaseDate < today)) throw new Error("Choose a future release date.");
+      let calendarItemId = proposal.calendarItemId || null;
+      if (decision === "approved") {
+        const get = await fetch("/api/editorial-calendar", {credentials:"same-origin"});
+        const calendar = await get.json();
+        if (!get.ok) throw new Error(calendar.error || "Calendar unavailable");
+        calendarItemId = "editorial-proposal:" + proposal.id;
+        if (!calendar.items.some(item => item.id === calendarItemId)) {
+          const item = newItem(releaseDate);
+          const dates = [shiftDate(releaseDate,-4),shiftDate(releaseDate,-3),shiftDate(releaseDate,-2),shiftDate(releaseDate,-1),releaseDate];
+          Object.assign(item, {id:calendarItemId,title:proposal.title,show:proposal.destination,format:proposal.format,
+            channels:proposal.destination,ideaDate:dates[0],briefDate:dates[1],draftDate:dates[2],reviewDate:dates[3],signoffDate:releaseDate,
+            notes:`Source: Editor's Call ${day}. Proposal ${proposal.id}. Subeditor reviewed ${proposal.subeditor.reviewedAt}.\\nProduction checklist:\\n${proposal.tasks.map(t=>"- "+t).join("\\n")}\\nEditorial verdict: ${proposal.subeditor.verdict || "Review recorded"}.\\nFinal publication sign-off remains required.`});
+          const saved = await fetch("/api/editorial-calendar",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify({action:"save",revision:calendar.revision,item})});
+          if (!saved.ok) { const e = await saved.json().catch(()=>({})); throw new Error(e.error || "Calendar save failed"); }
+        }
+      }
+      const next = {...proposal,status:decision === "approved" ? "production_planned" : decision,productionApproved:decision==="approved",publicationApproved:false,calendarItemId,decidedAt:new Date().toISOString()};
+      await writeKey("editor-call:" + day,{...fresh,workflowProposal:next,updatedAt:new Date().toISOString()});
+      setSession({...fresh,workflowProposal:next}); setHandoff(next);
+    } catch(e) { setError("Decision not completed: " + e.message); }
+    setBusy("");
+  };
   const saveEdit = async () => {
     if (!session?.drafts.length) return;
     const last = session.drafts.at(-1);
@@ -108,6 +180,23 @@ export default function EditorialCall() {
           {[["script", "Script"], ["linkedin", "LinkedIn post"], ["note", "Substack Note"]].map(([format, title]) => <Pill key={format} sm disabled={!!busy || !session.turns.some((t) => t.role === "vinny")} onClick={() => generate(format)}>{busy === "draft" ? "Working…" : "Draft " + title}</Pill>)}
         </div>
         {!!session.drafts.length && <div style={{ marginTop: 15 }}>
+          <Card tint={C.sand} pad={12}>
+            <Mono>Production gate · nothing advances automatically</Mono>
+            <p style={{fontSize:13}}>A draft is not a workflow. Create a proposal only when this idea deserves production. It must pass the Sub-Editor and your approval before tasks or dates are created.</p>
+            <Pill sm disabled={!!busy} onClick={proposeWorkflow}>Turn into workflow proposal</Pill>
+            {handoff && <div style={{marginTop:10}}><Mono>Proposal: {handoff.status.replaceAll("_"," ")} · {handoff.destination}</Mono><p style={{fontSize:12}}>Subeditor → your production approval → tasks → separate publication sign-off.</p>{handoff.status === "awaiting_subeditor" && <Pill sm tone="ghost" disabled={!!busy} onClick={sendToSubeditor}>Send to Sub-Editor</Pill>}
+              <Pill sm tone="ghost" disabled={!!busy} onClick={refreshReview}>Refresh review status</Pill>
+              {handoff.status === "reviewed_awaiting_vinny" && <div style={{marginTop:10}}>
+                <p style={{fontSize:13}}><b>Subeditor verdict:</b> {handoff.subeditor?.verdict || "Read completed"}</p>
+                <label style={{fontSize:12}}>Proposed release date (not an automatic publication)<input type="date" min={today} value={releaseDate} onChange={e=>setReleaseDate(e.target.value)} style={style}/></label>
+                <div style={{display:"flex",flexWrap:"wrap",gap:7,marginTop:8}}>
+                  <Pill sm disabled={!!busy || !releaseDate} onClick={()=>decide("approved")}>Approve production plan</Pill>
+                  <Pill sm tone="ghost" disabled={!!busy} onClick={()=>decide("parked")}>Park</Pill>
+                  <Pill sm tone="ghost" disabled={!!busy} onClick={()=>decide("rejected")}>Reject</Pill>
+                </div>
+              </div>}
+              {handoff.status === "production_planned" && <p style={{fontSize:12}}>Production plan created in Content Calendar. Final publication sign-off still required.</p>}</div>}
+          </Card>
           <Mono s={9}>Working draft · {session.drafts.at(-1).format} · {session.drafts.at(-1).origin} · version {session.drafts.length}</Mono>
           <textarea rows={10} aria-label="Editable draft" value={draftText} onChange={(e) => setDraftText(e.target.value)} style={{ ...style, marginTop: 8, resize: "vertical" }} />
           <Pill sm onClick={saveEdit} disabled={draftText === session.drafts.at(-1).text}>Save my edit</Pill>
