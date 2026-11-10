@@ -19,6 +19,7 @@ import Video from "./rooms/Video.jsx";
 import Guests from "./rooms/Guests.jsx";
 import Growth from "./rooms/Growth.jsx";
 import Essay from "./rooms/Essay.jsx";
+import EditorialSystem from "./rooms/EditorialSystem.jsx";
 import Cast from "./rooms/Cast.jsx";
 import Shows from "./rooms/Shows.jsx";
 import Build from "./rooms/Build.jsx";
@@ -120,6 +121,7 @@ const ROOMS = [
   { id: "video",    name: "Video",    icon: Film,          tint: C.mint,    blurb: "Shorts and calendar" },
   { id: "sub",      name: "Sub-Editor", icon: Scale,      tint: C.blush,   blurb: "Voice, claims, contradictions" },
   { id: "week",     name: "The Week", icon: CalendarDays,  tint: C.sand,    blurb: "Every slot, filled or open" },
+  { id: "editorial", name: "Editorial System", icon: PenLine, tint: C.sand, blurb: "Voice rules, approved artwork and speaking catalogue" },
   { id: "essay",    name: "Essay",    icon: PenLine,       tint: C.lilac,   blurb: "The long form" },
   { id: "guests",   name: "Guests",   icon: Users,         tint: C.blush,   blurb: "Pipeline and assets" },
   { id: "growth",   name: "Growth",   icon: TrendingUp,    tint: C.apricot, blurb: "Sponsors and Camp Tralee" },
@@ -604,6 +606,8 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
               {<RoomSession active={room === "growth"}><Growth assets={assets} setAssets={setAssets} sSet={sSet} K={K} today={today}
                   onGenerate={generate} busy={busy} /></RoomSession>}
+
+              <RoomSession active={room === "editorial"}><EditorialSystem /></RoomSession>
 
               {<RoomSession active={room === "essay"}><Essay threads={threads} threadContext={threadContext} K={K} initialThread={editorThread} /></RoomSession>}
 
