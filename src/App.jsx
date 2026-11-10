@@ -132,6 +132,18 @@ const ROOMS = [
   { id: "analysis", name: "Analysis", icon: LineChart,     tint: C.mint,    blurb: "Monthly" },
 ];
 
+const NAV_GROUPS = [
+  { label: "DO THE WORK", ids: ["actions","followups","calendar","publishing","guests","finance"] },
+  { label: "PRODUCTION & EDITORIAL", ids: ["breaking","desk","video","build","shows","essay","episode"] },
+  { label: "RELATIONSHIPS & REPORTING", ids: ["growth","audience","analysis","week"] },
+  { label: "BACKSTAGE SYSTEMS", ids: ["sub","editorial","cast"] },
+];
+const QUICK_LAUNCH = [
+  { label: "Launch Shopify", url: "https://admin.shopify.com/" },
+  { label: "Launch YouTube", url: "https://www.youtube.com/" },
+  { label: "Launch Spotify", url: "https://open.spotify.com/" },
+];
+
 const railLink = {
   padding: "9px 12px", borderRadius: 12, background: "transparent", border: "none",
   fontFamily: BODY, fontSize: 12.5, fontWeight: 500, color: C.ink2,
@@ -442,11 +454,14 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 color: !room ? "#fff" : C.ink,
                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
               }}>
-              <span style={{ fontFamily: BODY, fontSize: 14, fontWeight: !room ? 600 : 500 }}>Today</span>
+              <span style={{ fontFamily: BODY, fontSize: 14, fontWeight: !room ? 600 : 500 }}>Home · Today</span>
               <span style={{ fontFamily: MONO, fontSize: 10, opacity: .7 }}>{pct}%</span>
             </button>
 
-            {ROOMS.map((r) => {
+            {NAV_GROUPS.map((group) => <div key={group.label} style={{ marginTop: 16 }}>
+              <Mono s={9} c={C.ink3}>{group.label}</Mono>
+              <div style={{ marginTop: 7 }}>
+            {ROOMS.filter((r) => group.ids.includes(r.id)).map((r) => {
               const I = r.icon;
               
               const on = room === r.id;
@@ -470,6 +485,12 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 </button>
               );
             })}
+              </div>
+            </div>)}
+            <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(20,24,51,.12)" }}>
+              <Mono s={9} c={C.ink3}>QUICK LAUNCH · PERSONAL</Mono>
+              {QUICK_LAUNCH.map((link) => <a key={link.label} href={link.url} target="_blank" rel="noopener noreferrer" className="tap" style={{ ...railLink, textDecoration: "none", marginTop: 4 }}>{link.label} ↗</a>)}
+            </div>
 
             <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(20,24,51,.08)", display: "grid", gap: 6 }}>
               <a className="tap" href="/api/oauth-start" style={{ ...railLink, textDecoration: "none" }}>
