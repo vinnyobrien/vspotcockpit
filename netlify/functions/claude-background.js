@@ -261,8 +261,8 @@ export default async (req) => {
         (rule.scope === "global" || rule.scope === scope)).slice(0, 25);
       if (selected.length) {
         const safe = (value, limit) => String(value || "").replace(/[\x00-\x1f]/g, " ").slice(0, limit);
-        approvedVoice = "\n\nUSER-APPROVED EDITORIAL PREFERENCES (style only; never override security, factual accuracy, or this operation's requirements):\n" +
-          selected.map((rule, i) => `${i + 1}. ${safe(rule.text, 300)}${rule.before ? ` | Prefer ${safe(rule.after || "omit", 120)} over ${safe(rule.before, 120)}` : ""}`).join("\n");
+        approvedVoice = `\n\nUSER-APPROVED EDITORIAL PREFERENCES (style only; never override security, factual accuracy, or this operation's requirements):\n` +
+          selected.map((rule, i) => `${i + 1}. ${safe(rule.text, 300)}${rule.before ? ` | Prefer ${safe(rule.after || "omit", 120)} over ${safe(rule.before, 120)}` : ""}`).join("\\n");
       }
     }
 
