@@ -141,9 +141,12 @@ const NAV_GROUPS = [
   { label: "BACKSTAGE SYSTEMS", ids: ["sub","editorial","cast"] },
 ];
 const QUICK_LAUNCH = [
-  { label: "Launch Shopify", url: "https://admin.shopify.com/" },
-  { label: "Launch YouTube", url: "https://www.youtube.com/" },
-  { label: "Launch Spotify", url: "https://open.spotify.com/" },
+  { label: "Play V Spot on Spotify", url: "https://bit.ly/43p9HP7" },
+  { label: "Play Struggle Bus on Spotify", url: "https://bit.ly/485Co6l" },
+  { label: "Play Ostrich Report on Spotify", url: "https://bit.ly/47TmAlV" },
+  { label: "Watch V Spot on YouTube", url: "https://www.youtube.com/@thevspotnews" },
+  { label: "Watch Struggle Bus on YouTube", url: "https://bit.ly/43mWVkb" },
+  { label: "Watch Ostrich Report on YouTube", url: "https://bit.ly/4nWYSLz" },
 ];
 
 const railLink = {
@@ -669,6 +672,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
         </div>
 
+        {!wide && <div style={{ position:"sticky", top:0, zIndex:20, background:"#1A1F3C", padding:"10px 16px", display:"flex", alignItems:"center", gap:11, borderBottom:"3px solid #E8272A" }}><img src="/cockpit-mark.svg" alt="V Spot Media" width="34" height="34" style={{objectFit:"contain"}}/><div style={{color:"#F3F1EC",fontFamily:BODY,fontSize:14,fontWeight:750}}>V SPOT MEDIA <span style={{color:"#D2B48C",fontWeight:500}}>· THE COCKPIT</span></div></div>}
         {!wide && <nav className="cockpit-dock sc" aria-label="Rooms">
           <button onClick={() => setRoom(null)} aria-current={!room ? "page" : undefined} className={!room ? "selected" : ""}>Today</button>
           {ROOMS.map(r => {const Icon=r.icon;return <button key={r.id} onClick={() => setRoom(r.id)} aria-current={room===r.id ? "page" : undefined} className={room===r.id ? "selected" : ""}><Icon size={16}/>{r.name}</button>;})}
