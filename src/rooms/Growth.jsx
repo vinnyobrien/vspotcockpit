@@ -199,6 +199,27 @@ export default function Growth({ assets, setAssets, sSet, K, today, onGenerate, 
                 <div style={{ height: 7 }} />
                 <Field value={a.testimonialStatus || ""} onChange={v => patch(a.id, { testimonialStatus: v })} placeholder="Testimonial / case study permission status" />
                 {a.sowUrl && <a href={a.sowUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12 }}>Open agreed SOW</a>}
+                <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(20,24,51,.1)" }}>
+                  <Mono s={9}>SCOPE CHANGE REGISTER</Mono>
+                  <div style={{ fontSize: 12, color: C.ink2, margin: "5px 0 9px" }}>Record requests before accepting extra work. Pending requests are not approved for delivery.</div>
+                  <Field value={a.changeDraft || ""} onChange={v => patch(a.id, { changeDraft: v })} placeholder="Describe requested extra work and impact" />
+                  <div style={{ height: 7 }} />
+                  <Field value={a.changeValue || ""} onChange={v => patch(a.id, { changeValue: v })} placeholder="Proposed additional fee or goodwill value" />
+                  <div style={{ marginTop: 8 }}><Pill sm disabled={!String(a.changeDraft || "").trim()} onClick={() => patch(a.id, {
+                    changeOrders: [...(a.changeOrders || []), { id: Math.random().toString(36).slice(2), description: a.changeDraft.trim(), value: a.changeValue || "", status: "pending", createdAt: new Date().toISOString(), history: [] }],
+                    changeDraft: "", changeValue: ""
+                  })}>Log change request</Pill></div>
+                  {(a.changeOrders || []).map(co => <div key={co.id} style={{ marginTop: 10, padding: 10, borderRadius: 9, background: C.sand }}>
+                    <div style={{ fontSize: 12, fontWeight: 600 }}>{co.description}</div>
+                    <div style={{ fontSize: 11, marginTop: 4 }}>{co.value || "Value not recorded"} · {co.status.toUpperCase()}</div>
+                    {co.status === "pending" && <div className="flex gap-2 flex-wrap" style={{ marginTop: 8 }}>
+                      {[["approved_paid","Approve paid"],["approved_goodwill","Approve goodwill"],["rejected","Decline"]].map(([status,label]) =>
+                        <Pill key={status} sm tone="ghost" onClick={() => patch(a.id, { changeOrders: (a.changeOrders || []).map(x => x.id === co.id ? {...x, status, decidedAt: new Date().toISOString(), history: [...(x.history || []), {status, at: new Date().toISOString(), source: "manual"}]} : x) })}>{label}</Pill>
+                      )}
+                    </div>}
+                  </div>)}
+                </div>
+
                 {(a.history || []).length > 0 && <div style={{ marginTop: 8 }}><Mono s={8}>STATUS HISTORY</Mono>{a.history.slice(-3).reverse().map((h, i) => <div key={i} style={{ fontSize: 11, marginTop: 4 }}>{h.from} → {h.to} · {h.at.slice(0, 10)}</div>)}</div>}
               </div>
               <div className="sc flex gap-1.5" style={{ overflowX: "auto", marginTop: 11 }}>
