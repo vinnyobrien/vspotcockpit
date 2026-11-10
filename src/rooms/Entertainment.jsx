@@ -10,10 +10,14 @@ const PROGRAMMES = [
 ];
 const LINKS = [
   { label: "V Spot Media website", url: "https://thevspotnews.com/" },
-  { label: "YouTube Studio", url: "https://studio.youtube.com/" },
+  { label: "V Spot YouTube", url: "https://www.youtube.com/@thevspotnews" },
+  { label: "Struggle Bus YouTube", url: "https://bit.ly/43mWVkb" },
+  { label: "Ostrich Report YouTube", url: "https://bit.ly/4nWYSLz" },
+  { label: "V Spot Spotify", url: "https://bit.ly/43p9HP7" },
+  { label: "Struggle Bus Spotify", url: "https://bit.ly/485Co6l" },
+  { label: "Ostrich Report Spotify", url: "https://bit.ly/47TmAlV" },
   { label: "LinkedIn", url: "https://www.linkedin.com/" },
-  { label: "Substack", url: "https://substack.com/" },
-  { label: "Spotify for Creators", url: "https://creators.spotify.com/" },
+  { label: "Vinny on Substack", url: "https://vinnyobrien.substack.com/" },
   { label: "Metricool", url: "https://app.metricool.com/" },
 ];
 export default function Entertainment({ onNavigate }) {
@@ -39,7 +43,7 @@ export default function Entertainment({ onNavigate }) {
     </Section>
     <Section label="Social & distribution links">
       <Card pad={18}>
-        <p style={{fontSize:12.5,color:C.ink2,margin:"0 0 12px"}}>Direct website link and platform workspaces. Profile-specific links can replace the platform homepages once verified; no handles are assumed.</p>
+        <p style={{fontSize:12.5,color:C.ink2,margin:"0 0 12px"}}>Direct links to the show channels and publishing workspaces. Spotify and some YouTube links use your previously supplied short URLs.</p>
         <div style={{display:"flex",gap:9,flexWrap:"wrap"}}>
           {LINKS.map(l=><a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:7,padding:"10px 13px",border:"1px solid rgba(20,24,51,.15)",borderRadius:11,color:C.ink,fontSize:12.5,textDecoration:"none",fontFamily:BODY}}>{l.label}<ExternalLink size={13}/></a>)}
         </div>
