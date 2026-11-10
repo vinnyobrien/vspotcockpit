@@ -476,6 +476,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               <a className="tap" href="/api/oauth-start?service=youtube" style={{ ...railLink, textDecoration: "none" }}>
                 {googleConnected === "youtube" ? "YouTube connected" : "Connect YouTube"}
               </a>
+              <a className="tap" href="https://claude.ai/artifact/EcRWbk3eVKua7H3bWk9vDc" target="_blank" rel="noopener noreferrer" style={{ ...railLink, textDecoration: "none" }}>FoundRae dashboard ↗</a>
               <button className="tap" onClick={onLogout} style={railLink}>Sign out</button>
             </div>
           </aside>
