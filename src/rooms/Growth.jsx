@@ -20,7 +20,7 @@ import { callOp, sGet } from "../api.js";
    ============================================================ */
 
 const STEPS = ["Brief", "Build", "Preview", "Send", "Reply", "Close"];
-const STATUS = ["built", "sent", "won", "declined"];
+const STATUS = ["built", "sent", "replied", "meeting", "proposal", "won", "declined", "deferred"];
 const PARTNER_KEY = "partners";
 const PARTNER_TYPES = ["Strategic", "Media & Distribution", "Event & Venue", "Content & Data"];
 const PARTNER_ASSETS = [
@@ -89,7 +89,12 @@ export default function Growth({ assets, setAssets, sSet, K, today, onGenerate, 
     if (!name.trim()) return;
     save([{ id: Math.random().toString(36).slice(2), name: name.trim(), url: "", status: "built", camp: false, touched: iso(today) }, ...assets]);
   };
-  const patch = (id, p) => save(assets.map((a) => (a.id === id ? { ...a, ...p, touched: iso(today) } : a)));
+  const patch = (id, p) => save(assets.map((a) => {
+    if (a.id !== id) return a;
+    const changed = p.status && p.status !== a.status;
+    return { ...a, ...p, touched: iso(today),
+      history: changed ? [...(a.history || []), { from: a.status, to: p.status, at: new Date().toISOString(), source: "manual" }] : (a.history || []) };
+  }));
 
   return (
     <div>
@@ -182,6 +187,19 @@ export default function Growth({ assets, setAssets, sSet, K, today, onGenerate, 
                     <ExternalLink size={16} strokeWidth={2.2} />
                   </a>
                 )}
+              </div>
+              <div style={{ marginTop: 12, padding: 12, borderRadius: 12, border: "1px solid rgba(20,24,51,.12)" }}>
+                <Mono s={9}>COMMERCIAL CONTROL · {a.camp ? "CAMP TRALEE (SEPARATE BUSINESS)" : "V SPOT MEDIA"}</Mono>
+                <div style={{ fontSize: 12, color: C.ink2, margin: "7px 0" }}>Agreed SOW governs delivery. Additional work needs an approved change or recorded goodwill decision.</div>
+                <Field value={a.sowUrl || ""} onChange={v => patch(a.id, { sowUrl: v })} placeholder="Link to signed statement of work" />
+                <div style={{ height: 7 }} />
+                <Field value={a.clientResponsibilities || ""} onChange={v => patch(a.id, { clientResponsibilities: v })} placeholder="Client responsibilities and promotion commitments" />
+                <div style={{ height: 7 }} />
+                <Field value={a.nextAction || ""} onChange={v => patch(a.id, { nextAction: v })} placeholder="Next action / follow-up" />
+                <div style={{ height: 7 }} />
+                <Field value={a.testimonialStatus || ""} onChange={v => patch(a.id, { testimonialStatus: v })} placeholder="Testimonial / case study permission status" />
+                {a.sowUrl && <a href={a.sowUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12 }}>Open agreed SOW</a>}
+                {(a.history || []).length > 0 && <div style={{ marginTop: 8 }}><Mono s={8}>STATUS HISTORY</Mono>{a.history.slice(-3).reverse().map((h, i) => <div key={i} style={{ fontSize: 11, marginTop: 4 }}>{h.from} → {h.to} · {h.at.slice(0, 10)}</div>)}</div>}
               </div>
               <div className="sc flex gap-1.5" style={{ overflowX: "auto", marginTop: 11 }}>
                 {STATUS.map((s) => (
