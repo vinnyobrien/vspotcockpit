@@ -137,7 +137,7 @@ export default function Growth({ assets, setAssets, sSet, K, today, onGenerate, 
               <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 12.5 }}>
                 <a href="https://docs.google.com/document/d/1Ld4PUppF0ZWFfusObG3BxQkTNtcqy2hrb9NF104r4Bs/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer">Opportunities, meeting notes and actions</a>
                 <a href="https://drive.google.com/drive/folders/1NvRTKwX0_Zg5gD5IBuViNSWJdofrPsiA" target="_blank" rel="noopener noreferrer">Correspondence and agreements</a>
-                <a href="https://mail.google.com/mail/u/?authuser=vinny%40vinnyandco.com#all/1a1c103b04bca198" target="_blank" rel="noopener noreferrer">Sent proposal</a>
+                <a href="https://mail.google.com/mail/#all/1a1c103b04bca198" target="_blank" rel="noopener noreferrer">Sent proposal</a>
               </div>
               <p style={{ fontSize: 12, lineHeight: 1.5, margin: "10px 0 0", color: C.ink2 }}>Proposal sent 9 November 2026. Commercial split and attribution await agreement. Partner document access needs a Google visitor invitation.</p>
             </div>}
