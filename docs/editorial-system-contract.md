@@ -46,3 +46,11 @@ Editorial desk: story library with visual thumbnails; story editor with tracked 
 5. At least one essay can progress through talk outline, abstract, reel script and pitch-ready state.
 6. External sends and publication require logged approval or a previously approved narrow standing rule.
 7. Existing client-vault isolation and authentication remain intact; production auth bypass configuration must be audited before release.
+
+## V Spot Media motion signature — owner direction (10 November 2026)
+The approved wine-and-water walking silhouette is a network-level production signature, not a show-specific or Shopware PSA logo. Use the same recognisable mark across The V Spot News, PSAs, The Ostrich Report, The Struggle Bus, short videos, clips and owned media, regardless of publishing channel. Show identities and sponsor marks remain separate.
+- **Quick stamp:** target 0.5–1.5 seconds, subtle motion, original sonic sting; small screen legibility; no unnecessary long intro. The approved symbol-only crop must be derived from the existing artwork without redrawing it. Can serve as a short opening bumper, end card or corner watermark depending on the format and retention goals. Avoid obstructing captions or footage.
+- **Extended production seal:** target 2–3 seconds with full V SPOT MEDIA wordmark; use for third-party deliverables, partner materials, speaker packs, backstage passes, sponsor proposals and formal credits. Represents production provenance, not endorsement of third-party claims.
+- **Variants:** transparent master, dark/light, neon, monochrome; motion exports 9:16, 1:1, 16:9 and static PNG/SVG/favicons. Preserve original artwork and original sponsor PSA campaign versions as immutable records.
+- **Packaging:** versioned, reusable network intro/outro asset IDs with duration, aspect ratio, sound rights, checksum, approval, and render version; never copy a low-resolution thumbnail as the master.
+- **Editorial guardrail:** Use the signature consistently but keep intros fast; test audience retention. Do not imply every outside project is endorsed or approved without a specific contract and permission.
