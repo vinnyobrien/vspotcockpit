@@ -11,12 +11,13 @@ const label = {fontFamily:BODY,fontSize:12,fontWeight:650,color:C.ink2,display:"
 export default function MemoryCapture() {
   const [items,setItems] = useState([]);
   const [loaded,setLoaded] = useState(false);
+  const [automatic,setAutomatic] = useState([]);
   const [saving,setSaving] = useState(false);
   const [error,setError] = useState("");
   const [query,setQuery] = useState("");
   const [filter,setFilter] = useState("All");
   const [draft,setDraft] = useState({title:"",body:"",source:"",area:"Unsorted",kind:"Note"});
-  useEffect(()=>{let alive=true;sGet(KEY,[]).then(data=>{if(alive){setItems(Array.isArray(data)?data:[]);setLoaded(true)}});return()=>{alive=false}},[]);
+  useEffect(()=>{let alive=true;Promise.all([sGet(KEY,[]),sGet("business-memory-auto-v1",[])]).then(([manual,auto])=>{if(alive){setItems(Array.isArray(manual)?manual:[]);setAutomatic(Array.isArray(auto)?auto:[]);setLoaded(true)}});return()=>{alive=false}},[]);
   const persist = async next => {setSaving(true);setError("");const ok=await sSet(KEY,next);setSaving(false);if(ok){setItems(next);return true;}setError("Could not save. Your changes were not applied; please try again.");return false;};
   const capture = async e => {e.preventDefault();if(!draft.title.trim()||!draft.body.trim())return;
     const now=new Date().toISOString();
@@ -24,13 +25,13 @@ export default function MemoryCapture() {
     if(await persist([item,...items]))setDraft({title:"",body:"",source:"",area:"Unsorted",kind:"Note"});
   };
   const change = async (id,patch) => {const now=new Date().toISOString();await persist(items.map(x=>x.id===id?{...x,...patch,updatedAt:now,history:[...(x.history||[]),{at:now,action:Object.entries(patch).map(([k,v])=>k+": "+v).join(", ")}]}:x));};
-  const shown=useMemo(()=>items.filter(x=>(filter==="All"||x.status===filter)&&[x.title,x.body,x.source,x.area,x.kind].join(" ").toLowerCase().includes(query.toLowerCase())),[items,filter,query]);
-  const pending=items.filter(x=>x.status==="Captured"||x.status==="Action needed").length;
+  const shown=useMemo(()=>[...items,...automatic].filter(x=>(filter==="All"||x.status===filter)&&[x.title,x.body,x.source,x.area,x.kind].join(" ").toLowerCase().includes(query.toLowerCase())),[items,automatic,filter,query]);
+  const pending=[...items,...automatic].filter(x=>x.status==="Captured"||x.status==="Action needed").length;
   return <div style={{fontFamily:BODY}}>
     <div style={{background:"#1A1F3C",color:"#F3F1EC",padding:23,borderRadius:18,borderBottom:"4px solid #E8272A",marginBottom:18}}>
       <Mono c="#D2B48C" s={10}>V SPOT MEDIA · BUSINESS MEMORY</Mono>
       <div style={{fontSize:30,fontWeight:800,marginTop:6}}>CAPTURE IT. CLEAR YOUR HEAD.</div>
-      <p style={{fontSize:13,color:"#D2B48C",marginBottom:0}}>One inbox for loose thoughts, evidence, links and promises. Nothing is sent or assigned automatically.</p>
+      <p style={{fontSize:13,color:"#D2B48C",marginBottom:0}}>One inbox for notes and automatically captured Fireflies commitments. Review before acting; nothing is sent automatically.</p>
     </div>
     <Section label="Quick capture">
       <Card pad={18}><form onSubmit={capture} style={{display:"grid",gap:12}}>
@@ -53,17 +54,17 @@ export default function MemoryCapture() {
       {!loaded?<p>Loading memory…</p>:shown.length===0?<Card pad={20}>No entries match yet. Capture the first thing worth remembering.</Card>:<div style={{display:"grid",gap:10}}>
         {shown.map(x=><Card key={x.id} pad={17} style={{borderLeft:"4px solid "+(x.status==="Action needed"?"#E8272A":"#D2B48C")}}>
           <div style={{display:"flex",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}><strong style={{fontSize:16}}>{x.title}</strong><Mono s={9}>{new Date(x.createdAt).toLocaleDateString()}</Mono></div>
-          <div style={{fontSize:12,color:C.ink2,marginTop:5}}>{x.kind} · {x.area}</div>
+          <div style={{fontSize:12,color:C.ink2,marginTop:5}}>{x.kind} · {x.area}{x.origin ? " · Auto-imported from "+x.origin : ""}</div>
           <p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere",fontSize:13.5,lineHeight:1.55}}>{x.body}</p>
           {x.source&&<div style={{fontSize:12,overflowWrap:"anywhere",marginBottom:12}}>Source: {/^https:\/\//i.test(x.source)?<a href={x.source} target="_blank" rel="noopener noreferrer">{x.source}</a>:x.source}</div>}
-          <div style={{display:"flex",gap:9,flexWrap:"wrap"}}>
+          {!x.origin && <div style={{display:"flex",gap:9,flexWrap:"wrap"}}>
             <select aria-label={"Status for "+x.title} style={{...field,width:"auto",fontSize:12}} value={x.status} disabled={saving} onChange={e=>change(x.id,{status:e.target.value})}>{STATUS.map(y=><option key={y}>{y}</option>)}</select>
             <select aria-label={"Area for "+x.title} style={{...field,width:"auto",fontSize:12}} value={x.area} disabled={saving} onChange={e=>change(x.id,{area:e.target.value})}>{AREAS.map(y=><option key={y}>{y}</option>)}</select>
-          </div>
+          </div>}
           <details style={{fontSize:11,color:C.ink2,marginTop:12}}><summary>History · {(x.history||[]).length} entries</summary>{(x.history||[]).map((h,i)=><div key={i}>{new Date(h.at).toLocaleString()} · {h.action}</div>)}</details>
         </Card>)}
       </div>}
     </Section>
-    <p style={{fontSize:12,color:C.ink2}}>This is a searchable capture and review inbox. It stores text and references in Cockpit storage; it does not upload file bytes, create tasks in other rooms, or send messages.</p>
+    <p style={{fontSize:12,color:C.ink2}}>Fireflies imports appear automatically after the scheduled morning processing job runs successfully. Imported records are read-only here; review and action them in Follow-ups. No automatic file-byte upload, cross-room assignment or external sending.</p>
   </div>;
 }
