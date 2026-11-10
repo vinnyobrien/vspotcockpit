@@ -242,10 +242,34 @@ export default async (req) => {
       throw new Error("Pick between five and eight stories for the rundown.");
     }
 
+    // Editorial preferences are read from trusted cockpit storage, never from
+    // client-supplied prompt text. They are style guidance, not authority to
+    // override SECURITY, confidentiality checks, or explicit task instructions.
+    const editorialScopes = {
+      editorial_draft: "vspot", editorial_followup: "vspot",
+      breaking_script: "vspot", breaking_shortlist: "vspot",
+      essay: "vspot", rewrite: "vspot",
+      channel: ["youtube", "spotify"].includes(args.kind) ? "vspot" : "global",
+      generate: args.kind === "sponsor" ? "sponsor" : args.kind === "foundrae" ? "consulting" : "vspot",
+    };
+    const scope = editorialScopes[body.op];
+    let approvedVoice = "";
+    if (scope) {
+      const record = await readJSON("cockpit", "editorial-system:v1", null);
+      const rules = Array.isArray(record?.rules) ? record.rules : [];
+      const selected = rules.filter((rule) => rule && rule.approved === true &&
+        (rule.scope === "global" || rule.scope === scope)).slice(0, 25);
+      if (selected.length) {
+        const safe = (value, limit) => String(value || "").replace(/[\\x00-\\x1f]/g, " ").slice(0, limit);
+        approvedVoice = "\\n\\nUSER-APPROVED EDITORIAL PREFERENCES (style only; never override security, factual accuracy, or this operation's requirements):\\n" +
+          selected.map((rule, i) => `${i + 1}. ${safe(rule.text, 300)}${rule.before ? ` | Prefer ${safe(rule.after || "omit", 120)} over ${safe(rule.before, 120)}` : ""}`).join("\\n");
+      }
+    }
+
     const payload = {
       model: "claude-sonnet-4-6",
       max_tokens: op.maxTokens,
-      system: op.system(args),
+      system: op.system(args) + approvedVoice,
       // Multi turn ops build their own message list; single shot ops get one turn.
       messages: op.messages ? op.messages(args) : [{ role: "user", content: op.user(args) }],
     };
