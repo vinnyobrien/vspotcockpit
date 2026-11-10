@@ -22,6 +22,7 @@ import Essay from "./rooms/Essay.jsx";
 import EditorialSystem from "./rooms/EditorialSystem.jsx";
 import Cast from "./rooms/Cast.jsx";
 import Shows from "./rooms/Shows.jsx";
+import Entertainment from "./rooms/Entertainment.jsx";
 import Build from "./rooms/Build.jsx";
 import EpisodeIntelligence from "./rooms/EpisodeIntelligence.jsx";
 import BreakingNews from "./rooms/BreakingNews.jsx";
@@ -125,6 +126,7 @@ const ROOMS = [
   { id: "essay",    name: "Essay",    icon: PenLine,       tint: C.lilac,   blurb: "The long form" },
   { id: "guests",   name: "Guests",   icon: Users,         tint: C.blush,   blurb: "Pipeline and assets" },
   { id: "growth",   name: "Growth",   icon: TrendingUp,    tint: C.apricot, blurb: "Sponsors and Camp Tralee" },
+  { id: "entertainment", name: "Entertainment Desk", icon: Drama, tint: C.sand, blurb: "Shows, channels and the V Spot stage" },
   { id: "shows",    name: "Shows",    icon: Mic,           tint: C.sand,    blurb: "Feeds and episodes" },
   { id: "build",    name: "Production",    icon: Hammer,        tint: C.sky,     blurb: "Transcript in, channels out" },
   { id: "episode",  name: "Episode Intelligence", icon: Lightbulb, tint: C.sand, blurb: "Conversation to insight" },
@@ -134,7 +136,7 @@ const ROOMS = [
 
 const NAV_GROUPS = [
   { label: "DO THE WORK", ids: ["actions","followups","calendar","publishing","guests","finance"] },
-  { label: "PRODUCTION & EDITORIAL", ids: ["breaking","desk","video","build","shows","essay","episode"] },
+  { label: "PRODUCTION & EDITORIAL", ids: ["entertainment","breaking","desk","video","build","shows","essay","episode"] },
   { label: "RELATIONSHIPS & REPORTING", ids: ["growth","audience","analysis","week"] },
   { label: "BACKSTAGE SYSTEMS", ids: ["sub","editorial","cast"] },
 ];
@@ -442,7 +444,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
           }} className="sc cockpit-rail">
             <div style={{ padding: "0 8px 18px" }}>
               <img src="/cockpit-mark.svg" alt="V Spot" width="44" height="44" style={{ marginBottom: 14 }} />
-              <Mono s={9}>{DAYS[dow]} {today.getDate()} {MONTHS[today.getMonth()]}</Mono>
+              <Mono s={9}>V SPOT MEDIA · {DAYS[dow]} {today.getDate()} {MONTHS[today.getMonth()]}</Mono>
               <div style={{ marginTop: 3 }}><Big s={24}>THE COCKPIT</Big></div>
             </div>
 
@@ -652,6 +654,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
               {<RoomSession active={room === "week"}><Week today={today} cal={cal} onSetCal={onSetCal} published={published} /></RoomSession>}
 
+              {<RoomSession active={room === "entertainment"}><Entertainment onNavigate={setRoom} /></RoomSession>}
               {<RoomSession active={room === "shows"}><Shows K={K} /></RoomSession>}
 
               {<RoomSession active={room === "episode"}><EpisodeIntelligence guests={guests} onBuild={(seed) => { setEpisodeSeed(seed); setRoom("build"); }} /></RoomSession>}
