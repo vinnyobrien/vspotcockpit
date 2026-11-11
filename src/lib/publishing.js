@@ -33,8 +33,25 @@ export function gregorRelease() {
   return item;
 }
 
+
+export function paulStaffordRelease() {
+  const item = newRelease('struggle-paul-stafford-2026-11-11','Paul Stafford — EPAM | Retail Media, Career and Human Judgement','2026-11-11');
+  item.show='The Struggle Bus';
+  item.notes='SEASON 4 · Sponsor: VirtualStock. STATUS: edited working version; NOT FINAL and NOT PUBLISHED. Source conversation recorded 2 November 2026. Video/audio working edits, raw transcript, edited SRT/VTT, edit decisions and platform copy were prepared in the ChatGPT production workspace but have NOT been uploaded to Cockpit media storage. Do not treat a sandbox link as a durable public URL. Missing: approved VirtualStock Season 4 intro/outro, Funny and Sunny WAV music mix, final branded master, verified audio/caption QC, guest-approved real-photo artwork and platform uploads. No typing animations. Strong opening and tight closing. Verify exact EPAM title against current guest bio before publication. Release time not confirmed. Preserve original recording. Sponsor obligations apply to all final outputs.';
+  item.copy.spotifyTitle='The Human Side of Retail Media | Paul Stafford, EPAM — The Struggle Bus';
+  item.copy.youtubeTitle='Retail Media, Career Detours & the Human Side of Tech | Paul Stafford — The Struggle Bus';
+  item.copy.spotifyDescription='Vinny O’Brien welcomes Paul Stafford of EPAM for a candid conversation about retail media, the changing tools of commerce, professional experience and the human judgement behind the technology. There is room for the personal side too: life in the UK, family and the paths that bring us to our work. The Struggle Bus Season 4 is sponsored by VirtualStock. [Add verified episode link and sponsor URL before publishing.]';
+  item.copy.youtubeDescription=item.copy.spotifyDescription+'\\n\\nTopics include career experience, retail media measurement, data and tools, and separating signal from noise.\\n\\nSubscribe, share and join us for more conversations from The Struggle Bus. [Final chapters and sponsor links pending.]';
+  item.copy.spotifyChapters='PENDING: regenerate and verify from the final VirtualStock-branded audio master; do not use RAW timecodes.';
+  item.copy.youtubeChapters='PENDING: regenerate and verify from the final VirtualStock-branded video master; do not use RAW timecodes.';
+  item.copy.linkedinPost='Retail media is full of dashboards, tools and promises. But how much of the work still comes down to people, experience and knowing which signals matter?\\n\\nI sat down with Paul Stafford of EPAM for The Struggle Bus. We wandered through career paths, retail media, the noise surrounding technology and a little bit of life outside the job too.\\n\\nSeason 4 is supported by VirtualStock. [Add episode link when live.]';
+  item.copy.substackTitle='The Human Behind the Retail Media Dashboard — Paul Stafford';
+  item.copy.substackBody='The more sophisticated the technology becomes, the more interesting the human questions get.\\n\\nPaul Stafford of EPAM joined me on The Struggle Bus to talk retail media, the tools businesses now have at their disposal, and the judgement required to tell useful signals from an impressive pile of noise. But the good bits of these conversations are rarely confined to the job title. We also talked about career experience and the ordinary, wonderful complications of life beyond work.\\n\\nThis is why I enjoy The Struggle Bus: less corporate theatre, more of the person behind the profession.\\n\\nSeason 4 is sponsored by VirtualStock. [Insert verified full episode and sponsor links before release.]';
+  return item;
+}
+
 export function seedPublishing() {
-  return [gregorRelease(),newRelease('struggle-bus-2026-10-14','','2026-10-14')];
+  return [gregorRelease(),newRelease('struggle-bus-2026-10-14','','2026-10-14'),paulStaffordRelease()];
 }
 export function releaseBlockers(item) {
   const missing=[];
