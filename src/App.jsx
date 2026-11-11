@@ -138,12 +138,14 @@ const ROOMS = [
   { id: "analysis", name: "Analysis", icon: LineChart,     tint: C.mint,    blurb: "Monthly" },
 ];
 
+// Four clear destinations; specialist rooms remain available in Tools.
 const NAV_GROUPS = [
-  { label: "DO THE WORK", ids: ["memory","actions","followups","calendar","publishing","guests","finance"] },
-  { label: "PRODUCTION & EDITORIAL", ids: ["entertainment","breaking","desk","video","build","shows","essay","episode"] },
-  { label: "RELATIONSHIPS & REPORTING", ids: ["barometer","growth","audience","analysis","week"] },
-  { label: "BACKSTAGE SYSTEMS", ids: ["sub","editorial","cast"] },
+  { label: "PEOPLE", ids: ["guests","followups"] },
+  { label: "PRODUCTION", ids: ["publishing","calendar","entertainment","video","shows","episode","build"] },
+  { label: "BUSINESS", ids: ["finance","barometer"] },
+  { label: "TOOLS · WHEN NEEDED", ids: ["memory","actions","breaking","desk","essay","growth","audience","analysis","week","sub","editorial","cast"] },
 ];
+const MOBILE_PRIMARY = ["guests","publishing","finance","memory"];
 const QUICK_LAUNCH = [
   { label: "Play V Spot on Spotify", url: "https://bit.ly/43p9HP7" },
   { label: "Play Struggle Bus on Spotify", url: "https://bit.ly/485Co6l" },
@@ -681,7 +683,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
         {!wide && <div style={{ position:"sticky", top:0, zIndex:20, background:"#1A1F3C", padding:"10px 16px", display:"flex", alignItems:"center", gap:11, borderBottom:"3px solid #E8272A" }}><img src="/cockpit-mark.svg" alt="V Spot Media" width="34" height="34" style={{objectFit:"contain"}}/><div style={{color:"#F3F1EC",fontFamily:BODY,fontSize:14,fontWeight:750}}>V SPOT MEDIA <span style={{color:"#D2B48C",fontWeight:500}}>· THE COCKPIT</span></div></div>}
         {!wide && <nav className="cockpit-dock sc" aria-label="Rooms">
           <button onClick={() => setRoom(null)} aria-current={!room ? "page" : undefined} className={!room ? "selected" : ""}>Today</button>
-          {ROOMS.map(r => {const Icon=r.icon;return <button key={r.id} onClick={() => setRoom(r.id)} aria-current={room===r.id ? "page" : undefined} className={room===r.id ? "selected" : ""}><Icon size={16}/>{r.name}</button>;})}
+          {ROOMS.filter(r => MOBILE_PRIMARY.includes(r.id)).map(r => {const Icon=r.icon;return <button key={r.id} onClick={() => setRoom(r.id)} aria-current={room===r.id ? "page" : undefined} className={room===r.id ? "selected" : ""}><Icon size={16}/>{r.name}</button>;})}
         </nav>}
         {panel && <Panel entry={panel} onClose={() => setPanel(null)} />}
       </div>
