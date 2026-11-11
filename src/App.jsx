@@ -23,6 +23,8 @@ import EditorialSystem from "./rooms/EditorialSystem.jsx";
 import Cast from "./rooms/Cast.jsx";
 import Shows from "./rooms/Shows.jsx";
 import Entertainment from "./rooms/Entertainment.jsx";
+import MemoryCapture from "./rooms/MemoryCapture.jsx";
+import CommercialBarometer from "./rooms/CommercialBarometer.jsx";
 import Build from "./rooms/Build.jsx";
 import EpisodeIntelligence from "./rooms/EpisodeIntelligence.jsx";
 import BreakingNews from "./rooms/BreakingNews.jsx";
@@ -111,6 +113,8 @@ const TITLES = {
 };
 
 const ROOMS = [
+  { id: "barometer", name: "Commercial Barometer", icon: LineChart, tint: C.sand, blurb: "Learn from pricing decisions and outcomes" },
+  { id: "memory", name: "Business Memory", icon: Lightbulb, tint: C.sand, blurb: "Capture, search and review everything worth keeping" },
   { id: "finance", name: "Finance", icon: Receipt, tint: C.mint, blurb: "Receipt photos, invoices and expense review" },
   { id: "publishing", name: "Publishing", icon: Film, tint: C.sand, blurb: "Episode assets, release copy and live links" },
   { id: "audience", name: "Audience Stats", icon: LineChart, tint: C.mint, blurb: "Substack reach and post performance" },
@@ -135,9 +139,9 @@ const ROOMS = [
 ];
 
 const NAV_GROUPS = [
-  { label: "DO THE WORK", ids: ["actions","followups","calendar","publishing","guests","finance"] },
+  { label: "DO THE WORK", ids: ["memory","actions","followups","calendar","publishing","guests","finance"] },
   { label: "PRODUCTION & EDITORIAL", ids: ["entertainment","breaking","desk","video","build","shows","essay","episode"] },
-  { label: "RELATIONSHIPS & REPORTING", ids: ["growth","audience","analysis","week"] },
+  { label: "RELATIONSHIPS & REPORTING", ids: ["barometer","growth","audience","analysis","week"] },
   { label: "BACKSTAGE SYSTEMS", ids: ["sub","editorial","cast"] },
 ];
 const QUICK_LAUNCH = [
@@ -657,6 +661,8 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
               {<RoomSession active={room === "week"}><Week today={today} cal={cal} onSetCal={onSetCal} published={published} /></RoomSession>}
 
+              {<RoomSession active={room === "barometer"}><CommercialBarometer /></RoomSession>}
+              {<RoomSession active={room === "memory"}><MemoryCapture /></RoomSession>}
               {<RoomSession active={room === "entertainment"}><Entertainment onNavigate={setRoom} /></RoomSession>}
               {<RoomSession active={room === "shows"}><Shows K={K} /></RoomSession>}
 

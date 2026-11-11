@@ -185,6 +185,40 @@ than supplying a plausible one. An empty list is a valid answer.`,
     ];
 
     await writeJSON("cockpit", INBOX, unique([...items, ...inbox]).slice(0, MAX));
+    // Business Memory's automated lane is separate from manually captured notes.
+    // This avoids an hourly job overwriting a note that someone is editing.
+    const memoryKey = "business-memory-auto-v1";
+    const oldMemory = await readJSON("cockpit", memoryKey, []);
+    const sourceByTitle = new Map(meetings.map(m => [String(m.title || "").toLowerCase(), m]));
+    const now = new Date().toISOString();
+    const autoEntries = [
+      ...decisions.map(d => {
+        const meeting = sourceByTitle.get(d.meeting.toLowerCase());
+        return {
+          id: "ff-" + d.id, title: "Decision: " + d.what,
+          body: [d.why, "Meeting: " + d.meeting].filter(Boolean).join("\\n\\n"),
+          source: meeting?.url || "", kind: "Decision", area: "Unsorted",
+          status: "Captured", origin: "Fireflies", sourceId: meeting?.id || "",
+          createdAt: now, updatedAt: now, history: [{at:now,action:"Imported from Fireflies"}],
+        };
+      }),
+      ...actions.map(a => {
+        const meeting = sourceByTitle.get(a.meeting.toLowerCase());
+        return {
+          id: "ff-" + a.id, title: a.what,
+          body: ["Owner: " + a.who, "Meeting: " + a.meeting,
+            "Due: " + a.due + (a.agreed ? " (agreed)" : " (inferred — review)"),
+            a.blocks ? "Blocks: " + a.blocks : ""].filter(Boolean).join("\\n"),
+          source: meeting?.url || "", kind: "Meeting", area: "Unsorted",
+          status: "Captured", origin: "Fireflies", sourceId: meeting?.id || "",
+          createdAt: now, updatedAt: now, history: [{at:now,action:"Imported from Fireflies"}],
+        };
+      }),
+    ];
+    const byId = new Map((Array.isArray(oldMemory) ? oldMemory : []).map(entry => [entry.id,entry]));
+    for (const entry of autoEntries) if (!byId.has(entry.id)) byId.set(entry.id,entry);
+    await writeJSON("cockpit", memoryKey, [...byId.values()].slice(-MAX).reverse());
+
     await record("fireflies.filed", {
       meetings: meetings.length, actions: actions.length, decisions: decisions.length,
     });
