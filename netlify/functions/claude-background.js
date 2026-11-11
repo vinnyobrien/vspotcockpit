@@ -6,7 +6,8 @@ import { anthropicKey } from "./_key.js";
 import { fetchBriefing } from "./_workspace.js";
 import { containsClientMaterial, applyOverrides, haltMessage } from "./_contracts.js";
 import { listProjects, listClips } from "./_opus.js";
-import { selectCandidates, normalise } from "./_selector.js";          // NEW
+import { selectCandidates, normalise } from "./_selector.js";
+import { loadMomentLedger, isRepeatedMoment, rememberMoments } from "./_clip-memory.js";          // NEW
 import { recentMeetings, firefliesConfigured } from "./_fireflies.js";  // NEW
 import { pullStories } from "./_xdesk.js";
 
@@ -165,6 +166,8 @@ export default async (req) => {
       }
 
       const used = new Set(args.exclude);
+      const momentLedger = await loadMomentLedger();
+      let repeatedMoments = 0;
       const pool = [];
       const errors = [];
 
@@ -176,7 +179,9 @@ export default async (req) => {
           const clips = await listClips(p.projectId);
           for (const c of clips) {
             if (!c.curationId || used.has(String(c.curationId))) continue;
-            pool.push(normalise(c, p));
+            const candidate = normalise(c, p);
+            if (isRepeatedMoment(candidate, momentLedger)) { repeatedMoments++; continue; }
+            pool.push(candidate);
           }
         } catch (e) {
           errors.push({ projectId: p.projectId, title: p.title, error: String(e.message) });
@@ -194,6 +199,8 @@ export default async (req) => {
       const wanted = Math.min(Math.max(parseInt(args.extra, 10) || 12, 1), 24);
       const { tier1, tier2, diagnostics } = selectCandidates(pool, { count: 12, tier2Count: 18 });
       const candidates = Number(body.tier) === 2 ? tier2.slice(0, wanted) : tier1.slice(0, wanted);
+      // Only mark moments actually sent to the editor; do not burn unseen tier-two clips.
+      await rememberMoments(candidates, Number(body.tier) === 2 ? 2 : 1);
 
       // Regroup into the shape _prompts.js already expects.
       const byProject = new Map();
@@ -212,7 +219,7 @@ export default async (req) => {
         });
       }
 
-      args.data = { library: [...byProject.values(), ...errors], diagnostics: { ...diagnostics, requestedTier: Number(body.tier) === 2 ? 2 : 1 } };
+      args.data = { library: [...byProject.values(), ...errors], diagnostics: { ...diagnostics, requestedTier: Number(body.tier) === 2 ? 2 : 1, repeatedMomentsFiltered: repeatedMoments } };
     }
 
     /* ── commitments ─────────────────────────────────────────────────────
