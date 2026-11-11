@@ -41,6 +41,8 @@ export const DEFAULTS = {
   maxSeconds: 90,
   minScore: 60,       // safety floor only, see note on rankKey
   perThemeCap: 2,
+  perProjectCap: 3,
+  duplicateSimilarity: 0.72,
   tier1: { minHook: 8, minCoherence: 8 },
   tier2: { minHook: 6, minCoherence: 6 },
 };
@@ -65,6 +67,10 @@ const THEMES = [
   ["margin",      ["margin", "discount", "profitability", "unit economics", "cash flow", "cost base", "pricing", "markdown", "gross"]],
   ["retailfloor", ["pop-up", "popup", "wholesale", "stockist", "shop floor", "brick and mortar", "physical store", "clienteling", "footfall"]],
   ["craft",       ["hiring", "junior", "career", "leadership", "founder", "burnout", "mentor", "apprentice", "imposter"]],
+  ["debate",      ["disagree", "counterargument", "controversial", "the problem with", "not convinced", "wrong about", "challenge", "myth"]],
+  ["practical",   ["how to", "three things", "first step", "lesson learned", "mistake", "advice", "recommend", "what worked", "what failed"]],
+  ["future",      ["next five years", "future of", "what happens next", "prediction", "emerging", "opportunity", "threat", "change is coming"]],
+  ["human",       ["personal story", "family", "struggle", "failure", "regret", "surprised", "laughed", "funny", "embarrassing"]],
   ["culture",     ["curiosity", "lifelong", "hindsight", "introvert", "attention", "reflective", "slow down", "momentum", "optimism", "cynical"]],
 ];
 
@@ -151,29 +157,40 @@ const passesGate = (c, gate) =>
  * reads position 0 and 1 of every bucket, and the only thing that changes
  * between Monday and Tuesday is the order they appear on screen.
  */
-function spread(buckets, o, offset, count, exclude) {
-  const order = [...buckets.keys()].sort();
-  if (!order.length) return [];
-
-  const shift = offset % order.length;
-  const rotated = [...order.slice(shift), ...order.slice(0, shift)];
-
-  // Enough rounds to reach count even when only two or three themes are live.
-  const rounds = Math.max(o.perThemeCap, Math.ceil(count / order.length));
-
-  const picked = [];
-  const seen = new Set(exclude);
-  for (let round = 0; round < rounds && picked.length < count; round++) {
-    for (const t of rotated) {
-      if (picked.length >= count) break;
-      const bucket = buckets.get(t) || [];
-      if (!bucket.length) continue;
-      // Wrap, so a shallow bucket still contributes and a deep one is walked
-      // from a different starting point each day.
-      const pick = bucket[(offset + round) % bucket.length];
-      if (!pick || seen.has(pick.clipId)) continue;
-      picked.push(pick);
-      seen.add(pick.clipId);
+function words(c) {
+  return new Set(String(c.transcript || "").toLowerCase().replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(w=>w.length>3));
+}
+function similar(a,b) {
+  if (a.clipId === b.clipId && a.projectId === b.projectId) return true;
+  // Similar transcripts from the SAME source are likely overlapping Opus edits.
+  if (a.projectId !== b.projectId) return false;
+  const x=words(a),y=words(b);
+  if (x.size < 6 || y.size < 6) return false;
+  let common=0; for(const w of x) if(y.has(w)) common++;
+  return common/Math.min(x.size,y.size) >= DEFAULTS.duplicateSimilarity;
+}
+function spread(buckets, o, offset, count, exclude, already=[]) {
+  const order=[...buckets.keys()].sort();
+  if(!order.length)return [];
+  const rotated=[...order.slice(offset%order.length),...order.slice(0,offset%order.length)];
+  const picked=[], seen=new Set(exclude), projectCounts=new Map();
+  for(const c of already) projectCounts.set(c.projectId,(projectCounts.get(c.projectId)||0)+1);
+  // Traverse every bucket, rather than wrapping to its first item repeatedly.
+  let progress=true;
+  const indices=new Map(rotated.map(t=>[t,0]));
+  while(progress && picked.length<count) {
+    progress=false;
+    for(const t of rotated) {
+      if(picked.length>=count)break;
+      const bucket=buckets.get(t)||[];
+      if(!bucket.length)continue;
+      let index=indices.get(t);
+      while(index<bucket.length) {
+        const c=bucket[(index+offset)%bucket.length]; index++;
+        if(seen.has(c.clipId)||projectCounts.get(c.projectId)>=o.perProjectCap||[...already,...picked].some(p=>similar(c,p)))continue;
+        picked.push(c);seen.add(c.clipId);projectCounts.set(c.projectId,(projectCounts.get(c.projectId)||0)+1);progress=true;break;
+      }
+      indices.set(t,index);
     }
   }
   return picked;
@@ -212,7 +229,7 @@ export function selectCandidates(pool, opts = {}) {
   // it was short of reach.
   const taken = new Set(tier1.map((c) => c.clipId));
   const overflow = strong.filter((c) => !taken.has(c.clipId));
-  const tier2 = spread(bucketise([...overflow, ...wider]), o, offset, o.tier2Count, taken);
+  const tier2 = spread(bucketise([...overflow, ...wider]), o, offset + 3, o.tier2Count, taken, tier1);
 
   const histogram = {};
   for (const [t, list] of bucketise(shaped)) histogram[t] = list.length;
@@ -231,6 +248,7 @@ export function selectCandidates(pool, opts = {}) {
       returnedTier2: tier2.length,
       offset,
       themes: histogram,
+      diversityPolicy: "Project cap, transcript overlap suppression, rotating themes",
       missingJudgeScores: shaped.filter((c) => c.hookScore == null).length,
     },
   };

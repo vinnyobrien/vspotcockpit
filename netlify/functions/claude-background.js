@@ -72,7 +72,7 @@ export default async (req) => {
       history: Array.isArray(body.history) ? body.history.slice(-14) : [],
       // NEW. Was missing entirely, which is why the clip desk had no memory
       // and returned the same six clips every day.
-      exclude: Array.isArray(body.exclude) ? body.exclude.slice(0, 600).map(String) : [],
+      exclude: Array.isArray(body.exclude) ? body.exclude.slice(0, 900).map(String) : [],
       dateStr: new Date().toDateString(),
       news: Array.isArray(body.news) ? body.news.slice(0, 8).map((s) => ({
         id: String(s.id || "").slice(0, 500),
@@ -192,7 +192,8 @@ export default async (req) => {
       }
 
       const wanted = Math.min(Math.max(parseInt(args.extra, 10) || 12, 1), 24);
-      const { candidates, diagnostics } = selectCandidates(pool, { count: wanted });
+      const { tier1, tier2, diagnostics } = selectCandidates(pool, { count: 12, tier2Count: 18 });
+      const candidates = Number(body.tier) === 2 ? tier2.slice(0, wanted) : tier1.slice(0, wanted);
 
       // Regroup into the shape _prompts.js already expects.
       const byProject = new Map();
@@ -211,7 +212,7 @@ export default async (req) => {
         });
       }
 
-      args.data = { library: [...byProject.values(), ...errors], diagnostics };
+      args.data = { library: [...byProject.values(), ...errors], diagnostics: { ...diagnostics, requestedTier: Number(body.tier) === 2 ? 2 : 1 } };
     }
 
     /* ── commitments ─────────────────────────────────────────────────────
