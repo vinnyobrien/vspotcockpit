@@ -13,6 +13,10 @@ export default function MemoryCapture() {
   const [loaded,setLoaded] = useState(false);
   const [automatic,setAutomatic] = useState([]);
   const [saving,setSaving] = useState(false);
+  const [contextHits,setContextHits] = useState([]);
+  const [contextLoading,setContextLoading] = useState(false);
+  const [contextError,setContextError] = useState("");
+  const [searched,setSearched] = useState(false);
   const [error,setError] = useState("");
   const [query,setQuery] = useState("");
   const [filter,setFilter] = useState("All");
@@ -25,6 +29,7 @@ export default function MemoryCapture() {
     if(await persist([item,...items]))setDraft({title:"",body:"",source:"",area:"Unsorted",kind:"Note"});
   };
   const change = async (id,patch) => {const now=new Date().toISOString();await persist(items.map(x=>x.id===id?{...x,...patch,updatedAt:now,history:[...(x.history||[]),{at:now,action:Object.entries(patch).map(([k,v])=>k+": "+v).join(", ")}]}:x));};
+  const searchContext = async e => {e.preventDefault();if(query.trim().length<3)return;setContextLoading(true);setContextError("");setSearched(false);try{const response=await fetch("/.netlify/functions/context-search?q="+encodeURIComponent(query.trim()),{credentials:"same-origin"});const result=await response.json();if(!response.ok)throw new Error(result.error||"Search failed");setContextHits(result.results||[]);setSearched(true);}catch(e){setContextError(e.message)}finally{setContextLoading(false)}};
   const shown=useMemo(()=>[...items,...automatic].filter(x=>(filter==="All"||x.status===filter)&&[x.title,x.body,x.source,x.area,x.kind].join(" ").toLowerCase().includes(query.toLowerCase())),[items,automatic,filter,query]);
   const pending=[...items,...automatic].filter(x=>x.status==="Captured"||x.status==="Action needed").length;
   return <div style={{fontFamily:BODY}}>
@@ -44,6 +49,24 @@ export default function MemoryCapture() {
         <div><label style={label}>Source link or reference (optional)</label><input style={field} value={draft.source} placeholder="Fireflies URL, StreamYard link, email reference…" onChange={e=>setDraft({...draft,source:e.target.value})}/></div>
         <button disabled={!loaded||saving} type="submit" style={{background:"#E8272A",color:"#fff",border:0,borderRadius:10,padding:13,fontWeight:750,cursor:"pointer"}}>{saving?"Saving…":"Save to business memory"}</button>
       </form></Card>
+    </Section>
+    <Section label="Find the conversation · Fireflies + email follow-ups">
+      <Card pad={16}>
+        <form onSubmit={searchContext} style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <input style={{...field,flex:"1 1 220px"}} aria-label="Search recorded calls and email follow-ups" value={query} onChange={e=>setQuery(e.target.value)} placeholder="A guest, company, topic or promise…" minLength={3}/>
+          <button type="submit" disabled={contextLoading||query.trim().length<3} style={{background:"#1A1F3C",color:"#fff",border:0,borderRadius:9,padding:"10px 17px",cursor:"pointer"}}>{contextLoading?"Searching…":"Find context"}</button>
+        </form>
+        <p style={{fontSize:12,color:C.ink2,marginBottom:0}}>Searches extracted Fireflies decisions and commitments, plus structured email follow-up imports. This is not yet a search of every Gmail message or full recording.</p>
+        {contextError&&<p role="alert" style={{color:"#B81A1D"}}>{contextError}</p>}
+        {searched&&<p style={{fontSize:12,fontWeight:700}}>{contextHits.length} source-backed results</p>}
+        {contextHits.map((h,i)=><div key={h.kind+":"+h.sourceId+":"+i} style={{borderTop:"1px solid #ddd",padding:"12px 0"}}>
+          <div style={{fontSize:11,color:C.ink2}}>{h.sourceType} · {h.kind} · {h.date||"Date unavailable"}{h.dueBasis?" · Due date: "+h.dueBasis:""}</div>
+          <strong>{h.title}</strong>
+          <p style={{fontSize:13,whiteSpace:"pre-wrap",overflowWrap:"anywhere",margin:"6px 0"}}>{h.evidence}</p>
+          {h.owner&&<div style={{fontSize:12}}>Owner: {h.owner}</div>}
+          {h.sourceUrl&&/^https:\/\//.test(h.sourceUrl)&&<a href={h.sourceUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:12}}>Open original source</a>}
+        </div>)}
+      </Card>
     </Section>
     <Section label={"Memory inbox · "+pending+" to review"}>
       <div style={{display:"flex",gap:9,flexWrap:"wrap",marginBottom:12}}>
