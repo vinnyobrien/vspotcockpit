@@ -291,15 +291,14 @@ export default function Video({
 
   return (
     <div>
-            <Chips items={[["shorts", "The Shorts"], ["upload", "Upload"], ["cal", "Calendar"]]} value={tab} onChange={setTab} />
+            <Chips items={[["shorts", "The Shorts"], ["upload", "Add video"], ["cal", "Calendar"]]} value={tab} onChange={setTab} />
       <div style={{ height: 18 }} />
       <Problem onDismiss={() => setErr("")}>{err}</Problem>
       {tab === "upload" && (
         <>
           <Note>
-            Straight to Google Drive, not through the Cockpit — a 19MB clip breaks the
-            6MB function limit in both directions. Origin is required because a clip
-            filed untagged today cannot be attributed in December.
+            Preview a file from your phone, save it to your library, then review and
+            confirm its schedule. Choose an origin so its performance can be tracked.
           </Note>
           <div style={{ height: 12 }} />
           <Upload onUploaded={() => {}} />
