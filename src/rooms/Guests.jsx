@@ -226,6 +226,12 @@ export default function Guests({ guests, setGuests, sSet, K, today }) {
         where each one actually is rather than trying to remember.
       </Note>
       <Problem onDismiss={() => setErr("")}>{err}</Problem>
+      <Card style={{marginBottom:16}}>
+        <Mono>Past guest media packs</Mono>
+        <p style={{fontSize:14}}>Individual guest pages with published episode links, sharing cards, optional copy, available clips and the approved V Spot Media logo pack.</p>
+        <a href="https://vspot-guest-media.vspotmedia-7865.chatgpt.site" target="_blank" rel="noreferrer">Open the guest media room ↗</a>
+      </Card>
+
 
       <Card style={{ marginBottom: 16 }}>
         <div style={{marginBottom:16}}>
