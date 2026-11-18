@@ -425,7 +425,7 @@ export default function Build({ seed }) {
                 <Mono>{filled} of {CHANNELS.length} written</Mono>
                 {saved && <div style={{ marginTop: 4 }}><Mono s={9}>Saved {new Date(saved).toLocaleString("en-GB")}</Mono></div>}
               </div>
-              <Pill sm icon={Save} disabled={!filled || !!busy} onClick={publish}>
+              <Pill sm icon={Save} disabled={!out || !!busy} onClick={publish}>
                 {busy === "save" ? "Saving…" : "Save pack"}
               </Pill>
             </div>
