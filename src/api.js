@@ -28,6 +28,27 @@ export async function sGet(key, fallback) {
   }
 }
 
+/** Strict storage helpers for production outputs. A real service failure must never look like an empty draft or a successful save. */
+export async function sGetStrict(key, fallback = null) {
+  const res = await req(`/api/store?store=${storeFor(key)}&key=${encodeURIComponent(key)}`);
+  if (res.status === 404) return fallback;
+  if (!res.ok) throw new Error(`Could not read "${key}" (${res.status})`);
+  let data;
+  try { data = await res.json(); }
+  catch { throw new Error(`Could not read "${key}": the stored response was not valid JSON`); }
+  return data.value ?? fallback;
+}
+
+export async function sSetStrict(key, value) {
+  const res = await req("/api/store", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ store: storeFor(key), key, value }),
+  });
+  if (!res.ok) throw new Error(`Could not save "${key}" (${res.status})`);
+  return true;
+}
+
 export async function sSet(key, value) {
   try {
     const res = await req("/api/store", {
