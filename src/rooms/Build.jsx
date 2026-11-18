@@ -4,7 +4,7 @@ import {
   C, BODY, DISPLAY, MONO, Mono, Big, Card, Section, Pill, Field, Note,
   Empty, Problem, Chips, iso, parseObject,
 } from "../lib/ui.jsx";
-import { callOp, sGet, sSet } from "../api.js";
+import { callOp, sGetStrict, sSetStrict } from "../api.js";
 import ReleaseStudio from "./ReleaseStudio.jsx";
 
 /* ============================================================
@@ -31,6 +31,7 @@ const CHANNELS = [
 export default function Build({ seed }) {
   const [studioTab, setStudioTab] = useState(() => new URLSearchParams(window.location.search).has("release") ? "release" : "build");
   const [context, setContext] = useState("");
+  const [format, setFormat] = useState("episode");
   const [source, setSource] = useState("");
   const [out, setOut] = useState(null);
   const [busy, setBusy] = useState("");
@@ -48,21 +49,26 @@ export default function Build({ seed }) {
   useEffect(() => {
     if (!seed) return;
     setContext(seed.context || "");
+    setFormat(seed.format || "episode");
     setSource(seed.source || "");
     setOut(null);
     setDrafts({});
   }, [seed]);
 
   const words = source.trim() ? source.trim().split(/\s+/).length : 0;
-  const short = words > 0 && words < 500;
+  const minimumWords = format === "short" ? 40 : 500;
+  const short = words > 0 && words < minimumWords;
+  const activeChannels = format === "short" ? CHANNELS.filter((c) => ["youtube", "linkedin"].includes(c.id)) : CHANNELS;
   const slug = (context || "episode").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60);
 
   /* Restore anything already saved for this episode. */
   useEffect(() => {
     if (!out) return;
     (async () => {
-      const prior = await sGet(`build:${slug}`, null);
-      if (prior?.drafts) { setDrafts(prior.drafts); setSaved(prior.at); }
+      try {
+        const prior = await sGetStrict(`build:${slug}`, null);
+        if (prior?.drafts) { setDrafts(prior.drafts); setSaved(prior.at); }
+      } catch (e) { setErr(e.message || "Could not restore the saved production pack."); }
     })();
     // eslint-disable-next-line
   }, [out]);
@@ -74,7 +80,7 @@ export default function Build({ seed }) {
     if (!overrides) setBlocked(null);
     try {
       const r = await callOp({
-        op: "metadata", extra: context, draft: source,
+        op: "metadata", extra: `FORMAT: ${format === "short" ? "SHORT VIDEO" : "FULL EPISODE"}\n${context}`, draft: source,
         ...(overrides?.length ? { overrides } : {}),
       });
       setOut(parseObject(r.text));
@@ -134,8 +140,9 @@ export default function Build({ seed }) {
     setBusy("save");
     try {
       const at = new Date().toISOString();
-      await sSet(`build:${slug}`, {
-        at, context, slug,
+      await sSetStrict(`build:${slug}`, {
+        at, context, format, slug,
+        productionNotes: out?.production_notes || "",
         argument: out?.argument || "",
         titles: out?.titles || [],
         drafts,
@@ -153,7 +160,7 @@ export default function Build({ seed }) {
     setTimeout(() => setCopied(""), 1600);
   };
 
-  const filled = CHANNELS.filter((c) => drafts[c.id]).length;
+  const filled = activeChannels.filter((c) => drafts[c.id]).length;
 
   return (
     <div>
@@ -209,16 +216,21 @@ export default function Build({ seed }) {
 
       {!out && (
         <Card>
-          <Field value={context} onChange={setContext} placeholder="Which show, which episode, who is in it" />
+          <label style={{ display: "block", fontSize: 12, color: C.ink2, fontWeight: 600 }}>Production type
+            <select aria-label="Production type" value={format} onChange={(e) => { setFormat(e.target.value); setOut(null); setDrafts({}); }} style={{ display: "block", width: "100%", marginTop: 6, padding: 10, borderRadius: 10, border: "1px solid rgba(20,24,51,.18)", background: "#fff", color: C.ink, font: `13px ${BODY}` }}>
+              <option value="episode">Full podcast / episode</option><option value="short">Short video for YouTube / social</option>
+            </select>
+          </label>
+          <div style={{ marginTop: 10 }}><Field value={context} onChange={setContext} placeholder="Show, episode or video, guest, and any current sponsor" /></div>
           <div style={{ marginTop: 10 }}>
             <Field value={source} onChange={setSource} rows={10}
-              placeholder="Paste the transcript with timestamps. Under 500 words and it halts, by design." />
+              placeholder={format === "short" ? "Paste the short video transcript or spoken script. Include timestamps if available." : "Paste the complete episode transcript with timestamps."} />
           </div>
           <div className="flex items-center justify-between gap-3" style={{ marginTop: 12 }}>
             <Mono s={9} c={short ? C.red : C.ink2}>
-              {words} words{short ? " · under the 500 floor" : ""}
+              {words} words · {format === "short" ? "short video" : "full episode"}{short ? ` · needs ${minimumWords - words} more` : ""}
             </Mono>
-            <Pill sm disabled={!!busy || words < 500} onClick={() => runMeta()}>
+            <Pill sm disabled={!!busy || words < minimumWords} onClick={() => runMeta()}>
               {busy === "meta" ? "Reading…" : "Build it"}
             </Pill>
           </div>
@@ -242,6 +254,8 @@ export default function Build({ seed }) {
 
       {out && (
         <>
+          {out.production_notes && <Block label="Production notes and release checks" body={typeof out.production_notes === "string" ? out.production_notes : JSON.stringify(out.production_notes, null, 2)} onCopy={copy} copied={copied} tag="production-notes" />}
+
           {out.argument && (
             <Card tint={C.sand} style={{ marginBottom: 14 }}>
               <Mono>The argument</Mono>
@@ -252,7 +266,7 @@ export default function Build({ seed }) {
           )}
 
           <Chips
-            items={[["meta", "Metadata"], ...CHANNELS.map((c) => [c.id, drafts[c.id] ? `${c.label} ✓` : c.label])]}
+            items={[["meta", "Metadata"], ...activeChannels.map((c) => [c.id, drafts[c.id] ? `${c.label} ✓` : c.label])]}
             value={tab} onChange={setTab}
           />
           <div style={{ height: 14 }} />
@@ -338,7 +352,7 @@ export default function Build({ seed }) {
             </>
           )}
 
-          {CHANNELS.map((ch) => tab === ch.id && (
+          {activeChannels.map((ch) => tab === ch.id && (
             <div key={ch.id}>
               <div style={{ padding: "0 4px 10px" }}><Mono s={9}>{ch.note}</Mono></div>
 
