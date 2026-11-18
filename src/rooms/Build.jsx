@@ -60,13 +60,15 @@ export default function Build({ seed }) {
   const short = words > 0 && words < minimumWords;
   const activeChannels = format === "short" ? CHANNELS.filter((c) => ["youtube", "linkedin"].includes(c.id)) : CHANNELS;
   const slug = (context || "episode").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60);
+  const storageKey = `build:${format}:${slug}`;
+  const productionContext = `FORMAT: ${format === "short" ? "SHORT VIDEO" : "FULL EPISODE"}\n${context}`;
 
   /* Restore anything already saved for this episode. */
   useEffect(() => {
     if (!out) return;
     (async () => {
       try {
-        const prior = await sGetStrict(`build:${slug}`, null);
+        const prior = await sGetStrict(storageKey, null);
         if (prior?.drafts) { setDrafts(prior.drafts); setSaved(prior.at); }
       } catch (e) { setErr(e.message || "Could not restore the saved production pack."); }
     })();
@@ -80,7 +82,7 @@ export default function Build({ seed }) {
     if (!overrides) setBlocked(null);
     try {
       const r = await callOp({
-        op: "metadata", extra: `FORMAT: ${format === "short" ? "SHORT VIDEO" : "FULL EPISODE"}\n${context}`, draft: source,
+        op: "metadata", extra: productionContext, draft: source,
         ...(overrides?.length ? { overrides } : {}),
       });
       setOut(parseObject(r.text));
@@ -123,7 +125,7 @@ export default function Build({ seed }) {
           ]
         : [];
 
-      const r = await callOp({ op: "channel", kind, extra: context, draft: material, history: turns });
+      const r = await callOp({ op: "channel", kind, extra: productionContext, draft: material, history: turns });
       const text = String(r.text || "").trim();
 
       setDrafts((d) => ({ ...d, [kind]: text }));
@@ -133,14 +135,14 @@ export default function Build({ seed }) {
       setErr(e.message || `The ${kind} draft failed.`);
     }
     setBusy("");
-  }, [out, context, drafts, history]);
+  }, [out, context, format, drafts, history]);
 
   /* Publish means stored. Nothing leaves the building. */
   const publish = async () => {
     setBusy("save");
     try {
       const at = new Date().toISOString();
-      await sSetStrict(`build:${slug}`, {
+      await sSetStrict(storageKey, {
         at, context, format, slug,
         productionNotes: out?.production_notes || "",
         argument: out?.argument || "",
@@ -217,7 +219,7 @@ export default function Build({ seed }) {
       {!out && (
         <Card>
           <label style={{ display: "block", fontSize: 12, color: C.ink2, fontWeight: 600 }}>Production type
-            <select aria-label="Production type" value={format} onChange={(e) => { setFormat(e.target.value); setOut(null); setDrafts({}); }} style={{ display: "block", width: "100%", marginTop: 6, padding: 10, borderRadius: 10, border: "1px solid rgba(20,24,51,.18)", background: "#fff", color: C.ink, font: `13px ${BODY}` }}>
+            <select aria-label="Production type" value={format} onChange={(e) => { setFormat(e.target.value); setOut(null); setDrafts({}); setTab("meta"); }} style={{ display: "block", width: "100%", marginTop: 6, padding: 10, borderRadius: 10, border: "1px solid rgba(20,24,51,.18)", background: "#fff", color: C.ink, font: `13px ${BODY}` }}>
               <option value="episode">Full podcast / episode</option><option value="short">Short video for YouTube / social</option>
             </select>
           </label>
@@ -424,11 +426,11 @@ export default function Build({ seed }) {
                 {saved && <div style={{ marginTop: 4 }}><Mono s={9}>Saved {new Date(saved).toLocaleString("en-GB")}</Mono></div>}
               </div>
               <Pill sm icon={Save} disabled={!filled || !!busy} onClick={publish}>
-                {busy === "save" ? "Saving…" : "Publish"}
+                {busy === "save" ? "Saving…" : "Save pack"}
               </Pill>
             </div>
             <p style={{ fontSize: 12.5, color: C.ink2, lineHeight: 1.5, marginTop: 10 }}>
-              Publishing saves this episode's copy against its own key. Nothing is sent — copy each
+              Saving stores this episode's notes and copy under its own show/format key. Nothing uploads or publishes here; copy each channel block to its destination. Nothing is sent — copy each
               channel out when you post it.
             </p>
           </Card>
