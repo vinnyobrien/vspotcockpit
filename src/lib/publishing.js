@@ -55,6 +55,15 @@ export function seedPublishing() {
 }
 export function releaseBlockers(item) {
   const missing=[];
+  if (item.show === 'V Spot PSAs') {
+    if (!item.videoLink?.trim()) missing.push('video');
+    for (const [key,label] of [['edit','video and sponsor finishing reviewed'],['transcript','captions verified'],['copy','release copy reviewed'],['sponsor','Shopware approval verified']]) if (!item.checks?.[key]) missing.push(label);
+    for (const [key,label] of [['linkedinPost','LinkedIn post'],['substackTitle','Substack title'],['substackBody','Substack post']]) if (!item.copy?.[key]?.trim()) missing.push(label);
+    if (!item.date) missing.push('release date');
+    if (!item.time) missing.push('release time');
+    return missing;
+  }
+
   if(!item.videoLink?.trim()) missing.push('final video');
   if(!item.audioLink?.trim()) missing.push('Spotify audio');
   if(!item.transcriptLink?.trim()) missing.push('complete transcript');
@@ -63,4 +72,18 @@ export function releaseBlockers(item) {
   if(!item.date) missing.push('release date');
   if(!item.time) missing.push('release time');
   return missing;
+}
+
+export function parseReleaseImport(text) {
+  const item=JSON.parse(text);
+  if (!item || Array.isArray(item) || typeof item!=='object' || typeof item.id!=='string' || !item.id.trim() || !RELEASE_SCHEDULE.some(row=>row.show===item.show)) throw new Error('Choose a valid Cockpit release pack JSON file.');
+  if (typeof item.copy!=='object' || !item.copy || Array.isArray(item.copy)) throw new Error('The release pack needs channel copy.');
+  const plain=key=>typeof item[key]==='string'?item[key]:'';
+  const safeUrl=value=>{if(!value)return '';try{const url=new URL(value);if(url.protocol==='https:')return url.href;}catch{}throw new Error('Asset links must use HTTPS.');};
+  return {...newRelease(item.id),guest:plain('guest'),show:item.show,date:plain('date'),time:plain('time'),notes:plain('notes'),
+    videoLink:safeUrl(item.videoLink),audioLink:safeUrl(item.audioLink),transcriptLink:safeUrl(item.transcriptLink),
+    copy:Object.fromEntries(COPY_FIELDS.map(([key])=>[key,typeof item.copy[key]==='string'?item.copy[key]:''])),
+    checks:Object.fromEntries(['edit','transcript','chapters','copy','sponsor'].map(key=>[key,item.checks?.[key]===true])),
+    links:Object.fromEntries(['spotify','youtube','substack','linkedin'].map(key=>[key,safeUrl(item.links?.[key])])),
+    outputs:Array.isArray(item.outputs)?item.outputs.map(asset=>({label:String(asset.label||'Asset'),url:safeUrl(asset.url)})):[]};
 }
