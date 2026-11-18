@@ -127,9 +127,13 @@ export default async (req) => {
           });
         }
       }
-      if ((args.draft || "").trim().split(/\s+/).length < 500) {
+      const shortVideo = body.op === "metadata" && /FORMAT: SHORT VIDEO/i.test(args.extra);
+      const minimumWords = shortVideo ? 40 : 500;
+      if ((args.draft || "").trim().split(/\s+/).length < minimumWords) {
         throw new Error(
-          "Halted. Transcript is under 500 words. Guardrail 2 says do not infer clip boundaries from titles or virality scores alone."
+          shortVideo
+            ? "Halted. Short video source is under 40 words. Add the complete spoken script or transcript."
+            : "Halted. Transcript is under 500 words. Guardrail 2 says do not infer clip boundaries from titles or virality scores alone."
         );
       }
     }
