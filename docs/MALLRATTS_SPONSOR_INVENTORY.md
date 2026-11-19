@@ -19,6 +19,15 @@ The VSpot Cockpit is the commercial system of record for Mallratts sponsor oppor
 | MALL-SPR27-09 | Mallrat Wallet | sponsored achievement/media pack | opt-in shares, claims |
 | MALL-SPR27-10 | Murt bulletin | disclosed sponsor read | plays/completions |
 
+## Spring 2027 in-world inventory (added)
+| ID | Surface | Creative / interaction | Status |
+| --- | --- | --- | --- |
+| MALL-SPR27-11 | Mall billboard | Large-format exterior facade; player can inspect sponsor details | Preview surface; unsold |
+| MALL-SPR27-12 | Street sign | Street-level wayfinding and sponsor-supported destination | Preview surface; unsold |
+| MALL-SPR27-13 | On-shelf | Shelf talker / product-facing display with optional virtual trial | Preview surface; unsold |
+
+All three surfaces are accessible through the Mall Walk circle inside the existing single-screen Mallratts game. Placement IDs are stable commercial keys; they do not represent confirmed bookings. Cockpit is responsible for opportunities, proposals, approved creative and campaign status. Mallratts currently shows static demo placeholders only; no authenticated Cockpit publishing connection exists.
+
 ## Opportunity fields
 opportunity_id, property='Mallratts', season_skin='Spring 2027', placement_ids, sponsor_account, sponsor_contact, owner, stage (idea/qualified/proposed/negotiating/won/lost), proposed_value, currency, estimated_start/end, deliverables, creative_requirements, approval_state, sponsorship_disclosure, reporting_requirements, contract_ref, invoice_ref, source_campaign_id, last_updated.
 
