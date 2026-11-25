@@ -17,7 +17,43 @@ import {
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-export default function Analysis({ ledger, published, threads, history, today }) {
+const REPORTING_INSTRUCTION = `You are my Reporting Room. Build and maintain an evidence-backed register of my work from 1 July to 31 December 2026. Backfill to today first and leave future dates marked as planned. Cover shows, essays, social posts, sponsor campaigns, events, consulting milestones, internal builds and meaningful admin. Keep FoundRae delivery in Claude; include only high-level milestones and links for year-end reporting.
+
+Use one row per piece of work or milestone. Give it a stable ID, workstream, title, owner, activity date, status, next action and source link. Attach outputs as separate dated links under it: LinkedIn, Substack, YouTube, Spotify, files, invoices or approvals as appropriate. Anya’s interview is one work item; each channel release is a separate output. Keep activity, publication, invoice and payment dates distinct.
+
+Start with the H2 Work Evidence Register, then reconcile against Cockpit and Calendar, Gmail and signed agreements, Drive masters, Fireflies, and the actual platform or reporting records. Match on date, topic and guest or campaign, not title alone. A meeting proves a meeting; a draft proves a draft; a published permalink proves publication. Mark uncertain matches **needs evidence**, never complete. Keep sensitive files in their original location and link to them. Don’t publish, change approvals, move files, or copy client records across systems.
+
+Return a monthly scorecard with **unique work delivered**, **published outputs by channel**, **sponsor obligations with and without delivery evidence**, and **ready assets not yet used**. For each ready but unused asset, recommend one next use and date, or mark it parked. Finish with the five highest-value gaps and who can close them. Don’t create a new task just to report a duplicate.`;
+
+export default function Analysis(props) {
+  if (new URLSearchParams(window.location.search).get("view") === "reporting") {
+    return (
+      <section>
+        <a href="?room=analysis">← Analysis</a>
+        <h1>Reporting Room</h1>
+        <Card>
+          <a href="https://chatgpt.com/library">Find VSpot-H2-Work-Evidence-Register.xlsx in your files ↗</a>
+          <h2 style={{ marginTop: 16 }}>Standing instruction</h2>
+          {REPORTING_INSTRUCTION.split("\n\n").map(paragraph => (
+            <p key={paragraph} style={{ marginTop: 12, lineHeight: 1.6 }}>
+              {paragraph.split(/(\*\*.*?\*\*)/g).map((part, index) =>
+                part.startsWith("**") ? <strong key={index}>{part.slice(2, -2)}</strong> : part
+              )}
+            </p>
+          ))}
+        </Card>
+      </section>
+    );
+  }
+  return (
+    <>
+      <a href="?room=analysis&view=reporting">Reporting Room →</a>
+      <MonthlyAnalysis {...props} />
+    </>
+  );
+}
+
+function MonthlyAnalysis({ ledger, published, threads, history, today }) {
   const month = today.getMonth();
   const year = today.getFullYear();
   const prefix = `${year}-${String(month + 1).padStart(2, "0")}`;
