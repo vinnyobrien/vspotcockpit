@@ -11,11 +11,11 @@ export function useEditorialCalendar() {
 }
 export function CalendarPriority({calendar,onOpen}) {
   const {data,error}=calendar, today=dateInDublin();
-  const due=(data?.items || []).flatMap(deadlines).filter(d=>d.date<=shiftDate(today,7)).sort((a,b)=>a.date.localeCompare(b.date));
+  const due=(data?.items || []).flatMap(deadlines).filter(d=>d.date>=today && d.date<=shiftDate(today,7)).sort((a,b)=>a.date.localeCompare(b.date));
   const waiting=data?.items.filter(i=>i.status==='review').length || 0;
   return <div style={{padding:'8px 16px 14px'}}><button onClick={onOpen} style={{width:'100%',textAlign:'left',padding:18,borderRadius:18,border:'2px solid '+C.ink,background:C.sand,color:C.ink,fontFamily:BODY,cursor:'pointer'}}>
     <strong style={{fontSize:17}}>Content Calendar · {waiting} awaiting sign-off</strong>
-    <div style={{fontSize:13,marginTop:6}}>{error ? 'Calendar unavailable — open to reload' : !data ? 'Loading deadlines…' : due.length ? `${due.filter(d=>d.date<today).length} overdue · ${due.length} deadlines in view · ${due[0].label}: ${due[0].date} — ${due[0].item.title}` : 'No deadlines in the next seven days. Plan the next idea.'}</div>
+    <div style={{fontSize:13,marginTop:6}}>{error ? 'Calendar unavailable — open to reload' : !data ? 'Loading deadlines…' : due.length ? `${due.length} deadlines in the next seven days · next: ${due[0].label}, ${due[0].date} — ${due[0].item.title}` : 'No deadlines in the next seven days. Plan the next idea.'}</div>
     <div style={{fontSize:12,marginTop:6}}>Struggle Bus Wednesday · Ostrich Thursday · PSAs Friday · V Spot Sunday 18:00 →</div>
   </button></div>;
 }
@@ -26,8 +26,10 @@ const statusText={planned:'Planning',review:'Awaiting Vinny’s sign-off',approv
 
 export default function ContentCalendar({calendar,onSubEditor}) {
   const {data,error,busy,load,mutate}=calendar;
-  const [editing,setEditing]=useState(null),[filter,setFilter]=useState('all'),[start,setStart]=useState('2026-10-05');
-  const end=shiftDate(start,6),today=dateInDublin();
+  const today=dateInDublin();
+  const monday=shiftDate(today,-((new Date(`${today}T12:00:00Z`).getUTCDay()+6)%7));
+  const [editing,setEditing]=useState(null),[filter,setFilter]=useState('all'),[start,setStart]=useState(monday);
+  const end=shiftDate(start,6);
   const [confirm,setConfirm]=useState(null);
   const set=(k,v)=>setEditing(p=>({...p,[k]:v}));
   const items=(data?.items || []).filter(i=>i.date>=start && i.date<=end && (filter==='all' || filter==='sponsored' ? (filter!=='sponsored'||i.sponsor) : i.status==='review')).sort((a,b)=>`${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));

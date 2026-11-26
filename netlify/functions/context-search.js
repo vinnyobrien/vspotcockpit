@@ -16,7 +16,7 @@ export default async req=>{
   try {
     const [followups,meetings]=await Promise.all([
       store("vault").get(FOLLOWUP_KEY,{type:"json"}),
-      readJSON("cockpit","commitments",{})
+      readJSON("vault","fireflies-commitments",{})
     ]);
     const hits=[];
     for(const a of followups?.actions||[]){
@@ -29,11 +29,11 @@ export default async req=>{
     }
     for(const a of meetings?.actions||[]){
       if(matches([a.meeting,a.who,a.what,a.blocks].join(" "),q))
-        hits.push({kind:"meeting_action",sourceType:"fireflies",sourceId:a.id,date:a.raised,title:cap(a.what,300),evidence:cap(a.meeting,300),owner:a.who,dueDate:a.due,dueBasis:a.agreed?"agreed":"inferred",status:a.state});
+        hits.push({kind:"meeting_action",sourceType:"fireflies",sourceId:a.meetingId||a.id,sourceUrl:a.sourceUrl||"",date:a.meetingDate||a.raised,title:cap(a.what,300),evidence:cap(a.meeting,300),owner:a.who,dueDate:a.due,dueBasis:a.agreed?"agreed":"inferred",status:a.state});
     }
     for(const d of meetings?.decisions||[]){
       if(matches([d.meeting,d.what,d.why].join(" "),q))
-        hits.push({kind:"meeting_decision",sourceType:"fireflies",sourceId:d.id,date:d.date,title:cap(d.what,300),evidence:cap(d.why,600),meeting:d.meeting});
+        hits.push({kind:"meeting_decision",sourceType:"fireflies",sourceId:d.meetingId||d.id,sourceUrl:d.sourceUrl||"",date:d.meetingDate||d.date,title:cap(d.what,300),evidence:cap(d.why,600),meeting:d.meeting});
     }
     hits.sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")));
     return json({query,results:hits.slice(0,80),total:hits.length,coverage:{fireflies:"extracted meeting decisions/actions and imported reviews",email:"structured self-email follow-ups only; not all Gmail correspondence"},note:"Sources may overlap. Review before drafting or sending; never treat inferred due dates as agreed."});

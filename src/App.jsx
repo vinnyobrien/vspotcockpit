@@ -2,12 +2,12 @@ import RoomSession from "./lib/RoomSession.jsx";
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   MessageSquare, Film, PenLine, Users, TrendingUp, Mic, Hammer,
-  Drama, LineChart, ChevronLeft, CalendarDays, Scale, ListChecks,
+  Drama, LineChart, ChevronLeft, ChevronDown, CalendarDays, Scale, ListChecks,
   Lightbulb, Receipt,
 } from "lucide-react";
 import {
   C, BODY, MONO, SH, R, Mono, Big, Card, Section, Pill, Problem,
-  iso, DAYS, MONTHS, daysSince, weekDates,
+  iso, DAYS, MONTHS, weekDates,
 } from "./lib/ui.jsx";
 import Diary from "./lib/Diary.jsx";
 import { sGet, sSet, callOp, publishClipDirect } from "./api.js";
@@ -73,7 +73,7 @@ const DAILY = [
   { id: "fnd-deep", slot: "10:00", name: "Foundrae deep work", note: "Ninety minutes. One named workstream. Phone in another room.", w: 3 },
   { id: "fnd-listen", slot: "11:30", name: "Listen back", note: "One call recording. Notes into the log, not your head.", w: 1 },
   { id: "post", slot: "12:30", name: "The Post", note: "LinkedIn text post. Second hit of the day.", w: 2 },
-  { id: "approach", slot: "14:00", name: "The Approach", note: "One proactive move. Build the thing first, then send it.", w: 2 },
+  { id: "approach", slot: "14:00", name: "Sponsor approaches", note: "Make 3–4 qualified sponsor approaches. Keep AI implementation leads in the same pipeline and record each next step.", w: 3 },
   { id: "shutdown", slot: "17:30", name: "Shutdown", note: "Log the day. Name tomorrow's three before you close the lid.", w: 1 },
 ];
 
@@ -138,12 +138,13 @@ const ROOMS = [
   { id: "analysis", name: "Analysis", icon: LineChart,     tint: C.mint,    blurb: "Monthly" },
 ];
 
-// Four clear destinations; specialist rooms remain available in Tools.
+// Specialist rooms sit inside a few work-led destinations.
 const NAV_GROUPS = [
-  { label: "PEOPLE", ids: ["guests","followups"] },
-  { label: "PRODUCTION", ids: ["publishing","calendar","entertainment","video","shows","episode","build"] },
-  { label: "BUSINESS", ids: ["finance","barometer"] },
-  { label: "TOOLS · WHEN NEEDED", ids: ["memory","actions","breaking","desk","essay","growth","audience","analysis","week","sub","editorial","cast"] },
+  { label: "REVENUE", ids: ["barometer","growth","finance"] },
+  { label: "STUDIO", ids: ["publishing","calendar","video","desk","essay","editorial","entertainment","shows","build","episode","sub","cast"] },
+  { label: "AUDIENCE & NEWS", ids: ["audience","breaking","analysis","week"] },
+  { label: "PEOPLE & MEMORY", ids: ["guests","followups","memory"] },
+  { label: "OPERATIONS", ids: ["actions"] },
 ];
 const MOBILE_PRIMARY = ["guests","publishing","finance","memory"];
 const QUICK_LAUNCH = [
@@ -194,6 +195,8 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
   const wide = useWide();
   const [room, setRoom] = useState(() => { const id = new URLSearchParams(location.search).get("room"); return ROOMS.some(r=>r.id===id) ? id : null; });
+  const [openNavGroups, setOpenNavGroups] = useState({});
+  const [showAllRooms, setShowAllRooms] = useState(false);
   const [ready, setReady] = useState(false);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState("");
@@ -381,19 +384,13 @@ export default function Cockpit({ onLogout, googleConnected }) {
      noticing, because nothing breaks when they do. */
   const gaps = useMemo(() => {
     const out = [];
-    const ago = (d) => (d ? daysSince(d, today) : null);
-
-    const lastOutreach = vault.find((v) => v.kind === "sponsor");
-    const d1 = ago(lastOutreach && lastOutreach.date);
-    if (d1 === null) out.push({ w: 3, t: "No sponsor approach has ever gone out", s: "The Approach is in the rundown every day at 14:00. Build the thing first, then send it." });
-    else if (d1 >= 5) out.push({ w: 3, t: `No sponsor approach in ${d1} days`, s: "Pipelines do not stall loudly. They just stop returning anything." });
 
     const live = assets.filter((a) => a.status !== "declined");
     const sent = live.filter((a) => a.status === "sent" || a.status === "won");
     if (live.length && !sent.length) out.push({ w: 2, t: `${live.length} spec build${live.length > 1 ? "s" : ""} made and none sent`, s: "A proposal that never leaves the drive is a hobby." });
 
     if (!assets.filter((a) => a.camp).length) {
-      out.push({ w: 3, t: "No Camp Tralee prospects tracked", s: "January is closer than it reads. Omnisend, Trustap and Parcel Planet are confirmed. Who is next?" });
+      out.push({ w: 3, t: "Camp Truly partner pipeline needs a refresh", s: "Build the May 2027 partner list and log the next move for each prospect." });
     }
     if (!guests.filter((g) => g.stage === "confirmed").length) {
       out.push({ w: 3, t: "No guest confirmed for the next Struggle Bus", s: "A weekly show with no one booked is a gap you find out about on a Thursday." });
@@ -404,7 +401,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
     return out.sort((a, b) => b.w - a.w);
     // eslint-disable-next-line
-  }, [vault, assets, guests, cal, today]);
+  }, [assets, guests, cal, today]);
 
   const weekRows = weekDates(today).map((d) => ({ d, ...(d === dayKey ? { pct, doneW, totalW } : history[d] || {}) }));
   const scoredDays = weekRows.filter((r) => r.pct !== undefined && new Date(r.d) <= today);
@@ -469,9 +466,14 @@ export default function Cockpit({ onLogout, googleConnected }) {
               <span style={{ fontFamily: MONO, fontSize: 10, opacity: .7 }}>{pct}%</span>
             </button>
 
-            {NAV_GROUPS.map((group) => <div key={group.label} style={{ marginTop: 16 }}>
-              <Mono s={9} c={C.ink3}>{group.label}</Mono>
-              <div style={{ marginTop: 7 }}>
+            {NAV_GROUPS.map((group) => {
+              const expanded = openNavGroups[group.label] ?? (room ? group.ids.includes(room) : false);
+              return <div key={group.label} style={{ marginTop: 10 }}>
+              <button className="tap" aria-expanded={expanded} onClick={() => setOpenNavGroups((p) => ({ ...p, [group.label]: !expanded }))}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "7px 8px", border: "none", background: "transparent", cursor: "pointer" }}>
+                <Mono s={9} c={C.ink3}>{group.label}</Mono><ChevronDown size={13} style={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+              </button>
+              {expanded && <div style={{ marginTop: 3 }}>
             {ROOMS.filter((r) => group.ids.includes(r.id)).map((r) => {
               const I = r.icon;
               
@@ -496,8 +498,8 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 </button>
               );
             })}
-              </div>
-            </div>)}
+              </div>}
+            </div>;})}
             <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(20,24,51,.12)" }}>
               <Mono s={9} c={C.ink3}>QUICK LAUNCH · PERSONAL</Mono>
               {QUICK_LAUNCH.map((link) => <a key={link.label} href={link.url} target="_blank" rel="noopener noreferrer" className="tap" style={{ ...railLink, textDecoration: "none", marginTop: 4 }}>{link.label} ↗</a>)}
@@ -542,7 +544,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               </div>
               <div style={{ textAlign: "right" }}>
                 <Big s={26} c={pct === 100 ? C.red : C.ink}>{pct}%</Big>
-                <div style={{ marginTop: 2 }}><Mono s={9}>{doneW}/{totalW}</Mono></div>
+                <div style={{ marginTop: 2 }}><Mono s={9}>{all.filter((t) => done[t.id]).length}/{all.length} outcomes</Mono></div>
               </div>
             </div>
           )}
@@ -569,7 +571,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 </div>
                 <div style={{ fontSize: 13, color: "#D8D9E2", lineHeight: 1.6, marginBottom: 16 }}>The decisions, the people and the production. All the useful chaos, one desk.</div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 8 }}>
-                  {[{ label: "Tasks left", value: all.filter(t => !done[t.id]).length, room: "actions" }, { label: "Guest records", value: guests.length, room: "guests" }, { label: "Calendar items", value: editorialCalendar.items?.length ?? "—", room: "calendar" }].map(stat => <button key={stat.label} onClick={() => setRoom(stat.room)} className="tap" style={{ textAlign: "left", background: "#2B3150", color: "#fff", border: "1px solid #454C6B", borderRadius: 12, padding: "12px 10px", cursor: "pointer" }}><div style={{ fontSize: 23, fontWeight: 800 }}>{stat.value}</div><div style={{ fontSize: 10, color: "#D2B48C" }}>{stat.label}</div></button>)}
+                  {[{ label: "Outcomes left", value: all.filter(t => !done[t.id]).length, room: "actions" }, { label: "Sponsor approaches / day", value: "3–4", room: "growth" }, { label: "Calendar items", value: editorialCalendar.items?.length ?? "—", room: "calendar" }].map(stat => <button key={stat.label} onClick={() => setRoom(stat.room)} className="tap" style={{ textAlign: "left", background: "#2B3150", color: "#fff", border: "1px solid #454C6B", borderRadius: 12, padding: "12px 10px", cursor: "pointer" }}><div style={{ fontSize: 23, fontWeight: 800 }}>{stat.value}</div><div style={{ fontSize: 10, color: "#D2B48C" }}>{stat.label}</div></button>)}
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
                   {[{ label: "Action queue", room: "actions" }, { label: "Guest desk", room: "guests" }, { label: "Money & admin", room: "finance" }, { label: "Production", room: "build" }].map(link => <button key={link.room} className="tap" onClick={() => setRoom(link.room)} style={{ border: "1px solid #626B87", background: "transparent", color: "#F3F1EC", padding: "8px 11px", borderRadius: 10, fontSize: 12, cursor: "pointer" }}>{link.label} ↗</button>)}
@@ -589,26 +591,21 @@ export default function Cockpit({ onLogout, googleConnected }) {
               />
 
               {!wide && <div style={{ padding: "0 16px 24px" }}>
-                <Section label="The rooms">
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                    {ROOMS.map((r) => {
-                      const I = r.icon;
-                      return (
-                        <button key={r.id} onClick={() => setRoom(r.id)} className="tap"
-                          style={{
-                            background: C.card, borderRadius: 20, padding: 18, border: "1px solid rgba(20,24,51,.08)", cursor: "pointer",
-                            boxShadow: SH, minHeight: 108, display: "flex", flexDirection: "column",
-                            justifyContent: "space-between", textAlign: "left",
-                          }}>
-                          <I size={20} strokeWidth={2.1} color={C.ink} />
-                          <div>
-                            <Big s={20}>{r.name.toUpperCase()}</Big>
-                            <div style={{ fontSize: 11.5, color: C.ink2, marginTop: 3 }}>{r.blurb}</div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+                <Section label="Cockpit rooms" right={<button className="tap" onClick={() => setShowAllRooms((v) => !v)} style={{ border: 0, background: "transparent", color: C.ink2, cursor: "pointer", fontFamily: BODY, fontSize: 12 }}>{showAllRooms ? "Hide" : "Browse"}</button>}>
+                  {showAllRooms && <div style={{ display: "grid", gap: 14 }}>
+                    {NAV_GROUPS.map((group) => <div key={group.label}>
+                      <Mono s={9}>{group.label}</Mono>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 7 }}>
+                        {ROOMS.filter((r) => group.ids.includes(r.id)).map((r) => {
+                          const I = r.icon;
+                          return <button key={r.id} onClick={() => { setRoom(r.id); setShowAllRooms(false); }} className="tap"
+                            style={{ background: C.card, borderRadius: 14, padding: "11px 12px", border: "1px solid rgba(20,24,51,.08)", cursor: "pointer", display: "flex", alignItems: "center", gap: 9, textAlign: "left" }}>
+                            <I size={16} strokeWidth={2.1} color={C.ink} /><span style={{ fontSize: 12.5, color: C.ink }}>{r.name}</span>
+                          </button>;
+                        })}
+                      </div>
+                    </div>)}
+                  </div>}
                 </Section>
 
                 <div className="flex flex-wrap gap-2" style={{ paddingTop: 8 }}>

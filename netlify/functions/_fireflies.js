@@ -2,7 +2,7 @@
  * netlify/functions/_fireflies.js
  *
  * Reads meeting transcripts and their action items. Helper only — no HTTP
- * route. Imported by claude-background for the `commitments` op.
+ * route. Used by the scheduled intake worker and manual `commitments` op.
  *
  * Needs FIREFLIES_API_KEY on the site. Get it from Fireflies → Settings →
  * Developer Settings.

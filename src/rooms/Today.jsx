@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Video, ArrowUpRight, Plus, Check, Clock4, Zap, CornerDownLeft, Link2,
-  CalendarClock, Mail,
+  Mail,
 } from "lucide-react";
 import {
   C, MONO, BODY, DISPLAY, SH, R, Mono, Big, Card, Section, Pill, Field,
   Empty, Working, Problem, DAYS, iso, daysSince, parseJSON,
 } from "../lib/ui.jsx";
-import { callOp } from "../api.js";
+import { callOp, getMemoryHealth, sGetStrict } from "../api.js";
 import EditorialCall from "./EditorialCall.jsx";
 
 /* ============================================================
@@ -83,24 +83,35 @@ export default function Today({
   const [capture, setCapture] = useState("");
   const [just, setJust] = useState("");
   const [copied, setCopied] = useState(false);
-  const [ff, setFf] = useState({ state: "idle", data: null });
+  const [ff, setFf] = useState({ state: "loading", data: null });
   const [briefState, setBriefState] = useState(brief ? "done" : "idle");
   const [err, setErr] = useState("");
+  const briefAutoStarted = useRef(false);
 
-  /* Fireflies — op "commitments". Returns { actions, decisions }. */
-  const runMeetings = useCallback(async () => {
-    setFf({ state: "running", data: null });
-    setErr("");
+  /* Fireflies is filed by the scheduled server job. Today only reads its
+     durable record; opening this screen must not trigger another AI sweep. */
+  const refreshMeetings = useCallback(async () => {
     try {
-      const r = await callOp({ op: "commitments" });
-      const t = r.text.replace(/```json|```/g, "").trim();
-      const obj = JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1));
-      setFf({ state: "done", data: obj });
+      const data = await sGetStrict("vault:fireflies-commitments", {});
+      let health = null;
+      try { health = await getMemoryHealth(); } catch { /* Meeting data remains useful without diagnostics. */ }
+      setFf({ state: "done", data: data || {}, health: health?.fireflies || null });
     } catch (e) {
-      setFf({ state: "idle", data: null });
-      setErr(e.message || "The meetings sweep did not come back.");
+      setFf({ state: "error", data: null });
+      setErr(e.message || "The Fireflies record could not be read.");
     }
   }, []);
+
+  useEffect(() => {
+    refreshMeetings();
+    const timer = window.setInterval(refreshMeetings, 120000);
+    const onFocus = () => refreshMeetings();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [refreshMeetings]);
 
   const runBrief = useCallback(async () => {
     setBriefState("running");
@@ -116,6 +127,16 @@ export default function Today({
       setErr(e.message || "The sweep did not come back.");
     }
   }, [setBrief, setBriefAt]);
+
+  /* Refresh a stale briefing when Today opens. The button remains as a
+     deliberate retry, while routine use no longer depends on pressing it. */
+  useEffect(() => {
+    if (briefAutoStarted.current) return;
+    if (!briefAt || Date.now() - briefAt > 60 * 60 * 1000) {
+      briefAutoStarted.current = true;
+      runBrief();
+    }
+  }, [briefAt, runBrief]);
 
   const maxWeek = Math.max(...weekRows.map((r) => r.pct || 0), 1);
 
@@ -171,30 +192,52 @@ export default function Today({
         </button>
       </div>
 
-      {/* the two sweeps */}
+      {/* automatic meeting intake plus the current connected-source briefing */}
       <Section label="First thing">
-        <Sweep tint={C.lilac} icon={CalendarClock} title="Yesterday's meetings" sub="Fireflies, last 36 hours"
-          runLabel="Sweep for actionables" onRun={runMeetings} state={ff.state}>
-          {ff.data && (ff.data.decisions || []).map((d, i) => (
+        <Card tint={C.lilac} pad={18} style={{ marginBottom: 10 }}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div style={{ fontSize: 15.5, fontWeight: 600, color: C.ink, lineHeight: 1.25 }}>Recent meetings</div>
+              <div style={{ marginTop: 3 }}><Mono s={9}>FIREFLIES · AUTOMATIC INTAKE</Mono></div>
+            </div>
+            <button className="tap" onClick={refreshMeetings} aria-label="Refresh meeting list"
+              style={{ border: "1px solid rgba(20,24,51,.16)", borderRadius: 999, background: "transparent", padding: "5px 10px", cursor: "pointer", fontFamily: BODY, fontSize: 11, color: C.ink2 }}>Refresh</button>
+          </div>
+          {ff.state === "loading" ? <div style={{ marginTop: 12 }}><Mono>Loading saved meeting actions…</Mono></div> : ff.state === "error" ? <div style={{ marginTop: 12 }}><Mono c={C.red}>The saved meeting list is unavailable.</Mono></div> : (() => {
+            const cutoff = Date.now() - 36 * 60 * 60 * 1000;
+            const recent = (items) => (items || []).filter((item) => {
+              const at = item.meetingDate || item.raised || item.date;
+              const ms = at ? new Date(at).getTime() : NaN;
+              return Number.isFinite(ms) && ms >= cutoff;
+            });
+            const decisions = recent(ff.data?.decisions);
+            const actions = recent(ff.data?.actions);
+            return <>
+              <div className="flex items-center justify-between" style={{ marginTop: 10, padding: "8px 10px", borderRadius: 10, background: "rgba(255,255,255,.55)" }}>
+                <Mono>{actions.length} actions · {decisions.length} decisions · last 36 hours</Mono>
+                <Mono s={8}>{ff.health?.lastCheckedAt ? `Checked ${new Date(ff.health.lastCheckedAt).toLocaleTimeString("en-IE", { hour: "2-digit", minute: "2-digit" })}` : "Awaiting first check"}</Mono>
+              </div>
+              {ff.health?.lastError && <div style={{ padding: "7px 10px 0" }}><Mono c={C.red}>Automatic intake issue: {ff.health.lastError}</Mono></div>}
+              {decisions.map((d, i) => (
             <Row key={`d${i}`} accent={C.red} onAdd={() => addExtra(`Decision: ${d.what}`)}>
               <div style={{ marginBottom: 4 }}><Mono c={C.red} s={9}>Decision logged</Mono></div>
               <div style={{ fontSize: 14, color: C.ink, lineHeight: 1.4 }}>{d.what}</div>
               {d.why && <div style={{ fontSize: 12.5, color: C.ink2, marginTop: 3, lineHeight: 1.45 }}>{d.why}</div>}
-              <div style={{ marginTop: 3 }}><Mono s={9}>{d.meeting}</Mono></div>
+              <div className="flex items-center gap-2" style={{ marginTop: 3 }}><Mono s={9}>{d.meeting}</Mono>{d.sourceUrl && <a href={d.sourceUrl} target="_blank" rel="noreferrer" aria-label="Open Fireflies transcript"><Link2 size={12} /></a>}</div>
             </Row>
-          ))}
-          {ff.data && (ff.data.actions || []).map((a, i) => (
+              ))}
+              {actions.map((a, i) => (
             <Row key={`a${i}`} onAdd={() => addExtra(a.what)}>
               <div style={{ fontSize: 14, color: C.ink, lineHeight: 1.4 }}>{a.what}</div>
-              <div style={{ marginTop: 3 }}><Mono s={9}>{a.who}{a.when ? ` · ${a.when}` : ""} · {a.meeting}</Mono></div>
+              <div className="flex items-center gap-2" style={{ marginTop: 3 }}><Mono s={9}>{a.who}{a.due ? ` · due ${a.due}${a.agreed ? "" : " (inferred)"}` : ""} · {a.meeting}</Mono>{a.sourceUrl && <a href={a.sourceUrl} target="_blank" rel="noreferrer" aria-label="Open Fireflies transcript"><Link2 size={12} /></a>}</div>
             </Row>
-          ))}
-          {ff.data && !(ff.data.actions || []).length && !(ff.data.decisions || []).length && (
-            <div style={{ padding: "14px" }}><Mono>Nothing committed to. A quiet day is a valid answer.</Mono></div>
-          )}
-        </Sweep>
+              ))}
+              {!actions.length && !decisions.length && <div style={{ padding: "14px 10px 4px" }}><Mono>No new actions or decisions from meetings in the last 36 hours.</Mono></div>}
+            </>;
+          })()}
+        </Card>
 
-        <Sweep tint={C.mint} icon={Mail} title="The Briefing" sub="Gmail, Slack, Asana, Calendar, Fireflies, Drive"
+        <Sweep tint={C.mint} icon={Mail} title="The Briefing" sub={`Gmail, Calendar, Drive · ${briefAt ? `updated ${new Date(briefAt).toLocaleTimeString("en-IE", { hour: "2-digit", minute: "2-digit" })}` : "current connections"}`}
           runLabel="Sweep platforms" onRun={runBrief} state={briefState}>
           {(brief || []).map((c, i) => (
             <Row key={i} onAdd={() => addExtra(`Reply — ${c.who}`)}>
@@ -228,7 +271,7 @@ export default function Today({
       )}
 
       {/* rundown */}
-      <Section label="Rundown" right={<Mono>{offAir ? "rest day" : `${tasks.filter((t) => done[t.id]).length}/${tasks.length}`}</Mono>}>
+      <Section label="Today's outcomes" right={<Mono>{offAir ? "rest day" : `${tasks.filter((t) => done[t.id]).length}/${tasks.length}`}</Mono>}>
         {offAir ? (
           <Card style={{ textAlign: "center", padding: "32px 20px" }}>
             <Big s={30} c={C.ink2}>OFF AIR</Big>
