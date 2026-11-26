@@ -73,7 +73,7 @@ function Row({ children, onAdd, accent }) {
 /* ---------- the room ---------- */
 
 export default function Today({
-  today, dayKey, tasks, done, toggle, extras, addExtra,
+  today, dayKey, tasks, done, toggle, extras, addExtra, dispositions, setDisposition,
   gaps, three, setThree, weekRows, weekAvg, calibration, pct, doneW, totalW, offAir,
   brief, setBrief, briefAt, setBriefAt, onDecisionKeep,
   threads, onEditorialNavigate,
@@ -178,6 +178,7 @@ export default function Today({
                 <option value="editorial">Editorial idea</option>
                 <option value="commercial">Commercial follow-up</option>
                 <option value="production">Production task</option>
+                <option value="strategy">Strategy decision · needs Vinny</option>
               </select></label>
               <label>Owner<input name="owner" value={capture.owner} onChange={setCaptureField("owner")} maxLength={100} /></label>
               <label>Due date<input type="date" name="dueDate" value={capture.dueDate} onChange={setCaptureField("dueDate")} /></label>
@@ -189,7 +190,13 @@ export default function Today({
       </Card>
 
       {/* automatic meeting intake plus the current connected-source briefing */}
-      <Section label="Briefing & meeting intake">
+      <details className="cockpit-today-details">
+        <summary>Automation activity <small className="today-automation-status">
+          {ff.state === "error" || ff.health?.lastError ? "Meeting intake needs attention" : ff.health?.lastCheckedAt ? "Meeting intake checked" : "Meeting intake awaiting check"}
+          {" · "}
+          {briefState === "running" ? "Briefing refreshing" : briefState === "idle" && err ? "Briefing needs attention" : briefAt ? "Briefing available" : "Briefing pending"}
+        </small></summary>
+      <Section>
         <Card tint={C.lilac} pad={18} style={{ marginBottom: 10 }}>
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -254,6 +261,9 @@ export default function Today({
         </Sweep>
       </Section>
 
+      </details>
+
+      <details id="today-checklist" className="cockpit-today-details"><summary>Task checklist</summary>
       {/* THE GAP */}
       {gaps.length > 0 && (
         <Section label="The Gap" right={<Mono c={C.red}>{gaps.length} slipping</Mono>}>
@@ -268,7 +278,7 @@ export default function Today({
 
       {/* rundown */}
       <div id="today-outcomes" tabIndex={-1}>
-      <Section label="Today's outcomes" right={<Mono>{offAir ? "rest day" : `${tasks.filter((t) => done[t.id]).length}/${tasks.length}`}</Mono>}>
+      <Section label="Daily tasks" right={<Mono>{offAir ? "rest day" : `${tasks.filter((t) => done[t.id]).length}/${tasks.length}`}</Mono>}>
         {offAir ? (
           <Card style={{ textAlign: "center", padding: "32px 20px" }}>
             <Big s={30} c={C.ink2}>OFF AIR</Big>
@@ -280,7 +290,7 @@ export default function Today({
               const isDone = !!done[t.id];
               return (
                 <div key={t.id} className="flex items-start gap-3" style={{ padding: "11px 16px" }}>
-                  <button onClick={() => toggle(t.id)} className="tap" aria-label={`Done: ${t.name}`} aria-pressed={isDone}
+                  <button id={`today-task-${t.id}`} onClick={() => toggle(t.id)} className="tap" aria-label={`Done: ${t.name}`} aria-pressed={isDone}
                     style={{
                       width: 25, height: 25, flexShrink: 0, marginTop: 1, borderRadius: 999, cursor: "pointer",
                       border: isDone ? "none" : "1.5px solid rgba(20,24,51,.2)",
@@ -300,6 +310,15 @@ export default function Today({
                     {t.kind && <div style={{ marginTop: 3 }}><Mono s={9}>
                       {[t.kind, t.owner, t.dueDate && `Due ${t.dueDate}`, t.source !== "manual" && t.source].filter(Boolean).join(" · ")}
                     </Mono></div>}
+                    {t.kind && <label className="today-task-disposition">
+                      <span className="sr-only">Status for {t.name}</span>
+                      <select name="disposition" value={dispositions[t.id] || ""} disabled={isDone}
+                        onChange={(event) => setDisposition(t.id, event.target.value)}>
+                        <option value="">Keep open</option>
+                        <option value="deferred">Not getting to</option>
+                        <option value="ruledOut">Ruled out</option>
+                      </select>
+                    </label>}
                   </div>
                 </div>
               );
@@ -309,6 +328,8 @@ export default function Today({
       </Section>
 
       </div>
+
+      </details>
 
       <details className="cockpit-today-details">
         <summary>Editorial desk tools</summary>
@@ -326,6 +347,7 @@ export default function Today({
 
       </details>
 
+      <details className="cockpit-today-details"><summary>Weekly check-in and tomorrow’s priorities</summary>
       {/* week */}
       <Section label="This week" right={<Mono>{weekAvg !== null ? `${weekAvg}% avg` : "no baseline"}</Mono>}>
         <Card pad={0} style={{ padding: "20px 18px 14px" }}>
@@ -355,6 +377,7 @@ export default function Today({
             style={{ width: "100%", background: "transparent", border: "none", outline: "none", resize: "none", fontFamily: BODY, fontSize: 14.5, color: C.ink, lineHeight: 1.7 }} />
         </Card>
       </Section>
+      </details>
     </div>
   );
 }

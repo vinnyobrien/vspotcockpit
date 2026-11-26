@@ -111,3 +111,20 @@ html, body, #root { background:var(--ck-ground); }
   .cockpit-room-scroll { height:auto; overflow:visible; }
   .cockpit-dock button { flex:1 1 0; min-width:0; padding-inline:3px; }
 }
+
+.today-dashboard { margin:0 16px 16px; display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); }
+.today-result { border:1px solid var(--ck-line); border-radius:14px; padding:13px; background:var(--ck-card); min-width:0; }
+.today-result-required, .today-result-strategy { border-top:3px solid var(--ck-red); }
+.today-result-posted, .today-result-won { border-top:3px solid #31755b; }
+.today-result h2 { margin:0; font:italic 800 24px/1 'Barlow Condensed','Arial Narrow',Impact,sans-serif; }
+.today-result-count { margin:4px 0; font-size:18px; font-weight:700; }
+.today-result ul { list-style:none; margin:3px 0; padding:0; }
+.today-result li { border-bottom:1px solid var(--ck-line); padding:5px 0; overflow-wrap:anywhere; }
+.today-result p, .today-result li { font-size:13px; }
+.today-result small { display:block; color:var(--ck-ink2); }
+.today-result button, .today-result a, .today-result summary { text-decoration:underline; cursor:pointer; text-align:left; }
+.today-result-source { margin-top:8px; font-size:12px; }
+.today-workspace-directory { margin:0 16px 20px; }
+.today-workspace-directory summary { cursor:pointer; font-weight:600; padding-bottom:8px; }
+.today-task-disposition select { margin-top:5px; font-size:13px; padding:5px 7px; border:1px solid var(--ck-line); border-radius:6px; }
+.today-automation-status { display:block; padding-left:1em; color:var(--ck-ink2); font-weight:400; }

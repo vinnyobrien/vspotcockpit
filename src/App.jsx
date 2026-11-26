@@ -13,6 +13,8 @@ import Diary from "./lib/Diary.jsx";
 import { sGet, sSet, callOp, publishClipDirect } from "./api.js";
 
 import Today from "./rooms/Today.jsx";
+import TodayDashboard from "./rooms/TodayDashboard.jsx";
+import { getTodayDashboard } from "./lib/today-dashboard.js";
 import ClipDesk from "./rooms/ClipDesk.jsx";
 import Desk from "./rooms/Desk.jsx";
 import Video from "./rooms/Video.jsx";
@@ -31,7 +33,7 @@ import BreakingNews from "./rooms/BreakingNews.jsx";
 import Analysis from "./rooms/Analysis.jsx";
 import Week from "./rooms/Week.jsx";
 import ContentCalendar, { useEditorialCalendar } from "./rooms/ContentCalendar.jsx";
-import { dateInDublin, deadlines, shiftDate } from "./lib/editorial-calendar.js";
+import { dateInDublin } from "./lib/editorial-calendar.js";
 import SubEditor from "./rooms/SubEditor.jsx";
 
 import Actions from "./rooms/Actions.jsx";
@@ -235,6 +237,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
   const [panel, setPanel] = useState(null);
 
   const [done, setDone] = useState({});
+  const [dispositions, setDispositions] = useState({});
   const [extras, setExtras] = useState([]);
   const [three, setThree] = useState("");
   const [wire, setWire] = useState(null);
@@ -271,6 +274,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
     (async () => {
       const d = await sGet(K.day(dayKey), {});
       setDone(d.done || {});
+      setDispositions(d.dispositions || {});
       setExtras(d.extras || []);
       setThree(d.three || "");
       setWire(d.wire || null);
@@ -295,16 +299,30 @@ export default function Cockpit({ onLogout, googleConnected }) {
     if (!ready) return;
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      await sSet(K.day(dayKey), { done, extras, three, wire, wireAt, brief, briefAt, log });
+      await sSet(K.day(dayKey), { done, dispositions, extras, three, wire, wireAt, brief, briefAt, log });
       const h = { ...history, [dayKey]: { pct, doneW, totalW } };
       setHistory(h);
       await sSet(K.hist, h);
     }, 600);
     return () => clearTimeout(saveTimer.current);
     // eslint-disable-next-line
-  }, [done, extras, three, wire, brief, log, ready]);
+  }, [done, dispositions, extras, three, wire, wireAt, brief, briefAt, log, ready]);
 
-  const toggle = (id) => setDone((p) => ({ ...p, [id]: !p[id] }));
+  const toggle = (id) => {
+    setDispositions((previous) => ({ ...previous, [id]: "" }));
+    setDone((previous) => ({ ...previous, [id]: !previous[id] }));
+  };
+  const setDisposition = (id, status) => {
+    if (status) setDone((previous) => ({ ...previous, [id]: false }));
+    setDispositions((previous) => ({ ...previous, [id]: status }));
+  };
+  const reviewTask = (id) => {
+    const checklist = document.getElementById("today-checklist");
+    if (checklist) checklist.open = true;
+    const control = document.getElementById(`today-task-${id}`);
+    control?.scrollIntoView({ block: "center" });
+    control?.focus({ preventScroll: true });
+  };
 
   const addExtra = (input) => {
     const fields = typeof input === "string" ? { title: input } : input;
@@ -516,7 +534,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
               }}>
               <span style={{ fontFamily: BODY, fontSize: 14, fontWeight: !room ? 600 : 500 }}>Home · Today</span>
-              <span style={{ fontFamily: MONO, fontSize: 10, opacity: .7 }}>{pct}%</span>
+
             </button>
 
             <nav className="workspace-rail-nav" aria-label="Workspaces">
@@ -568,18 +586,11 @@ export default function Cockpit({ onLogout, googleConnected }) {
                   </>
                 )}
               </div>
-              <div style={{ textAlign: "right" }}>
-                <Big s={26} c={pct === 100 ? C.red : C.ink}>{pct}%</Big>
-                <div style={{ marginTop: 2 }}><Mono s={9}>{all.filter((t) => done[t.id]).length}/{all.length} outcomes</Mono></div>
-              </div>
+
             </div>
         </div>
 
-        {/* The diary lives in the shell, so the day is visible from every room.
-            Full ticker on Today, next-thing-only inside a room. */}
-        <div style={{ paddingLeft: wide ? 8 : 0, paddingRight: wide ? 8 : 0 }}>
-          <Diary compact={!!room} />
-        </div>
+        {room && <Diary compact />}
 
         <div ref={scrollArea} className="sc cockpit-room-scroll">
           <div style={{ padding: "0 16px" }}>
@@ -588,14 +599,13 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
           {!room && (
             <>
-              <RunningOrder
-                calendar={editorialCalendar}
-                remaining={all.filter((task) => !done[task.id]).length}
-                onOpen={setRoom}
-              />
-              <Workspaces rooms={ROOMS} outputs={outputs} onOpen={setRoom} />
+              <TodayDashboard sections={getTodayDashboard({
+                day: dateInDublin(today), calendar: editorialCalendar, followups,
+                published, assets, tasks: all, done, dispositions,
+              })} onOpen={setRoom} onReviewTask={reviewTask} />
               <Today
                 today={today} dayKey={dayKey} tasks={all} done={done} toggle={toggle}
+                dispositions={dispositions} setDisposition={setDisposition}
                 extras={extras} addExtra={addExtra} gaps={gaps} three={three} setThree={setThree}
                 weekRows={weekRows} weekAvg={weekAvg} calibration={calibration}
                 pct={pct} doneW={doneW} totalW={totalW} offAir={offAir}
@@ -607,6 +617,14 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 }}
               />
 
+              <details className="today-workspace-directory">
+                <summary>Appointments</summary>
+                <Diary />
+              </details>
+              <details className="today-workspace-directory">
+                <summary>Workspaces</summary>
+                <Workspaces rooms={ROOMS} outputs={outputs} onOpen={setRoom} />
+              </details>
               {!wide && <div className="workspace-mobile-settings">
                 <a href="/api/oauth-start">{googleConnected === "workspace" ? "Google connected" : "Connect Google"}</a>
                 <a href="/api/oauth-start?service=youtube">{googleConnected === "youtube" ? "YouTube connected" : "Connect YouTube"}</a>
@@ -684,42 +702,6 @@ export default function Cockpit({ onLogout, googleConnected }) {
         {panel && <Panel entry={panel} onClose={() => setPanel(null)} />}
       </div>
     </div>
-  );
-}
-
-function RunningOrder({ calendar, remaining, onOpen }) {
-  const today = dateInDublin();
-  const items = calendar.data?.items;
-  const due = items?.flatMap(deadlines).filter(({ date }) => date >= today && date <= shiftDate(today, 7));
-  const awaiting = items?.filter(({ status }) => status === "review").length;
-  const calendarCount = calendar.error ? "Unavailable" : due?.length ?? "Loading";
-  const tiles = [
-    { value: remaining, label: "Open outcomes", room: "outcomes" },
-    { value: "3–4", label: "Daily sponsor target", room: "growth" },
-    { value: calendarCount, label: "Deadlines · next 7 days", room: "calendar" },
-  ];
-  const open = (room) => {
-    if (room === "outcomes") {
-      document.getElementById("today-outcomes")?.scrollIntoView({ block: "start" });
-      return;
-    }
-    onOpen(room);
-  };
-  return (
-    <section className="cockpit-today-card" aria-labelledby="running-order">
-      <div className="cockpit-running-title">
-        <h2 id="running-order">Today’s running order</h2>
-        {awaiting > 0 && <button type="button" onClick={() => onOpen("calendar")}>{awaiting} awaiting sign-off</button>}
-      </div>
-      <div className="cockpit-today-metrics">
-        {tiles.map(({ value, label, room }) => (
-          <button key={room} type="button" className="tap" onClick={() => open(room)}>
-            <strong>{value}</strong>
-            <span>{label}</span>
-          </button>
-        ))}
-      </div>
-    </section>
   );
 }
 
