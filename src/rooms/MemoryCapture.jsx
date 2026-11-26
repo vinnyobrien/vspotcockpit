@@ -23,7 +23,7 @@ export default function MemoryCapture() {
   const [query,setQuery] = useState("");
   const [filter,setFilter] = useState("All");
   const [draft,setDraft] = useState({title:"",body:"",source:"",area:"Unsorted",kind:"Note"});
-  useEffect(()=>{let alive=true;Promise.all([sGet(KEY,[]),sGet("business-memory-auto-v1",[])]).then(([manual,auto])=>{if(alive){setItems(Array.isArray(manual)?manual:[]);setAutomatic(Array.isArray(auto)?auto:[]);setLoaded(true)}});return()=>{alive=false}},[]);
+  useEffect(()=>{let alive=true;Promise.all([sGet(KEY,[]),sGet("vault:business-memory-auto-v1",[])]).then(([manual,auto])=>{if(alive){setItems(Array.isArray(manual)?manual:[]);setAutomatic(Array.isArray(auto)?auto:[]);setLoaded(true)}});return()=>{alive=false}},[]);
   useEffect(()=>{let active=true;fetch("/.netlify/functions/memory-health",{credentials:"same-origin"}).then(async r=>{if(!r.ok)throw new Error("Sync status unavailable");return r.json()}).then(data=>{if(active)setHealth(data)}).catch(e=>{if(active)setHealthError(e.message)});return()=>{active=false}},[]);
   const persist = async next => {setSaving(true);setError("");const ok=await sSet(KEY,next);setSaving(false);if(ok){setItems(next);return true;}setError("Could not save. Your changes were not applied; please try again.");return false;};
   const capture = async e => {e.preventDefault();if(!draft.title.trim()||!draft.body.trim())return;
@@ -48,7 +48,7 @@ export default function MemoryCapture() {
           <div><strong>Fireflies</strong> · {health.fireflies.configured?"Key configured":"Not configured"} · {health.fireflies.lastFiledAt?"Last filed "+new Date(health.fireflies.lastFiledAt).toLocaleString():"No successful filing timestamp available"} · {health.fireflies.actionCount} actions, {health.fireflies.decisionCount} decisions</div>
           <div><strong>Email follow-ups</strong> · {health.emailFollowups.lastSyncAt?"Last sync "+new Date(health.emailFollowups.lastSyncAt).toLocaleString():"No sync timestamp available"} · {health.emailFollowups.storedActions} stored actions {health.emailFollowups.errors.length?" · "+health.emailFollowups.errors.length+" import errors":""}</div>
           <div><strong>Opus</strong> · {health.opus.momentsRemembered} previously proposed moments remembered</div>
-          <div style={{color:C.ink2}}>These are stored processing records, not proof that a live Fireflies API request has passed. Gmail coverage currently includes only structured self-email imports.</div>
+          <div style={{color:C.ink2}}>Fireflies intake status comes from the private processing record. Gmail coverage currently includes only structured self-email imports.</div>
         </div>}
       </Card>
     </Section>
@@ -102,6 +102,6 @@ export default function MemoryCapture() {
         </Card>)}
       </div>}
     </Section>
-    <p style={{fontSize:12,color:C.ink2}}>Fireflies imports appear automatically after the scheduled morning processing job runs successfully. Imported records are read-only here; review and action them in Follow-ups. No automatic file-byte upload, cross-room assignment or external sending.</p>
+    <p style={{fontSize:12,color:C.ink2}}>Fireflies imports are stored in the private client and commercial vault. Review meeting items before using them elsewhere. No automatic external sending or publishing.</p>
   </div>;
 }

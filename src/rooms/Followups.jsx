@@ -2,11 +2,15 @@ import React,{useEffect,useState} from 'react';
 import { C,Card,Big,Pill,Mono } from '../lib/ui.jsx';
 import { dateInDublin } from '../lib/editorial-calendar.js';
 
-export default function Followups(){
-  const [data,setData]=useState(null),[sync,setSync]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[view,setView]=useState('open');
-  const source=new URLSearchParams(location.search).get('source');
+export function useFollowups(){
+  const [data,setData]=useState(null),[sync,setSync]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
   async function request(input){setBusy(true);try{const r=await fetch('/api/followups',{credentials:'same-origin',...(input?{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(input)}:{})});const d=await r.json();if(!r.ok)throw new Error(d.error || 'Could not load follow-ups');setData(d.data);if(d.sync)setSync(d.sync);setError('');}catch(e){setError(e.message);}finally{setBusy(false);}}
   useEffect(()=>{request();},[]);
+  return {data,sync,error,busy,request};
+}
+
+export default function Followups({ data, sync, error, busy, request, source }){
+  const [view,setView]=useState('open');
   const today=dateInDublin();
   const actions=(data?.actions || []).filter(a=>(view==='all'||a.state==='open')&&(!source||a.sourceId===source)).sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
   return <div><p>The morning email prepares today. The evening email captures today’s promises. Call and email actions are grouped by due date, with their original evidence.</p>

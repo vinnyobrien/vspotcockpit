@@ -1,33 +1,32 @@
 @import "tailwindcss";
 
-/* Pastel ground. Was #0A0A0A — the whole app inverted from here. */
+/* V Spot Media: midnight navy, cream paper, signal red and amber. */
 html, body, #root {
-  height: 100%;
-  background: #F5F3EE;
-  color: #141833;
+  min-height: 100%;
+  background: #F4EDE1;
+  color: #151C34;
 }
 body { margin: 0; }
 
-/* Rounded, app-like. Klarna and Wise separate surfaces with radius and
-   shadow rather than luminance, which is why the tints can sit close to
-   the ground without disappearing. */
 :root {
-  --ck-ground: #F5F3EE;
-  --ck-card: #FFFFFF;
-  --ck-ink: #141833;
-  --ck-ink2: #565C82;
-  --ck-red: #B81A1D;
-
-  --ck-apricot: #FFE0CE;
-  --ck-sky: #D6E8F5;
-  --ck-mint: #D6EFE0;
-  --ck-lilac: #E2DDF7;
-  --ck-sand: #F2E6D0;
-  --ck-blush: #FFD8D9;
+  --ck-ground: #F4EDE1;
+  --ck-card: #FFF9EF;
+  --ck-ink: #151C34;
+  --ck-ink2: #535A70;
+  --ck-red: #A91F31;
+  --ck-teal: #2A365B;
+  --ck-coral: #A91F31;
+  --ck-cream: #F4EDE1;
+  --ck-apricot: #F4D9BA;
+  --ck-sky: #DDE5F4;
+  --ck-mint: #E3EDE7;
+  --ck-lilac: #E8E1F0;
+  --ck-sand: #F7E3B9;
+  --ck-blush: #F6DADA;
 
   --ck-r: 22px;
-  --ck-shadow: 0 1px 2px rgba(20,24,51,.04), 0 6px 20px rgba(20,24,51,.06);
-  --ck-line: rgba(20,24,51,.08);
+  --ck-shadow: 0 1px 2px rgba(21,28,52,.04), 0 8px 24px rgba(21,28,52,.07);
+  --ck-line: rgba(21,28,52,.10);
 }
 
 /* Scrollbars off — they break the app illusion on desktop. */
@@ -45,14 +44,128 @@ input::placeholder, textarea::placeholder { color: var(--ck-ink2); opacity: .6; 
   * { animation: none !important; transition: none !important; }
 }
 
-/* First rollout of the app shell: quiet surfaces, strong navigation. */
-html, body, #root { background:#F4F5F1; }
-.cockpit-rail { background:#141833; border-radius:24px 0 0 24px; }
-.cockpit-rail span { color:#F4F5F1 !important; }
-.cockpit-rail a,.cockpit-rail button { color:#F4F5F1 !important; }
-.cockpit-rail button:hover,.cockpit-rail a:hover { background:rgba(255,255,255,.08) !important; }
-.cockpit-dock { position:fixed; z-index:35; bottom:0; left:50%; transform:translateX(-50%); width:min(100%,460px); display:flex; gap:8px; overflow-x:auto; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); background:rgba(20,24,51,.96); backdrop-filter:blur(18px); border-radius:22px 22px 0 0; box-shadow:0 -8px 32px rgba(20,24,51,.12); }
-.cockpit-dock button { display:flex; align-items:center; gap:7px; flex-shrink:0; border:0; border-radius:14px; min-height:44px; padding:10px 14px; font-size:13px; color:#E8EAF3; background:transparent; }
-.cockpit-dock button.selected { background:#D6EFE0; color:#141833; font-weight:600; }
-@media(max-width:899px) { .cockpit-shell { padding-bottom:100px; } }
+/* The artwork anchors the desktop rail and compact mobile masthead. */
+html, body, #root { background:var(--ck-ground); }
+.cockpit-rail { background:#151C34; border-radius:24px 0 0 24px; box-shadow:8px 0 28px rgba(21,28,52,.08); }
+.cockpit-rail span { color:#F4EDE1 !important; }
+.cockpit-rail a,.cockpit-rail button { color:#F4EDE1 !important; }
+.cockpit-rail button:hover,.cockpit-rail a:hover { background:rgba(255,255,255,.10) !important; }
+.brand-plaque { display:flex; align-items:center; justify-content:center; padding:8px; border-radius:16px; background:#101629; }
+.brand-plaque img { display:block; width:100%; max-height:130px; object-fit:contain; }
+.cockpit-mobile-head { position:sticky; top:0; z-index:30; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:7px 15px; min-height:68px; background:rgba(244,237,225,.96); border-bottom:1px solid var(--ck-line); box-shadow:0 4px 16px rgba(21,28,52,.06); backdrop-filter:blur(14px); }
+.cockpit-mobile-head img { display:block; width:102px; height:65px; object-fit:contain; object-position:left center; }
+.cockpit-mobile-head .mobile-status { display:grid; justify-items:end; gap:3px; white-space:nowrap; }
+.cockpit-dock { position:fixed; z-index:35; bottom:0; left:50%; transform:translateX(-50%); width:min(100%,480px); display:flex; justify-content:space-around; gap:3px; overflow-x:auto; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); background:rgba(21,28,52,.97); backdrop-filter:blur(18px); border:1px solid rgba(255,255,255,.14); border-bottom:0; border-radius:21px 21px 0 0; box-shadow:0 -8px 32px rgba(21,28,52,.17); }
+.cockpit-dock button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; flex:1 0 62px; border:0; border-radius:14px; min-height:48px; padding:6px 8px; font-size:10px; color:#F4EDE1; background:transparent; }
+.cockpit-dock button.selected { background:#A91F31; color:#fffaf2; font-weight:700; }
+.cockpit-today-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.cockpit-today-card { background:linear-gradient(110deg, #151C34, #232D4D); border-top:4px solid #D92D43; }
+.cockpit-rail :focus-visible, .cockpit-dock :focus-visible, .cockpit-today-card :focus-visible { outline-color:#F7E3B9; }
+.cockpit-capture-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.cockpit-capture-fields label { display:grid; gap:4px; font-size:13px; }
+.cockpit-capture-fields :is(input, select, textarea) { width:100%; min-width:0; padding:8px; color:var(--ck-ink); background:var(--ck-card); border:1px solid var(--ck-line); border-radius:8px; font-size:16px; }
+.cockpit-capture-details { grid-column:1 / -1; }
+@media(max-width:899px) {
+  .cockpit-shell { padding-bottom:calc(88px + env(safe-area-inset-bottom)); }
+  .cockpit-today-card { padding:15px; }
+}
+@media(max-width:390px) {
+  .cockpit-mobile-head img { width:92px; }
+  .cockpit-dock { gap:0; padding-left:5px; padding-right:5px; }
+  .cockpit-dock button { flex-basis:58px; padding-left:4px; padding-right:4px; font-size:9px; }
+}
 @media(min-width:900px) { .cockpit-shell { padding:24px 0; } }
+
+.cockpit-today-card { margin:0 16px 16px; padding:19px; border-radius:20px; color:#FFF9EF; }
+.cockpit-running-title { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px 12px; margin-bottom:12px; }
+.cockpit-running-title h2 { margin:0; font:italic 800 29px/1 'Barlow Condensed','Arial Narrow',Impact,sans-serif; }
+.cockpit-running-title button { color:#F7E3B9; text-decoration:underline; cursor:pointer; min-height:32px; }
+.cockpit-today-metrics button { min-width:0; text-align:left; background:#FFFFFF12; border:1px solid #FFFFFF32; border-radius:11px; padding:8px; cursor:pointer; }
+.cockpit-today-metrics strong, .cockpit-today-metrics span { display:block; }
+.cockpit-today-metrics strong { font-size:clamp(15px, 4vw, 22px); overflow-wrap:anywhere; }
+.cockpit-today-metrics span { color:#F7E3B9; font-size:11px; line-height:1.3; }
+.cockpit-today-details { margin-bottom:16px; }
+.cockpit-today-details > summary { cursor:pointer; font-weight:600; padding-block:8px; }
+
+.workspace-rail-nav { display:grid; gap:4px; margin-top:10px; }
+.workspace-rail-nav button { text-align:left; padding:10px 13px; border:1px solid transparent; border-radius:10px; cursor:pointer; font-weight:600; }
+.workspace-rail-nav button[aria-current] { border-color:#FFFFFF45; background:#FFFFFF16; }
+.workspace-board { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr)); gap:10px; margin:0 16px 16px; }
+.workspace-card { min-width:0; padding:14px; border:1px solid var(--ck-line); border-radius:15px; background:var(--ck-card); }
+.workspace-card h2 { margin:0 0 10px; font:italic 800 25px/1 'Barlow Condensed','Arial Narrow',Impact,sans-serif; }
+.workspace-outputs { list-style:none; margin:0 0 8px; padding:0; }
+.workspace-outputs button { text-align:left; display:flex; align-items:center; gap:8px; width:100%; min-height:38px; cursor:pointer; }
+.workspace-outputs li + li { border-top:1px solid var(--ck-line); }
+.workspace-outputs strong { flex:none; color:var(--ck-red); }
+.workspace-outputs span { flex:1; font-size:13px; }
+.workspace-outputs svg { flex:none; opacity:.65; }
+.workspace-tools, .workspace-related, .workspace-mobile-settings { display:flex; gap:6px; flex-wrap:wrap; }
+.workspace-tools button, .workspace-related > button, .workspace-mobile-settings > * { cursor:pointer; font-size:13px; padding:7px 9px; border:1px solid var(--ck-line); border-radius:8px; min-height:40px; }
+.workspace-tools button:hover, .workspace-related button:hover { background:var(--ck-sand); }
+.workspace-related { margin:0 16px 14px; }
+.workspace-related > button { font-weight:700; background:var(--ck-sand); }
+.workspace-all { display:flex; align-items:center; gap:4px; padding-top:8px; min-height:38px; font-size:13px; font-weight:700; cursor:pointer; }
+.workspace-mobile-settings { margin:0 16px 20px; }
+.cockpit-room-scroll { height:calc(100vh - 74px); overflow-y:auto; }
+.rm p { margin-block:6px; line-height:1.45; }
+.rm p:empty { display:none; }
+@media(max-width:899px) {
+  .cockpit-room-scroll { height:auto; overflow:visible; }
+  .cockpit-dock button { flex:1 1 0; min-width:0; padding-inline:3px; }
+}
+
+.today-dashboard { margin:0 16px 16px; display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); }
+.today-result { border:1px solid var(--ck-line); border-radius:14px; padding:13px; background:var(--ck-card); min-width:0; }
+.today-result-required, .today-result-strategy { border-top:3px solid var(--ck-red); }
+.today-result-posted, .today-result-won { border-top:3px solid #31755b; }
+.today-result h2 { margin:0; font:italic 800 24px/1 'Barlow Condensed','Arial Narrow',Impact,sans-serif; }
+.today-result-count { margin:4px 0; font-size:18px; font-weight:700; }
+.today-result ul { list-style:none; margin:3px 0; padding:0; }
+.today-result li { border-bottom:1px solid var(--ck-line); padding:5px 0; overflow-wrap:anywhere; }
+.today-result p, .today-result li { font-size:13px; }
+.today-result small { display:block; color:var(--ck-ink2); }
+.today-result button, .today-result a, .today-result summary { text-decoration:underline; cursor:pointer; text-align:left; }
+.today-result-source { margin-top:8px; font-size:12px; }
+.today-workspace-directory { margin:0 16px 20px; }
+.today-workspace-directory summary { cursor:pointer; font-weight:600; padding-bottom:8px; }
+.today-task-disposition select { margin-top:5px; font-size:13px; padding:5px 7px; border:1px solid var(--ck-line); border-radius:6px; }
+.today-automation-status { display:block; padding-left:1em; color:var(--ck-ink2); font-weight:400; }
+.today-audit { margin:0 16px 16px; border:1px solid var(--ck-line); border-radius:14px; background:var(--ck-card); overflow:hidden; }
+.today-audit > summary { display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer; padding:13px 15px; font-weight:700; }
+.today-audit > summary span { color:var(--ck-ink2); font-size:12px; font-weight:500; }
+.today-audit-date { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:0 15px 10px; color:var(--ck-ink2); font-size:12px; }
+.today-audit-date input { padding:6px 8px; border:1px solid var(--ck-line); border-radius:8px; color:var(--ck-ink); background:var(--ck-card); font:inherit; }
+.today-audit ol { list-style:none; margin:0; padding:0 15px 10px; }
+.today-audit li { display:flex; gap:12px; padding:9px 0; border-top:1px solid var(--ck-line); font-size:13px; }
+.today-audit time { flex:none; color:var(--ck-ink2); font:11px 'IBM Plex Mono',monospace; padding-top:2px; }
+.ask-dot-actions, .ask-dot-mobile-actions { display:flex; align-items:center; gap:7px; }
+.ask-dot-button, .ask-dot-config, .ask-dot-cancel { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:40px; padding:8px 13px; border:1px solid var(--ck-line); border-radius:999px; background:var(--ck-card); color:var(--ck-ink); font:600 13px/1.2 'IBM Plex Sans',system-ui,sans-serif; cursor:pointer; white-space:nowrap; }
+.ask-dot-button { background:var(--ck-ink); color:var(--ck-card); border-color:var(--ck-ink); }
+.ask-dot-button:hover { background:var(--ck-red); border-color:var(--ck-red); }
+.ask-dot-config { width:40px; padding:0; }
+.ask-dot-mobile { min-height:36px; padding:7px 10px; font-size:12px; }
+.ask-dot-backdrop { position:fixed; inset:0; z-index:90; display:grid; place-items:center; padding:16px; background:rgba(21,28,52,.48); }
+.ask-dot-dialog { width:min(100%,560px); max-height:min(88vh,760px); overflow-y:auto; padding:22px; border:1px solid var(--ck-line); border-radius:22px; background:var(--ck-card); color:var(--ck-ink); box-shadow:0 18px 55px rgba(21,28,52,.22); }
+.ask-dot-dialog-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.ask-dot-dialog-head h2 { margin:4px 0 0; font:italic 800 30px/1 'Barlow Condensed','Arial Narrow',Impact,sans-serif; }
+.ask-dot-dialog-head > button { width:36px; height:36px; border:0; border-radius:50%; background:rgba(21,28,52,.06); color:var(--ck-ink); font-size:24px; cursor:pointer; }
+.ask-dot-dialog > p { font-size:14px; line-height:1.5; }
+.ask-dot-label { display:grid; gap:6px; font-size:13px; font-weight:700; }
+.ask-dot-label input, .ask-dot-context textarea { box-sizing:border-box; width:100%; padding:10px 12px; border:1px solid var(--ck-line); border-radius:10px; background:#fffdf8; color:var(--ck-ink); font:14px/1.45 'IBM Plex Sans',system-ui,sans-serif; }
+.ask-dot-context { margin-top:14px; font-size:13px; }
+.ask-dot-context summary { cursor:pointer; font-weight:700; }
+.ask-dot-context textarea { display:block; margin-top:8px; resize:vertical; font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:11px; }
+.ask-dot-dialog-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.ask-dot-dialog-actions .ask-dot-config { width:auto; padding:8px 12px; margin-right:auto; }
+.ask-dot-error { color:var(--ck-red); font-size:13px; }
+.ask-dot-notice { position:fixed; z-index:80; right:20px; bottom:20px; max-width:min(420px,calc(100vw - 40px)); padding:12px 16px; border-radius:12px; background:var(--ck-ink); color:var(--ck-card); box-shadow:var(--ck-shadow); font-size:13px; }
+@media(max-width:899px) {
+  .ask-dot-mobile-actions { flex-shrink:0; }
+  .ask-dot-mobile { min-height:34px; padding:6px 9px; }
+  .ask-dot-mobile-actions .ask-dot-config { width:34px; height:34px; min-height:34px; }
+  .ask-dot-dialog { padding:18px; }
+  .ask-dot-notice { right:12px; bottom:calc(84px + env(safe-area-inset-bottom)); }
+}
+.today-audit li strong { font-weight:700; }
+.today-audit li small { display:block; color:var(--ck-ink2); margin-top:3px; }
+.today-audit > p { margin:0; padding:0 15px 14px; color:var(--ck-ink2); font-size:13px; }

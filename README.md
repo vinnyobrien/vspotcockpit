@@ -96,7 +96,7 @@ netlify/functions/
 ### The three stores
 
 - **cockpit** — day state, ledger, threads, signals. Exportable.
-- **vault** — Foundrae emails, sweep replies, sponsor outreach. Never exported, never used to inform published content.
+- **vault** — FoundRae emails, sweep replies, sponsor outreach, and Fireflies meeting extracts. Never exported, never used to inform published content.
 - **secrets** — OAuth tokens. Not in `CLIENT_STORES`, so `/api/store` physically cannot read it.
 
 ### Why `/api/claude` is not an open relay
@@ -115,7 +115,7 @@ It accepts an operation name (`wire`, `sweep`, `generate`) and structured argume
 
 ## Known gaps
 
-1. **Slack, Asana, Notion, Fireflies are not wired.** Each needs its own OAuth app. Google covers Gmail, Calendar and Drive, which is most of the value. Add the others once you know you use the sweep.
+1. **Slack, Asana, and Notion are not wired.** Google currently covers Gmail, Calendar, and Drive. Fireflies uses a server-side API key and a scheduled intake worker; the worker polls recent transcripts every 15 minutes and records its last successful check and any error in cockpit health. Confirm that the Fireflies key is configured and that a successful live check appears before relying on automatic intake.
 2. **The Notion mirror is gone**, replaced by EXPORT, which downloads the redacted public ledger as JSON. Blobs already makes it durable, so the mirror was only ever about portability.
 3. **Google MCP endpoints move.** If the sweep fails with an upstream error after Google connects cleanly, the endpoint URLs in `_google.js` are the first thing to check.
 4. **One user.** No multi user, no roles. That is deliberate.

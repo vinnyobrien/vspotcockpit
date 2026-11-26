@@ -128,6 +128,13 @@ export async function checkSession() {
   }
 }
 
+/** Operational status for background imports; omits message and credential data. */
+export async function getMemoryHealth() {
+  const res = await req("/api/memory-health");
+  if (!res.ok) throw new Error(`Could not read background status (${res.status})`);
+  return res.json();
+}
+
 /** User initiated only. Creates a new Google Doc from generated text. */
 export async function saveToGoogleDoc(title, body) {
   const res = await req("/api/doc-create", {
