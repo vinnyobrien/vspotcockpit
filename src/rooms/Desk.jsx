@@ -28,7 +28,7 @@ export default function Desk({ onGenerate, busy, wire, wireAt, deskStory, onClea
     <Problem onDismiss={()=>setErr("")}>{err}</Problem>
     <Card pad={18} style={{marginBottom:16}}>
       <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-        {[["breaking","News & scripts"],["essay","Essay workshop"],["sub","Sub editor"],["clipdesk","Clip desk"],["growth","Sponsors"]].map(([id,label])=><Pill key={id} sm tone="ghost" onClick={()=>onOpenRoom(id)}>{label}</Pill>)}
+        {[["breaking","News & scripts"],["weekend","Weekend Desk"],["essay","Essay workshop"],["sub","Sub editor"],["clipdesk","Clip desk"],["growth","Sponsors"]].map(([id,label])=><Pill key={id} sm tone="ghost" onClick={()=>onOpenRoom(id)}>{label}</Pill>)}
       </div>
     </Card>
     <Section label="The Conversation">

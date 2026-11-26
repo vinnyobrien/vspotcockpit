@@ -34,7 +34,9 @@ import Analysis from "./rooms/Analysis.jsx";
 import Week from "./rooms/Week.jsx";
 import ContentCalendar, { useEditorialCalendar } from "./rooms/ContentCalendar.jsx";
 import { dateInDublin } from "./lib/editorial-calendar.js";
+import { recordAudit } from "./lib/audit.js";
 import SubEditor from "./rooms/SubEditor.jsx";
+import WeekendDesk from "./rooms/WeekendDesk.jsx";
 
 import Actions from "./rooms/Actions.jsx";
 import Finance from "./rooms/Finance.jsx";
@@ -136,6 +138,7 @@ const ROOMS = [
   { id: "week",     name: "The Week", icon: CalendarDays,  tint: C.sand,    blurb: "Every slot, filled or open" },
   { id: "editorial", name: "Editorial System", icon: PenLine, tint: C.sand, blurb: "Voice rules, approved artwork and speaking catalogue" },
   { id: "essay",    name: "Essay",    icon: PenLine,       tint: C.lilac,   blurb: "The long form" },
+  { id: "weekend", name: "Weekend Desk", icon: PenLine, tint: C.lilac, blurb: "Saturday Nuggets, Sunday Supplement and author relationships" },
   { id: "guests",   name: "Guests",   icon: Users,         tint: C.blush,   blurb: "Pipeline and assets" },
   { id: "growth",   name: "Growth",   icon: TrendingUp,    tint: C.apricot, blurb: "Sponsors and Camp Tralee" },
   { id: "entertainment", name: "Entertainment Desk", icon: Drama, tint: C.sand, blurb: "Shows, channels and the V Spot stage" },
@@ -311,10 +314,14 @@ export default function Cockpit({ onLogout, googleConnected }) {
   const toggle = (id) => {
     setDispositions((previous) => ({ ...previous, [id]: "" }));
     setDone((previous) => ({ ...previous, [id]: !previous[id] }));
+    const task = all.find((item) => item.id === id);
+    recordAudit({ action: done[id] ? "Task reopened" : "Task completed", target: task?.name || id, detail: task?.owner ? `Owner: ${task.owner}` : "Daily cockpit checklist", source: "Today" }).catch(() => setErr("Task updated, but the daily audit entry failed to save."));
   };
   const setDisposition = (id, status) => {
     if (status) setDone((previous) => ({ ...previous, [id]: false }));
     setDispositions((previous) => ({ ...previous, [id]: status }));
+    const task = all.find((item) => item.id === id);
+    recordAudit({ action: status === "deferred" ? "Task deferred" : status === "ruledOut" ? "Task ruled out" : "Task status cleared", target: task?.name || id, detail: task?.dueDate ? `Due ${task.dueDate}` : "Daily cockpit checklist", source: "Today" }).catch(() => setErr("Task updated, but the daily audit entry failed to save."));
   };
   const reviewTask = (id) => {
     const checklist = document.getElementById("today-checklist");
@@ -666,6 +673,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               <RoomSession active={room === "editorial"}><EditorialSystem /></RoomSession>
 
               {<RoomSession active={room === "essay"}><Essay threads={threads} threadContext={threadContext} K={K} initialThread={editorThread} /></RoomSession>}
+              {<RoomSession active={room === "weekend"}><WeekendDesk active={room === "weekend"} onSubEditor={() => setRoom("sub")} /></RoomSession>}
 
               {<RoomSession active={room === "cast"}><Cast /></RoomSession>}
 

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { C, BODY, Card, Big, Mono, Pill } from '../lib/ui.jsx';
 import { TONE, dateInDublin, shiftDate, newItem, blockers, deadlines } from '../lib/editorial-calendar.js';
+import { recordAudit } from '../lib/audit.js';
 
 export function useEditorialCalendar() {
   const [data,setData]=useState(null), [error,setError]=useState(''), [busy,setBusy]=useState(false);
   async function load() { setBusy(true); try { const r=await fetch('/api/editorial-calendar',{credentials:'same-origin'}); const d=await r.json(); if(!r.ok) throw new Error(d.error || 'Calendar unavailable'); setData(d);setError(''); } catch(e){setError(e.message);} finally{setBusy(false);} }
   useEffect(()=>{load();},[]);
-  async function mutate(action,item) { setBusy(true); try {const r=await fetch('/api/editorial-calendar',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({action,revision:data.revision,...(action==='save'?{item}:{id:item.id})})}); const d=await r.json(); if(!r.ok) throw new Error(d.error || 'Could not save');setData(d);setError('');return true;} catch(e){setError(e.message);return false;} finally{setBusy(false);} }
+  async function mutate(action,item) { setBusy(true); try {const r=await fetch('/api/editorial-calendar',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({action,revision:data.revision,...(action==='save'?{item}:{id:item.id})})}); const d=await r.json(); if(!r.ok) throw new Error(d.error || 'Could not save');setData(d);setError(''); try { await recordAudit({ action: ({save:'Release plan saved',review:'Release submitted for sign-off',approve:'Release signed off',published:'Publication confirmed'}[action] || action), target: item.title || 'Release', detail: `${item.show || ''} · ${item.date || ''}`.trim(), source: 'Content Calendar' }); } catch { setError('Calendar action saved, but the daily audit entry failed to save.'); } return true;} catch(e){setError(e.message);return false;} finally{setBusy(false);} }
   return {data,error,busy,load,mutate};
 }
 const fieldStyle={width:'100%',padding:'10px 12px',borderRadius:10,border:'1px solid rgba(20,24,51,.2)',fontFamily:BODY,fontSize:16,background:'white',color:C.ink};
@@ -40,10 +41,10 @@ export default function ContentCalendar({calendar,onSubEditor}) {
     {!items.length && <Card>No releases match this week and filter. Preparation deadlines remain visible above.</Card>}
     {items.map(i=><Card key={i.id} style={{marginBottom:16,borderLeft:'4px solid '+(i.approval?C.ink:C.red)}}>
       <Mono>{i.date} · {i.time || 'Release time to agree'} · {i.show}</Mono><div style={{marginTop:8}}><Big s={24}>{i.title}</Big></div>
-      <p><strong>{statusText[i.status]}</strong> · {i.owner} · {i.format}</p><p style={{fontSize:13}}>{i.channels}</p>
-      {i.sponsor && <p style={{background:C.sand,padding:12,borderRadius:12}}>Sponsor: <strong>{i.sponsor}</strong> · Approval due {i.sponsorDate || 'MISSING'}<br/>{i.sponsorNeeds}<br/>Evidence: {i.sponsorEvidence || 'Awaiting approval'}{i.checks?.sponsor && i.sponsorEvidence?.trim() ? <><br/><strong>✓ Sponsor approval recorded — no further sponsor sign-off needed.</strong></> : null}</p>}
-      {i.finalLink && <p style={{fontSize:13}}><a href={i.finalLink} target="_blank" rel="noreferrer" style={{color:C.ink,fontWeight:700}}>Open final asset / copy link ↗</a></p>}
-      <p style={{fontSize:13,whiteSpace:'pre-wrap'}}>{i.notes}</p>
+      <p style={{margin:'5px 0',lineHeight:1.4}}><strong>{statusText[i.status]}</strong> · {i.owner} · {i.format}</p><p style={{fontSize:13,margin:'5px 0',lineHeight:1.4}}>{i.channels}</p>
+      {i.sponsor && <p style={{background:C.sand,padding:12,borderRadius:12,margin:'8px 0',lineHeight:1.45}}>Sponsor: <strong>{i.sponsor}</strong> · Approval due {i.sponsorDate || 'MISSING'}<br/>{i.sponsorNeeds}<br/>Evidence: {i.sponsorEvidence || 'Awaiting approval'}{i.checks?.sponsor && i.sponsorEvidence?.trim() ? <><br/><strong>✓ Sponsor approval recorded — no further sponsor sign-off needed.</strong></> : null}</p>}
+      {i.finalLink && <p style={{fontSize:13,margin:'5px 0',lineHeight:1.4}}><a href={i.finalLink} target="_blank" rel="noreferrer" style={{color:C.ink,fontWeight:700}}>Open final asset / copy link ↗</a></p>}
+      {i.notes?.trim() && <p style={{fontSize:13,whiteSpace:'pre-wrap',margin:'7px 0',lineHeight:1.45}}>{i.notes}</p>}
       {i.status==='review' && blockers(i).length>0 && <p style={{color:C.red}}>Sign-off blocked: {blockers(i).join(', ')}.</p>}
       {i.approval && <p style={{fontSize:12}}>Signed off by {i.approval.by} · {new Date(i.approval.at).toLocaleString('en-IE',{timeZone:'Europe/Dublin'})}</p>}
       <div style={{display:'flex',gap:8,flexWrap:'wrap'}}><Pill sm tone="ghost" disabled={busy} onClick={()=>setEditing(structuredClone(i))}>Edit / checklist</Pill>

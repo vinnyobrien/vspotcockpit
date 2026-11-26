@@ -5,6 +5,7 @@ import {
   Empty, Problem, Chips, iso, parseObject,
 } from "../lib/ui.jsx";
 import { callOp, sGet, sSet } from "../api.js";
+import { recordAudit } from "../lib/audit.js";
 
 /* ============================================================
    src/rooms/SubEditor.jsx
@@ -177,10 +178,21 @@ verdict: one sentence. Blunt.` }],
       const review = parseObject(r.text);
       setRead(review);
       if (handoff) {
-        const next = { ...handoff, status: "reviewed_awaiting_vinny", subeditor: { ...review, voice: analyse(text), reviewedAt: new Date().toISOString() } };
+        const subeditor = { ...review, voice: analyse(text), reviewedAt: new Date().toISOString() };
+        const next = { ...handoff, status: "reviewed_awaiting_vinny", subeditor };
         const current = await sGet("editor-call:" + handoff.sourceDay, null);
         if (current?.workflowProposal?.id === handoff.id) await sSet("editor-call:" + handoff.sourceDay, { ...current, workflowProposal: next });
-        await sSet("subeditor:handoff", next);
+        if (handoff.kind === "weekend-post" && handoff.recordId) {
+          const issues = await sGet("weekend-editorial-v1", []);
+          if (Array.isArray(issues)) {
+            const updated = issues.map((item) => item.id === handoff.recordId
+              ? { ...item, status: "reviewed", subeditor, updatedAt: new Date().toISOString() }
+              : item);
+            if (!await sSet("weekend-editorial-v1", updated)) throw new Error("Review complete, but the Weekend Desk record did not save.");
+          }
+        }
+        if (!await sSet("subeditor:handoff", next)) throw new Error("Review complete, but the review hand-off did not save.");
+        if (handoff.kind === "weekend-post") await recordAudit({ action: "Sub-Editor review completed", target: handoff.format, detail: review.verdict || "Findings saved to the Weekend Desk issue", source: "Sub-Editor" });
         setHandoff(next);
       }
     } catch (e) {

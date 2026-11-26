@@ -2,7 +2,7 @@ import { dateInDublin, shiftDate } from "./editorial-calendar.js";
 
 export const WORKSPACES = [
   { id: "studio", label: "Studio", tools: ["calendar", "build", "publishing", "sub", "episode", "video", "clipdesk", "shows", "cast", "entertainment"] },
-  { id: "editorial-work", label: "Editorial", tools: ["breaking", "desk", "essay", "sub", "editorial", "episode", "cast"] },
+  { id: "editorial-work", label: "Editorial", tools: ["breaking", "desk", "weekend", "essay", "sub", "editorial", "episode", "cast"] },
   { id: "revenue", label: "Revenue", tools: ["growth", "followups", "barometer", "finance", "publishing"] },
   { id: "relationships", label: "People", tools: ["guests", "followups", "episode", "memory"] },
   { id: "reporting", label: "Reporting", tools: ["analysis", "audience", "publishing", "week", "actions", "memory"] },

@@ -107,6 +107,8 @@ html, body, #root { background:var(--ck-ground); }
 .workspace-all { display:flex; align-items:center; gap:4px; padding-top:8px; min-height:38px; font-size:13px; font-weight:700; cursor:pointer; }
 .workspace-mobile-settings { margin:0 16px 20px; }
 .cockpit-room-scroll { height:calc(100vh - 74px); overflow-y:auto; }
+.rm p { margin-block:6px; line-height:1.45; }
+.rm p:empty { display:none; }
 @media(max-width:899px) {
   .cockpit-room-scroll { height:auto; overflow:visible; }
   .cockpit-dock button { flex:1 1 0; min-width:0; padding-inline:3px; }
@@ -128,3 +130,12 @@ html, body, #root { background:var(--ck-ground); }
 .today-workspace-directory summary { cursor:pointer; font-weight:600; padding-bottom:8px; }
 .today-task-disposition select { margin-top:5px; font-size:13px; padding:5px 7px; border:1px solid var(--ck-line); border-radius:6px; }
 .today-automation-status { display:block; padding-left:1em; color:var(--ck-ink2); font-weight:400; }
+.today-audit { margin:0 16px 16px; border:1px solid var(--ck-line); border-radius:14px; background:var(--ck-card); overflow:hidden; }
+.today-audit > summary { display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer; padding:13px 15px; font-weight:700; }
+.today-audit > summary span { color:var(--ck-ink2); font-size:12px; font-weight:500; }
+.today-audit ol { list-style:none; margin:0; padding:0 15px 10px; }
+.today-audit li { display:flex; gap:12px; padding:9px 0; border-top:1px solid var(--ck-line); font-size:13px; }
+.today-audit time { flex:none; color:var(--ck-ink2); font:11px 'IBM Plex Mono',monospace; padding-top:2px; }
+.today-audit li strong { font-weight:700; }
+.today-audit li small { display:block; color:var(--ck-ink2); margin-top:3px; }
+.today-audit > p { margin:0; padding:0 15px 14px; color:var(--ck-ink2); font-size:13px; }
