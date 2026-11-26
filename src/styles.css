@@ -1,33 +1,32 @@
 @import "tailwindcss";
 
-/* Pastel ground. Was #0A0A0A — the whole app inverted from here. */
+/* V Spot Media: warm paper, studio teal and the coral live light. */
 html, body, #root {
-  height: 100%;
-  background: #F5F3EE;
-  color: #141833;
+  min-height: 100%;
+  background: #F5F1E8;
+  color: #123D40;
 }
 body { margin: 0; }
 
-/* Rounded, app-like. Klarna and Wise separate surfaces with radius and
-   shadow rather than luminance, which is why the tints can sit close to
-   the ground without disappearing. */
 :root {
-  --ck-ground: #F5F3EE;
-  --ck-card: #FFFFFF;
-  --ck-ink: #141833;
-  --ck-ink2: #565C82;
-  --ck-red: #B81A1D;
-
-  --ck-apricot: #FFE0CE;
-  --ck-sky: #D6E8F5;
-  --ck-mint: #D6EFE0;
-  --ck-lilac: #E2DDF7;
-  --ck-sand: #F2E6D0;
-  --ck-blush: #FFD8D9;
+  --ck-ground: #F5F1E8;
+  --ck-card: #FFFCF6;
+  --ck-ink: #123D40;
+  --ck-ink2: #50656A;
+  --ck-red: #EA604A;
+  --ck-teal: #176B68;
+  --ck-coral: #EA604A;
+  --ck-cream: #F5F1E8;
+  --ck-apricot: #F6D4BD;
+  --ck-sky: #CFE5E2;
+  --ck-mint: #C8E8DA;
+  --ck-lilac: #DDD6F1;
+  --ck-sand: #EFDDBB;
+  --ck-blush: #F5D0C4;
 
   --ck-r: 22px;
-  --ck-shadow: 0 1px 2px rgba(20,24,51,.04), 0 6px 20px rgba(20,24,51,.06);
-  --ck-line: rgba(20,24,51,.08);
+  --ck-shadow: 0 1px 2px rgba(18,61,64,.04), 0 8px 24px rgba(18,61,64,.07);
+  --ck-line: rgba(18,61,64,.10);
 }
 
 /* Scrollbars off — they break the app illusion on desktop. */
@@ -45,14 +44,31 @@ input::placeholder, textarea::placeholder { color: var(--ck-ink2); opacity: .6; 
   * { animation: none !important; transition: none !important; }
 }
 
-/* First rollout of the app shell: quiet surfaces, strong navigation. */
-html, body, #root { background:#F4F5F1; }
-.cockpit-rail { background:#141833; border-radius:24px 0 0 24px; }
-.cockpit-rail span { color:#F4F5F1 !important; }
-.cockpit-rail a,.cockpit-rail button { color:#F4F5F1 !important; }
-.cockpit-rail button:hover,.cockpit-rail a:hover { background:rgba(255,255,255,.08) !important; }
-.cockpit-dock { position:fixed; z-index:35; bottom:0; left:50%; transform:translateX(-50%); width:min(100%,460px); display:flex; gap:8px; overflow-x:auto; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); background:rgba(20,24,51,.96); backdrop-filter:blur(18px); border-radius:22px 22px 0 0; box-shadow:0 -8px 32px rgba(20,24,51,.12); }
-.cockpit-dock button { display:flex; align-items:center; gap:7px; flex-shrink:0; border:0; border-radius:14px; min-height:44px; padding:10px 14px; font-size:13px; color:#E8EAF3; background:transparent; }
-.cockpit-dock button.selected { background:#D6EFE0; color:#141833; font-weight:600; }
-@media(max-width:899px) { .cockpit-shell { padding-bottom:100px; } }
+/* The shell stays studio-like on desktop and becomes a proper thumb-first
+   app on mobile. The brand plaque is deliberately the only paper panel on rail. */
+html, body, #root { background:var(--ck-ground); }
+.cockpit-rail { background:#123D40; border-radius:24px 0 0 24px; box-shadow:8px 0 28px rgba(18,61,64,.08); }
+.cockpit-rail span { color:#F5F1E8 !important; }
+.cockpit-rail a,.cockpit-rail button { color:#F5F1E8 !important; }
+.cockpit-rail button:hover,.cockpit-rail a:hover { background:rgba(255,255,255,.10) !important; }
+.brand-plaque { display:flex; align-items:center; justify-content:center; min-height:84px; padding:6px 8px; border-radius:16px; background:#F5F1E8; box-shadow:0 4px 16px rgba(0,0,0,.12); }
+.brand-plaque img { display:block; width:100%; max-height:80px; object-fit:contain; }
+.cockpit-mobile-head { position:sticky; top:0; z-index:30; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:7px 15px; min-height:68px; background:rgba(245,241,232,.96); border-bottom:1px solid var(--ck-line); box-shadow:0 4px 16px rgba(18,61,64,.06); backdrop-filter:blur(14px); }
+.cockpit-mobile-head img { display:block; width:154px; max-height:58px; object-fit:contain; object-position:left center; }
+.cockpit-mobile-head .mobile-status { display:grid; justify-items:end; gap:3px; white-space:nowrap; }
+.cockpit-dock { position:fixed; z-index:35; bottom:0; left:50%; transform:translateX(-50%); width:min(100%,480px); display:flex; justify-content:space-around; gap:3px; overflow-x:auto; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); background:rgba(18,61,64,.97); backdrop-filter:blur(18px); border:1px solid rgba(255,255,255,.14); border-bottom:0; border-radius:21px 21px 0 0; box-shadow:0 -8px 32px rgba(18,61,64,.17); }
+.cockpit-dock button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; flex:1 0 62px; border:0; border-radius:14px; min-height:48px; padding:6px 8px; font-size:10px; color:#F5F1E8; background:transparent; }
+.cockpit-dock button.selected { background:#EA604A; color:#fffaf2; font-weight:700; }
+.cockpit-today-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.cockpit-today-card { background:#123D40 !important; border-top:4px solid #EA604A; }
+@media(max-width:899px) {
+  .cockpit-shell { padding-bottom:92px; }
+  .cockpit-today-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .cockpit-today-metrics > button:last-child { grid-column:1 / -1; }
+}
+@media(max-width:390px) {
+  .cockpit-mobile-head img { width:132px; }
+  .cockpit-dock { gap:0; padding-left:5px; padding-right:5px; }
+  .cockpit-dock button { flex-basis:58px; padding-left:4px; padding-right:4px; font-size:9px; }
+}
 @media(min-width:900px) { .cockpit-shell { padding:24px 0; } }

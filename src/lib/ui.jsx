@@ -9,27 +9,27 @@ import React, { useState } from "react";
    ============================================================ */
 
 export const C = {
-  ground: "#F4F5F1",
-  card: "#FFFFFF",
-  ink: "#141833",
-  ink2: "#565C82",
-  ink3: "#767CA0",
-  red: "#B81A1D",
-  apricot: "#FFE0CE",
-  sky: "#D6E8F5",
-  mint: "#D6EFE0",
-  lilac: "#E2DDF7",
-  sand: "#F2E6D0",
-  blush: "#FFD8D9",
-  line: "rgba(20,24,51,0.10)",
+  ground: "#F5F1E8",
+  card: "#FFFCF6",
+  ink: "#123D40",
+  ink2: "#50656A",
+  ink3: "#78898A",
+  red: "#EA604A",
+  apricot: "#F6D4BD",
+  sky: "#CFE5E2",
+  mint: "#C8E8DA",
+  lilac: "#DDD6F1",
+  sand: "#EFDDBB",
+  blush: "#F5D0C4",
+  line: "rgba(18,61,64,0.12)",
 };
 
 export const DISPLAY = "'Big Shoulders Display','Oswald',Impact,sans-serif";
 export const BODY = "'IBM Plex Sans',system-ui,-apple-system,sans-serif";
 export const MONO = "'IBM Plex Mono',ui-monospace,monospace";
 
-export const SH = "0 1px 2px rgba(20,24,51,.04), 0 6px 20px rgba(20,24,51,.06)";
-export const SH_UP = "0 2px 6px rgba(20,24,51,.06), 0 18px 44px rgba(20,24,51,.14)";
+export const SH = "0 1px 2px rgba(18,61,64,.04), 0 8px 24px rgba(18,61,64,.07)";
+export const SH_UP = "0 2px 6px rgba(18,61,64,.06), 0 18px 44px rgba(18,61,64,.16)";
 export const R = 20;
 
 /* ---------- text ---------- */

@@ -146,7 +146,12 @@ const NAV_GROUPS = [
   { label: "PEOPLE & MEMORY", ids: ["guests","followups","memory"] },
   { label: "OPERATIONS", ids: ["actions"] },
 ];
-const MOBILE_PRIMARY = ["guests","publishing","finance","memory"];
+const MOBILE_PRIMARY = [
+  { id: "desk", label: "Desk" },
+  { id: "calendar", label: "Schedule" },
+  { id: "build", label: "Production" },
+  { id: "guests", label: "Guests" },
+];
 const QUICK_LAUNCH = [
   { label: "Play V Spot on Spotify", url: "https://bit.ly/43p9HP7" },
   { label: "Play Struggle Bus on Spotify", url: "https://bit.ly/485Co6l" },
@@ -421,7 +426,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
   if (!ready) return <div style={{ background: C.ground, minHeight: "100vh" }} />;
 
   return (
-    <div className="cockpit-shell" style={{ background: "#ECEEEB", minHeight: "100vh", fontFamily: BODY }}>
+    <div className="cockpit-shell" style={{ background: C.ground, minHeight: "100vh", fontFamily: BODY }}>
       <style>{`
         * { box-sizing: border-box; }
         .tap:active { transform: scale(.97); }
@@ -449,8 +454,8 @@ export default function Cockpit({ onLogout, googleConnected }) {
             height: "100vh", overflowY: "auto", padding: "22px 14px 24px",
           }} className="sc cockpit-rail">
             <div style={{ padding: "0 8px 18px" }}>
-              <img src="/cockpit-mark.svg" alt="V Spot" width="44" height="44" style={{ marginBottom: 14 }} />
-              <Mono s={9}>V SPOT MEDIA · {DAYS[dow]} {today.getDate()} {MONTHS[today.getMonth()]}</Mono>
+              <div className="brand-plaque"><img src="/lockup-paper.png" alt="V Spot Media — drafted 2026" /></div>
+              <Mono s={9}>VINNY'S MEDIA DESK · {DAYS[dow]} {today.getDate()} {MONTHS[today.getMonth()]}</Mono>
               <div style={{ marginTop: 3 }}><Big s={24}>THE COCKPIT</Big></div>
             </div>
 
@@ -518,6 +523,14 @@ export default function Cockpit({ onLogout, googleConnected }) {
           </aside>
         )}
 
+        {!wide && <header className="cockpit-mobile-head">
+          <img src="/lockup-paper.png" alt="V Spot Media — drafted 2026" />
+          <div className="mobile-status">
+            <Mono s={8.5} c={C.ink2}>VINNY'S DESK</Mono>
+            <Big s={17} c={C.ink}>TODAY · {pct}%</Big>
+          </div>
+        </header>}
+
         {/* MAIN */}
         <div style={{ flex: 1, minWidth: 0, position: "relative" }}>
         <div style={{ padding: wide ? "22px 24px 10px" : "20px 20px 12px" }}>
@@ -564,14 +577,14 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
           {!room && (
             <>
-              <section style={{ margin: "0 16px 18px", borderRadius: 22, background: "#1A1F3C", color: "#F3F1EC", padding: "22px 22px 20px", borderTop: "4px solid #E8272A" }}>
+              <section className="cockpit-today-card" style={{ margin: "0 16px 18px", borderRadius: 22, color: "#FFF9EF", padding: "22px 22px 20px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
                   <img src="/cockpit-mark.svg" alt="V Spot Media mark" width="48" height="48" style={{ objectFit: "contain" }} />
-                  <div><div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 2, color: "#D2B48C" }}>V SPOT MEDIA · MISSION CONTROL</div><div style={{ fontFamily: BODY, fontSize: 24, fontWeight: 800 }}>Today's running order</div></div>
+                  <div><div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 2, color: C.sand }}>VINNY'S MEDIA DESK · MISSION CONTROL</div><div style={{ fontFamily: BODY, fontSize: 24, fontWeight: 800 }}>Today's running order</div></div>
                 </div>
-                <div style={{ fontSize: 13, color: "#D8D9E2", lineHeight: 1.6, marginBottom: 16 }}>The decisions, the people and the production. All the useful chaos, one desk.</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 8 }}>
-                  {[{ label: "Outcomes left", value: all.filter(t => !done[t.id]).length, room: "actions" }, { label: "Sponsor approaches / day", value: "3–4", room: "growth" }, { label: "Calendar items", value: editorialCalendar.items?.length ?? "—", room: "calendar" }].map(stat => <button key={stat.label} onClick={() => setRoom(stat.room)} className="tap" style={{ textAlign: "left", background: "#2B3150", color: "#fff", border: "1px solid #454C6B", borderRadius: 12, padding: "12px 10px", cursor: "pointer" }}><div style={{ fontSize: 23, fontWeight: 800 }}>{stat.value}</div><div style={{ fontSize: 10, color: "#D2B48C" }}>{stat.label}</div></button>)}
+                <div style={{ fontSize: 13, color: "#E1E8DF", lineHeight: 1.6, marginBottom: 16 }}>The decisions, the people and the production. All the useful chaos, one desk.</div>
+                <div className="cockpit-today-metrics">
+                  {[{ label: "Outcomes left", value: all.filter(t => !done[t.id]).length, room: "actions" }, { label: "Sponsor approaches / day", value: "3–4", room: "growth" }, { label: "Calendar items", value: editorialCalendar.items?.length ?? "—", room: "calendar" }].map(stat => <button key={stat.label} onClick={() => setRoom(stat.room)} className="tap" style={{ textAlign: "left", background: "rgba(255,255,255,.10)", color: "#fffaf2", border: "1px solid rgba(255,255,255,.2)", borderRadius: 14, padding: "12px 10px", cursor: "pointer" }}><div style={{ fontSize: 23, fontWeight: 800 }}>{stat.value}</div><div style={{ fontSize: 10, color: C.sand }}>{stat.label}</div></button>)}
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
                   {[{ label: "Action queue", room: "actions" }, { label: "Guest desk", room: "guests" }, { label: "Money & admin", room: "finance" }, { label: "Production", room: "build" }].map(link => <button key={link.room} className="tap" onClick={() => setRoom(link.room)} style={{ border: "1px solid #626B87", background: "transparent", color: "#F3F1EC", padding: "8px 11px", borderRadius: 10, fontSize: 12, cursor: "pointer" }}>{link.label} ↗</button>)}
@@ -677,10 +690,9 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
         </div>
 
-        {!wide && <div style={{ position:"sticky", top:0, zIndex:20, background:"#1A1F3C", padding:"10px 16px", display:"flex", alignItems:"center", gap:11, borderBottom:"3px solid #E8272A" }}><img src="/cockpit-mark.svg" alt="V Spot Media" width="34" height="34" style={{objectFit:"contain"}}/><div style={{color:"#F3F1EC",fontFamily:BODY,fontSize:14,fontWeight:750}}>V SPOT MEDIA <span style={{color:"#D2B48C",fontWeight:500}}>· THE COCKPIT</span></div></div>}
         {!wide && <nav className="cockpit-dock sc" aria-label="Rooms">
-          <button onClick={() => setRoom(null)} aria-current={!room ? "page" : undefined} className={!room ? "selected" : ""}>Today</button>
-          {ROOMS.filter(r => MOBILE_PRIMARY.includes(r.id)).map(r => {const Icon=r.icon;return <button key={r.id} onClick={() => setRoom(r.id)} aria-current={room===r.id ? "page" : undefined} className={room===r.id ? "selected" : ""}><Icon size={16}/>{r.name}</button>;})}
+          <button onClick={() => setRoom(null)} aria-current={!room ? "page" : undefined} className={!room ? "selected" : ""}><CalendarDays size={16}/>Today</button>
+          {MOBILE_PRIMARY.map(item => {const r=ROOMS.find(x=>x.id===item.id);const Icon=r.icon;return <button key={r.id} onClick={() => setRoom(r.id)} aria-label={r.name} aria-current={room===r.id ? "page" : undefined} className={room===r.id ? "selected" : ""}><Icon size={16}/>{item.label}</button>;})}
         </nav>}
         {panel && <Panel entry={panel} onClose={() => setPanel(null)} />}
       </div>
