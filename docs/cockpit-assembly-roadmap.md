@@ -76,3 +76,15 @@ The shell uses the V-Spot Media Skyline Badge, the network artwork derived from 
 - Slack and Asana are not yet connected to the cockpit.
 - Metricool access exists as a connected service, but audience views still need a consolidated data model and comparisons.
 - The preview is not production. Scheduled Fireflies intake and the rest of this branch become live only after merge and deploy.
+
+## Where outputs appear
+
+| Output | Appears in | Connection |
+| --- | --- | --- |
+| Upcoming releases and pending sign-offs | Today, Studio, Content Calendar | These views read the same editorial calendar. |
+| Recorded release links | Studio, Reporting, Publishing | Studio and Reporting count the same saved packs. Publishing updates both after a save. |
+| Open follow-ups due today or earlier | Revenue, People, Follow-ups | Both workspaces read the same queue and reflect changes made in Follow-ups. |
+| Source-backed news lead and its angle | Breaking News, The Desk | Send a selected story to the Desk with its source link and angle. |
+| Daily outcomes | Today, Reporting | Both views use the daily checklist and its completion state. |
+
+Production, calendar and publishing still hold separate records. A shared release ID is needed before a draft, checklist, sign-off and published links can be shown as one release across those views. The sponsor target is a goal. Counting actual approaches and conversion depends on a shared sponsorship and advisory pipeline. Keep the Commercial Barometer available from Revenue while gathering enough outcomes to decide whether it needs a separate view. Finance remains reachable from Revenue. Audience reporting, background news and productivity reporting have their own integration work.

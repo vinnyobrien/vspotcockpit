@@ -86,3 +86,28 @@ html, body, #root { background:var(--ck-ground); }
 .cockpit-today-metrics span { color:#F7E3B9; font-size:11px; line-height:1.3; }
 .cockpit-today-details { margin-bottom:16px; }
 .cockpit-today-details > summary { cursor:pointer; font-weight:600; padding-block:8px; }
+
+.workspace-rail-nav { display:grid; gap:4px; margin-top:10px; }
+.workspace-rail-nav button { text-align:left; padding:10px 13px; border:1px solid transparent; border-radius:10px; cursor:pointer; font-weight:600; }
+.workspace-rail-nav button[aria-current] { border-color:#FFFFFF45; background:#FFFFFF16; }
+.workspace-board { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr)); gap:10px; margin:0 16px 16px; }
+.workspace-card { min-width:0; padding:14px; border:1px solid var(--ck-line); border-radius:15px; background:var(--ck-card); }
+.workspace-card h2 { margin:0 0 10px; font:italic 800 25px/1 'Barlow Condensed','Arial Narrow',Impact,sans-serif; }
+.workspace-outputs { list-style:none; margin:0 0 8px; padding:0; }
+.workspace-outputs button { text-align:left; display:flex; align-items:center; gap:8px; width:100%; min-height:38px; cursor:pointer; }
+.workspace-outputs li + li { border-top:1px solid var(--ck-line); }
+.workspace-outputs strong { flex:none; color:var(--ck-red); }
+.workspace-outputs span { flex:1; font-size:13px; }
+.workspace-outputs svg { flex:none; opacity:.65; }
+.workspace-tools, .workspace-related, .workspace-mobile-settings { display:flex; gap:6px; flex-wrap:wrap; }
+.workspace-tools button, .workspace-related > button, .workspace-mobile-settings > * { cursor:pointer; font-size:13px; padding:7px 9px; border:1px solid var(--ck-line); border-radius:8px; min-height:40px; }
+.workspace-tools button:hover, .workspace-related button:hover { background:var(--ck-sand); }
+.workspace-related { margin:0 16px 14px; }
+.workspace-related > button { font-weight:700; background:var(--ck-sand); }
+.workspace-all { display:flex; align-items:center; gap:4px; padding-top:8px; min-height:38px; font-size:13px; font-weight:700; cursor:pointer; }
+.workspace-mobile-settings { margin:0 16px 20px; }
+.cockpit-room-scroll { height:calc(100vh - 74px); overflow-y:auto; }
+@media(max-width:899px) {
+  .cockpit-room-scroll { height:auto; overflow:visible; }
+  .cockpit-dock button { flex:1 1 0; min-width:0; padding-inline:3px; }
+}

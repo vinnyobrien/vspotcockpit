@@ -12,7 +12,7 @@ const decode = (text) => {
   }
 };
 
-export default function BreakingNews() {
+export default function BreakingNews({ onDiscuss }) {
   const [items, setItems] = useState([]);
   const [report, setReport] = useState([]);
   const [selected, setSelected] = useState([]);
@@ -130,6 +130,10 @@ export default function BreakingNews() {
         <p style={{ fontSize: 13, lineHeight: 1.45, color: C.ink, marginTop: 8 }}><strong>Why it made the cut:</strong> {s.why}</p>
         <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: C.red, display: "inline-block", marginTop: 8 }}>Read original ↗</a>
         <p style={{ fontSize: 12, color: C.ink2, marginTop: 5 }}>Check: {s.verify}</p>
+        <div style={{ marginTop: 8 }}><Pill sm tone="ghost" onClick={() => onDiscuss({
+          id: s.id, title: s.title, headline: s.title, source: s.source, url: s.url,
+          region: s.region, summary: s.summary, angle: s.angles[angles[s.id] || 0] || "",
+        })}>Discuss at the Desk</Pill></div>
         {selected.includes(s.id) && <div style={{ marginTop: 10 }}>
           <Mono s={9}>THE COMIC ANGLE</Mono>
           <select value={angles[s.id] || 0} onChange={(e) => setAngles((p) => ({ ...p, [s.id]: Number(e.target.value) }))}

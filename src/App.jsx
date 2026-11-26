@@ -2,11 +2,11 @@ import RoomSession from "./lib/RoomSession.jsx";
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   MessageSquare, Film, PenLine, Users, TrendingUp, Mic, Hammer,
-  Drama, LineChart, ChevronLeft, ChevronDown, CalendarDays, Scale, ListChecks,
+  Drama, LineChart,  CalendarDays, Scale, ListChecks,
   Lightbulb, Receipt,
 } from "lucide-react";
 import {
-  C, BODY, MONO, SH, R, Mono, Big, Card, Section, Pill, Problem,
+  C, BODY, MONO, SH, R, Mono, Big, Card, Pill, Problem,
   iso, DAYS, MONTHS, weekDates,
 } from "./lib/ui.jsx";
 import Diary from "./lib/Diary.jsx";
@@ -36,7 +36,11 @@ import SubEditor from "./rooms/SubEditor.jsx";
 
 import Actions from "./rooms/Actions.jsx";
 import Finance from "./rooms/Finance.jsx";
-import Followups from "./rooms/Followups.jsx";
+import Followups, { useFollowups } from "./rooms/Followups.jsx";
+import Workspaces, { RelatedTools } from "./rooms/Workspaces.jsx";
+import { WORKSPACES, workspaceOutputs } from "./lib/workspaces.js";
+import { PUBLISHING_KEY } from "./lib/publishing.js";
+import { readKey } from "./lib/api.js";
 import AudienceStats from "./rooms/AudienceStats.jsx";
 import Publishing from "./rooms/Publishing.jsx";
 /* ============================================================
@@ -114,6 +118,7 @@ const TITLES = {
 };
 
 const ROOMS = [
+  { id: "clipdesk", name: "Clip Desk", icon: Film, blurb: "Prepare clips for publication" },
   { id: "barometer", name: "Commercial Barometer", icon: LineChart, tint: C.sand, blurb: "Learn from pricing decisions and outcomes" },
   { id: "memory", name: "Business Memory", icon: Lightbulb, tint: C.sand, blurb: "Capture, search and review everything worth keeping" },
   { id: "finance", name: "Finance", icon: Receipt, tint: C.mint, blurb: "Receipt photos, invoices and expense review" },
@@ -139,20 +144,14 @@ const ROOMS = [
   { id: "analysis", name: "Analysis", icon: LineChart,     tint: C.mint,    blurb: "Monthly" },
 ];
 
-// Specialist rooms sit inside a few work-led destinations.
-const NAV_GROUPS = [
-  { label: "REVENUE", ids: ["barometer","growth","finance"] },
-  { label: "STUDIO", ids: ["publishing","calendar","video","desk","essay","editorial","entertainment","shows","build","episode","sub","cast"] },
-  { label: "AUDIENCE & NEWS", ids: ["audience","breaking","analysis","week"] },
-  { label: "PEOPLE & MEMORY", ids: ["guests","followups","memory"] },
-  { label: "OPERATIONS", ids: ["actions"] },
-];
-const MOBILE_PRIMARY = [
-  { id: "desk", label: "Desk" },
-  { id: "calendar", label: "Schedule" },
-  { id: "build", label: "Production" },
-  { id: "guests", label: "Guests" },
-];
+const DESTINATIONS = [...ROOMS, ...WORKSPACES.map(({ id, label }) => ({ id, name: label }))];
+
+function readLocation() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("room");
+  return { room: DESTINATIONS.some((destination) => destination.id === id) ? id : null, source: params.get("source") };
+}
+
 const QUICK_LAUNCH = [
   { label: "Play V Spot on Spotify", url: "https://bit.ly/43p9HP7" },
   { label: "Play Struggle Bus on Spotify", url: "https://bit.ly/485Co6l" },
@@ -166,12 +165,6 @@ const railLink = {
   padding: "9px 12px", borderRadius: 12, background: "transparent", border: "none",
   fontFamily: BODY, fontSize: 12.5, fontWeight: 500, color: C.ink2,
   cursor: "pointer", textAlign: "left", width: "100%", display: "block",
-};
-
-const ghost = {
-  padding: "10px 15px", borderRadius: 999, background: "transparent",
-  border: "1.5px solid rgba(20,24,51,.15)", fontFamily: BODY, fontSize: 12.5,
-  fontWeight: 600, color: C.ink, cursor: "pointer",
 };
 
 /* Desktop is a different room, not a wider phone. Below 900 the hub is the
@@ -196,13 +189,46 @@ export default function Cockpit({ onLogout, googleConnected }) {
   const today = useMemo(() => new Date(), []);
   const [episodeSeed, setEpisodeSeed] = useState(null);
   const [editorThread, setEditorThread] = useState("");
+  const [deskStory, setDeskStory] = useState(null);
   const dayKey = iso(today);
   const dow = today.getDay();
 
   const wide = useWide();
-  const [room, setRoom] = useState(() => { const id = new URLSearchParams(location.search).get("room"); return ROOMS.some(r=>r.id===id) ? id : null; });
-  const [openNavGroups, setOpenNavGroups] = useState({});
-  const [showAllRooms, setShowAllRooms] = useState(false);
+  const [{ room, source }, setLocation] = useState(readLocation);
+  const scrollArea = useRef(null);
+  const followups = useFollowups();
+  const [publishing, setPublishing] = useState({ rows: null, error: false });
+
+  useEffect(() => {
+    let active = true;
+    readKey(PUBLISHING_KEY, []).then((rows) => {
+      if (active) setPublishing((previous) => previous.rows ? previous : { rows: Array.isArray(rows) ? rows : null, error: !Array.isArray(rows) });
+    }).catch(() => {
+      if (active) setPublishing((previous) => previous.rows ? previous : { rows: null, error: true });
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    const followLocation = () => setLocation(readLocation());
+    window.addEventListener("popstate", followLocation);
+    return () => window.removeEventListener("popstate", followLocation);
+  }, []);
+
+  useEffect(() => {
+    scrollArea.current?.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }, [room, source]);
+
+  const setRoom = (next) => {
+    if (next === room && !source) return;
+    const url = new URL(window.location.href);
+    for (const key of ["source", "view", "release"]) url.searchParams.delete(key);
+    if (next) url.searchParams.set("room", next);
+    else url.searchParams.delete("room");
+    window.history.pushState(null, "", url);
+    setLocation(readLocation());
+  };
   const [ready, setReady] = useState(false);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState("");
@@ -438,7 +464,12 @@ export default function Cockpit({ onLogout, googleConnected }) {
     return `Trailing average ${Math.round(avg)}%. You are carrying more than the week can hold. Cut the two lowest weight items.`;
   }, [history]);
 
-  const current = ROOMS.find((r) => r.id === room);
+  const current = DESTINATIONS.find((destination) => destination.id === room);
+  const workspace = WORKSPACES.find(({ id }) => id === room);
+  const outputs = workspaceOutputs({
+    calendar: editorialCalendar, followups, publishing, guests,
+    completed: all.filter((task) => done[task.id]).length, total: all.length,
+  });
 
   if (!ready) return <div style={{ background: C.ground, minHeight: "100vh" }} />;
 
@@ -488,40 +519,12 @@ export default function Cockpit({ onLogout, googleConnected }) {
               <span style={{ fontFamily: MONO, fontSize: 10, opacity: .7 }}>{pct}%</span>
             </button>
 
-            {NAV_GROUPS.map((group) => {
-              const expanded = openNavGroups[group.label] ?? (room ? group.ids.includes(room) : false);
-              return <div key={group.label} style={{ marginTop: 10 }}>
-              <button className="tap" aria-expanded={expanded} onClick={() => setOpenNavGroups((p) => ({ ...p, [group.label]: !expanded }))}
-                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "7px 8px", border: "none", background: "transparent", cursor: "pointer" }}>
-                <Mono s={9} c={C.ink3}>{group.label}</Mono><ChevronDown size={13} style={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
-              </button>
-              {expanded && <div style={{ marginTop: 3 }}>
-            {ROOMS.filter((r) => group.ids.includes(r.id)).map((r) => {
-              const I = r.icon;
-              
-              const on = room === r.id;
-              return (
-                <button key={r.id} onClick={() => setRoom(r.id)} className="tap"
-                  style={{
-                    width: "100%", textAlign: "left", cursor: "pointer", border: "none",
-                    borderRadius: 14, padding: "11px 12px", marginBottom: 2,
-                    background: on ? C.ink : "transparent",
-                    color: on ? "#fff" : C.ink2,
-                    display: "flex", alignItems: "center", gap: 10,
-                  }}>
-                  <span style={{
-                    width: 26, height: 26, borderRadius: 8, flexShrink: 0,
-                    background: on ? "rgba(255,255,255,.14)" : r.tint,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <I size={14} strokeWidth={2.2} color={on ? "#fff" : C.ink} />
-                  </span>
-                  <span style={{ fontFamily: BODY, fontSize: 14, fontWeight: on ? 600 : 500 }}>{r.name}</span>
-                </button>
-              );
-            })}
-              </div>}
-            </div>;})}
+            <nav className="workspace-rail-nav" aria-label="Workspaces">
+              {WORKSPACES.map(({ id, label, tools }) => (
+                <button key={id} type="button" onClick={() => setRoom(id)}
+                  aria-current={room === id ? "page" : tools.includes(room) ? "location" : undefined}>{label}</button>
+              ))}
+            </nav>
             <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(20,24,51,.12)" }}>
               <Mono s={9} c={C.ink3}>QUICK LAUNCH · PERSONAL</Mono>
               {QUICK_LAUNCH.map((link) => <a key={link.label} href={link.url} target="_blank" rel="noopener noreferrer" className="tap" style={{ ...railLink, textDecoration: "none", marginTop: 4 }}>{link.label} ↗</a>)}
@@ -551,13 +554,6 @@ export default function Cockpit({ onLogout, googleConnected }) {
         {/* MAIN */}
         <div style={{ flex: 1, minWidth: 0, position: "relative" }}>
         <div style={{ padding: wide ? "22px 24px 10px" : "20px 20px 12px" }}>
-          {room && !wide ? (
-            <button onClick={() => setRoom(null)} className="tap flex items-center gap-1.5"
-              style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: C.ink2 }}>
-              <ChevronLeft size={19} strokeWidth={2.4} />
-              <span style={{ fontSize: 14.5, fontWeight: 500 }}>Today</span>
-            </button>
-          ) : (
             <div className="flex items-start justify-between gap-3">
               <div>
                 {wide ? (
@@ -568,7 +564,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 ) : (
                   <>
                     <Mono s={9.5}>{DAYS[dow]} {today.getDate()} {MONTHS[today.getMonth()]} · Tralee</Mono>
-                    <div style={{ marginTop: 3 }}><Big s={30}>TODAY</Big></div>
+                    <div style={{ marginTop: 3 }}><Big s={30}>{current?.name.toUpperCase() ?? "TODAY"}</Big></div>
                   </>
                 )}
               </div>
@@ -577,7 +573,6 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 <div style={{ marginTop: 2 }}><Mono s={9}>{all.filter((t) => done[t.id]).length}/{all.length} outcomes</Mono></div>
               </div>
             </div>
-          )}
         </div>
 
         {/* The diary lives in the shell, so the day is visible from every room.
@@ -586,7 +581,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
           <Diary compact={!!room} />
         </div>
 
-        <div className="sc" style={{ height: "calc(100vh - 74px)", overflowY: "auto" }}>
+        <div ref={scrollArea} className="sc cockpit-room-scroll">
           <div style={{ padding: "0 16px" }}>
             <Problem onDismiss={() => setErr("")}>{err}</Problem>
           </div>
@@ -598,6 +593,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 remaining={all.filter((task) => !done[task.id]).length}
                 onOpen={setRoom}
               />
+              <Workspaces rooms={ROOMS} outputs={outputs} onOpen={setRoom} />
               <Today
                 today={today} dayKey={dayKey} tasks={all} done={done} toggle={toggle}
                 extras={extras} addExtra={addExtra} gaps={gaps} three={three} setThree={setThree}
@@ -611,51 +607,30 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 }}
               />
 
-              {!wide && <div style={{ padding: "0 16px 24px" }}>
-                <Section label="Cockpit rooms" right={<button className="tap" onClick={() => setShowAllRooms((v) => !v)} style={{ border: 0, background: "transparent", color: C.ink2, cursor: "pointer", fontFamily: BODY, fontSize: 12 }}>{showAllRooms ? "Hide" : "Browse"}</button>}>
-                  {showAllRooms && <div style={{ display: "grid", gap: 14 }}>
-                    {NAV_GROUPS.map((group) => <div key={group.label}>
-                      <Mono s={9}>{group.label}</Mono>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 7 }}>
-                        {ROOMS.filter((r) => group.ids.includes(r.id)).map((r) => {
-                          const I = r.icon;
-                          return <button key={r.id} onClick={() => { setRoom(r.id); setShowAllRooms(false); }} className="tap"
-                            style={{ background: C.card, borderRadius: 14, padding: "11px 12px", border: "1px solid rgba(20,24,51,.08)", cursor: "pointer", display: "flex", alignItems: "center", gap: 9, textAlign: "left" }}>
-                            <I size={16} strokeWidth={2.1} color={C.ink} /><span style={{ fontSize: 12.5, color: C.ink }}>{r.name}</span>
-                          </button>;
-                        })}
-                      </div>
-                    </div>)}
-                  </div>}
-                </Section>
-
-                <div className="flex flex-wrap gap-2" style={{ paddingTop: 8 }}>
-                  <a className="tap" href="/api/oauth-start" style={{ ...ghost, textDecoration: "none" }}>
-                    {googleConnected === "workspace" ? "Google connected" : "Connect Google"}
-                  </a>
-                  <a className="tap" href="/api/oauth-start?service=youtube" style={{ ...ghost, textDecoration: "none" }}>
-                    {googleConnected === "youtube" ? "YouTube connected" : "Connect YouTube"}
-                  </a>
-                  <button className="tap" onClick={onLogout} style={ghost}>Sign out</button>
-                </div>
+              {!wide && <div className="workspace-mobile-settings">
+                <a href="/api/oauth-start">{googleConnected === "workspace" ? "Google connected" : "Connect Google"}</a>
+                <a href="/api/oauth-start?service=youtube">{googleConnected === "youtube" ? "YouTube connected" : "Connect YouTube"}</a>
+                <button type="button" onClick={onLogout}>Sign out</button>
               </div>}
             </>
           )}
 
+          {workspace && <Workspaces rooms={ROOMS} outputs={outputs} onOpen={setRoom} selected={workspace.id} />}
+          {room && !workspace && <RelatedTools rooms={ROOMS} room={room} onOpen={setRoom} />}
           {(
-            <div hidden={!room} className="rm" style={{ padding: wide ? "0 24px 48px" : "0 16px 40px", maxWidth: wide ? 820 : "none" }}>
-              {room && !wide && <div style={{ marginBottom: 18 }}><Big s={36}>{current.name.toUpperCase()}</Big></div>}
+            <div hidden={!room || !!workspace} className="rm" style={{ padding: wide ? "0 24px 48px" : "0 16px 40px", maxWidth: wide ? 820 : "none" }}>
               <RoomSession active={room === "calendar"}><ContentCalendar calendar={editorialCalendar} onSubEditor={() => setRoom("sub")} /></RoomSession>
-              <RoomSession active={room === "followups"}><Followups /></RoomSession>
+              <RoomSession active={room === "followups"}><Followups {...followups} source={source} /></RoomSession>
               <RoomSession active={room === "actions"}><Actions /></RoomSession>
               <RoomSession active={room === "finance"}><Finance /></RoomSession>
               <RoomSession active={room === "audience"}><AudienceStats /></RoomSession>
-              <RoomSession active={room === "publishing"}><Publishing onProduction={() => setRoom("build")} onCalendar={() => setRoom("calendar")} /></RoomSession>
+              <RoomSession active={room === "publishing"}><Publishing onProduction={() => setRoom("build")} onCalendar={() => setRoom("calendar")} onRecords={(rows) => setPublishing({ rows, error: false })} /></RoomSession>
 
               {<RoomSession active={room === "desk"}><Desk
                   threads={threads} today={today} onGenerate={generate} busy={busy}
                   wire={wire} setWire={setWire} wireAt={wireAt} setWireAt={setWireAt}
-                  onOpenRoom={(nextRoom) => setRoom(nextRoom)}
+                  deskStory={deskStory} onClearStory={() => setDeskStory(null)}
+                  onOpenRoom={setRoom}
                 /></RoomSession>}
 
               {<RoomSession active={room === "video"}><Video
@@ -687,7 +662,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
               {<RoomSession active={room === "shows"}><Shows K={K} /></RoomSession>}
 
               {<RoomSession active={room === "episode"}><EpisodeIntelligence guests={guests} onBuild={(seed) => { setEpisodeSeed(seed); setRoom("build"); }} /></RoomSession>}
-              {<RoomSession active={room === "breaking"}><BreakingNews /></RoomSession>}
+              {<RoomSession active={room === "breaking"}><BreakingNews onDiscuss={(story) => { setDeskStory(story); setRoom("desk"); }} /></RoomSession>}
               {<RoomSession active={room === "build"}><Build seed={episodeSeed} /></RoomSession>}
 
               {<RoomSession active={room === "analysis"}><Analysis ledger={ledger} published={published} threads={threads}
@@ -700,7 +675,11 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
         {!wide && <nav className="cockpit-dock sc" aria-label="Rooms">
           <button onClick={() => setRoom(null)} aria-current={!room ? "page" : undefined} className={!room ? "selected" : ""}><CalendarDays size={16}/>Today</button>
-          {MOBILE_PRIMARY.map(item => {const r=ROOMS.find(x=>x.id===item.id);const Icon=r.icon;return <button key={r.id} onClick={() => setRoom(r.id)} aria-label={r.name} aria-current={room===r.id ? "page" : undefined} className={room===r.id ? "selected" : ""}><Icon size={16}/>{item.label}</button>;})}
+          {WORKSPACES.map(({ id, label, tools }) => {
+            const currentLocation = room === id ? "page" : tools.includes(room) ? "location" : undefined;
+            return <button key={id} onClick={() => setRoom(id)} aria-current={currentLocation}
+              className={currentLocation ? "selected" : ""}>{label}</button>;
+          })}
         </nav>}
         {panel && <Panel entry={panel} onClose={() => setPanel(null)} />}
       </div>
