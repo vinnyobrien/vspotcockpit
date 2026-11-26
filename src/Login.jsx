@@ -1,10 +1,7 @@
 import React, { useState } from "react";
 import { login } from "./api.js";
 
-const C = {
-  ground: "#F5F3EE", card: "#FFFFFF", ink: "#141833",
-  ink2: "#565C82", red: "#B81A1D",
-};
+import { C, BODY, DISPLAY, MONO } from "./lib/ui.jsx";
 
 export default function Login({ onIn }) {
   const [pw, setPw] = useState("");
@@ -27,12 +24,13 @@ export default function Login({ onIn }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 20, background: C.ground, fontFamily: "'IBM Plex Sans', system-ui, sans-serif" }}>
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 20, background: C.ground, fontFamily: BODY }}>
       <div style={{ width: "100%", maxWidth: 330, background: C.card, borderRadius: 28, padding: 28, boxShadow: "0 1px 2px rgba(20,24,51,.04), 0 8px 28px rgba(20,24,51,.08)" }}>
-        <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9.5, letterSpacing: ".2em", color: C.ink2, textTransform: "uppercase" }}>
+        <img src="/vspot-media-skyline.webp" alt="V-Spot Media" width="146" style={{ margin: "0 auto 16px", display: "block" }} />
+        <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: ".2em", color: C.ink2, textTransform: "uppercase" }}>
           A V Spot Network production
         </div>
-        <h1 style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 800, fontSize: 44, lineHeight: .92, color: C.ink, margin: "10px 0 22px", letterSpacing: ".02em" }}>
+        <h1 style={{ fontFamily: DISPLAY, fontStyle: "italic", fontWeight: 800, fontSize: 44, lineHeight: .92, color: C.ink, margin: "10px 0 22px", letterSpacing: ".02em" }}>
           THE COCKPIT
         </h1>
         <input
@@ -53,7 +51,7 @@ export default function Login({ onIn }) {
             {err}
           </div>
         )}
-        <div style={{ marginTop: 22, paddingTop: 16, borderTop: "1px solid rgba(20,24,51,.07)", fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: ".14em", color: C.ink2, textTransform: "uppercase" }}>
+        <div style={{ marginTop: 22, paddingTop: 16, borderTop: "1px solid rgba(20,24,51,.07)", fontFamily: MONO, fontSize: 9, letterSpacing: ".14em", color: C.ink2, textTransform: "uppercase" }}>
           Tralee, Kerry
         </div>
       </div>

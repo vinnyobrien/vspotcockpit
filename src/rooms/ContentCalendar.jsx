@@ -9,19 +9,8 @@ export function useEditorialCalendar() {
   async function mutate(action,item) { setBusy(true); try {const r=await fetch('/api/editorial-calendar',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({action,revision:data.revision,...(action==='save'?{item}:{id:item.id})})}); const d=await r.json(); if(!r.ok) throw new Error(d.error || 'Could not save');setData(d);setError('');return true;} catch(e){setError(e.message);return false;} finally{setBusy(false);} }
   return {data,error,busy,load,mutate};
 }
-export function CalendarPriority({calendar,onOpen}) {
-  const {data,error}=calendar, today=dateInDublin();
-  const due=(data?.items || []).flatMap(deadlines).filter(d=>d.date>=today && d.date<=shiftDate(today,7)).sort((a,b)=>a.date.localeCompare(b.date));
-  const waiting=data?.items.filter(i=>i.status==='review').length || 0;
-  return <div style={{padding:'8px 16px 14px'}}><button onClick={onOpen} style={{width:'100%',textAlign:'left',padding:18,borderRadius:18,border:'2px solid '+C.ink,background:C.sand,color:C.ink,fontFamily:BODY,cursor:'pointer'}}>
-    <strong style={{fontSize:17}}>Content Calendar · {waiting} awaiting sign-off</strong>
-    <div style={{fontSize:13,marginTop:6}}>{error ? 'Calendar unavailable — open to reload' : !data ? 'Loading deadlines…' : due.length ? `${due.length} deadlines in the next seven days · next: ${due[0].label}, ${due[0].date} — ${due[0].item.title}` : 'No deadlines in the next seven days. Plan the next idea.'}</div>
-    <div style={{fontSize:12,marginTop:6}}>Struggle Bus Wednesday · Ostrich Thursday · PSAs Friday · V Spot Sunday 18:00 →</div>
-  </button></div>;
-}
-
 const fieldStyle={width:'100%',padding:'10px 12px',borderRadius:10,border:'1px solid rgba(20,24,51,.2)',fontFamily:BODY,fontSize:16,background:'white',color:C.ink};
-function Input({label,value,onChange,type='text'}) {return <label style={{display:'block',fontSize:12,color:C.ink2}}>{label}<input type={type} value={value ?? ''} onChange={e=>onChange(e.target.value)} style={{...fieldStyle,marginTop:5}}/></label>;}
+function Input({name,label,value,onChange,type='text'}) {return <label style={{display:'block',fontSize:12,color:C.ink2}}>{label}<input name={name} type={type} value={value ?? ''} onChange={e=>onChange(e.target.value)} style={{...fieldStyle,marginTop:5}}/></label>;}
 const statusText={planned:'Planning',review:'Awaiting Vinny’s sign-off',approved:'Signed off',published:'Published (confirmed)'};
 
 export default function ContentCalendar({calendar,onSubEditor}) {
@@ -70,10 +59,10 @@ export default function ContentCalendar({calendar,onSubEditor}) {
       <Big s={25}>CONTENT PLAN</Big><p style={{fontSize:13}}>Saving changes clears previous sign-off. Confirm sponsor obligations from the agreement.</p>
       <form onSubmit={async e=>{e.preventDefault();if(await mutate('save',editing))setEditing(null);}}>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:14}}>
-          {[['title','Title'],['show','Show / publication'],['format','Format'],['owner','Owner'],['channels','Channels'],['date','Release date','date'],['time','Release time (Ireland)','time'],['ideaDate','Thinking / idea session','date'],['ideaMinutes','Reserved minutes','number'],['briefDate','Brief due','date'],['draftDate','Draft / edit due','date'],['reviewDate','Sub-Editor review due','date'],['signoffDate','Vinny sign-off due','date'],['sponsor','Sponsor (blank if none confirmed)'],['sponsorDate','Sponsor approval deadline','date'],['sponsorNeeds','Sponsor deliverables / placement'],['sponsorEvidence','Sponsor approval evidence / link'],['finalLink','Final asset / copy link']].map(([k,l,t])=><Input key={k} label={l} type={t} value={editing[k]} onChange={v=>set(k,k==='ideaMinutes'?Number(v):v)}/>)}
+          {[['title','Title'],['show','Show / publication'],['format','Format'],['owner','Owner'],['channels','Channels'],['date','Release date','date'],['time','Release time (Ireland)','time'],['ideaDate','Thinking / idea session','date'],['ideaMinutes','Reserved minutes','number'],['briefDate','Brief due','date'],['draftDate','Draft / edit due','date'],['reviewDate','Sub-Editor review due','date'],['signoffDate','Vinny sign-off due','date'],['sponsor','Sponsor (blank if none confirmed)'],['sponsorDate','Sponsor approval deadline','date'],['sponsorNeeds','Sponsor deliverables / placement'],['sponsorEvidence','Sponsor approval evidence / link'],['finalLink','Final asset / copy link']].map(([k,l,t])=><Input key={k} name={k} label={l} type={t} value={editing[k]} onChange={v=>set(k,k==='ideaMinutes'?Number(v):v)}/>)}
         </div>
         <label style={{display:'block',marginTop:14}}>Notes / idea<textarea style={{...fieldStyle,minHeight:100,marginTop:6}} value={editing.notes} onChange={e=>set('notes',e.target.value)}/></label>
-        <div style={{display:'grid',gap:10,margin:'18px 0'}}>{[['ideas','Thinking session completed'],['brief','Brief agreed'],['draft','Draft / edit ready'],['review','Sub-Editor tone, source and branding review completed'],...(editing.sponsor?[['sponsor','Sponsor approval received; evidence recorded above']]:[])].map(([k,l])=><label key={k}><input type="checkbox" checked={editing.checks[k]} onChange={e=>set('checks',{...editing.checks,[k]:e.target.checked})}/> {l}</label>)}</div>
+        <div style={{display:'grid',gap:10,margin:'18px 0'}}>{[['ideas','Thinking session completed'],['brief','Brief agreed'],['draft','Draft / edit ready'],['review','Sub-Editor tone, source and branding review completed'],...(editing.sponsor?[['sponsor','Sponsor approval received; evidence recorded above']]:[])].map(([k,l])=><label key={k}><input name={`checks.${k}`} type="checkbox" checked={editing.checks[k]} onChange={e=>set('checks',{...editing.checks,[k]:e.target.checked})}/> {l}</label>)}</div>
         {error && <p role="alert" style={{color:C.red}}>{error}</p>}
         <div style={{display:'flex',gap:10}}><button disabled={busy} style={{...fieldStyle,width:'auto',cursor:'pointer',fontWeight:700}} type="submit">{busy?'Saving…':'Save plan'}</button><button type="button" disabled={busy} style={{...fieldStyle,width:'auto',cursor:'pointer'}} onClick={()=>setEditing(null)}>Cancel</button></div>
       </form>

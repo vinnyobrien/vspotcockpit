@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
-  Video, ArrowUpRight, Plus, Check, Clock4, Zap, CornerDownLeft, Link2,
-  Mail,
+  Plus, Check, Link2, Mail,
 } from "lucide-react";
 import {
-  C, MONO, BODY, DISPLAY, SH, R, Mono, Big, Card, Section, Pill, Field,
-  Empty, Working, Problem, DAYS, iso, daysSince, parseJSON,
+  C, MONO, BODY, Mono, Big, Card, Section, Pill, Problem, DAYS, parseJSON,
 } from "../lib/ui.jsx";
 import { callOp, getMemoryHealth, sGetStrict } from "../api.js";
 import EditorialCall from "./EditorialCall.jsx";
@@ -80,7 +78,9 @@ export default function Today({
   brief, setBrief, briefAt, setBriefAt, onDecisionKeep,
   threads, onEditorialNavigate,
 }) {
-  const [capture, setCapture] = useState("");
+  const [capture, setCapture] = useState({ title: "", kind: "action", owner: "", dueDate: "", details: "" });
+  const [showCaptureDetails, setShowCaptureDetails] = useState(false);
+  const setCaptureField = (key) => (event) => setCapture((previous) => ({ ...previous, [key]: event.target.value }));
   const [just, setJust] = useState("");
   const [copied, setCopied] = useState(false);
   const [ff, setFf] = useState({ state: "loading", data: null });
@@ -142,11 +142,13 @@ export default function Today({
 
   /* One path in, and it says so afterwards. A capture bar that swallows
      input silently is worse than no capture bar. */
-  const commit = () => {
-    const v = capture.trim();
+  const commit = (event) => {
+    event.preventDefault();
+    const v = capture.title.trim();
     if (!v) return;
-    addExtra(v);
-    setCapture("");
+    addExtra(capture);
+    setCapture({ title: "", kind: "action", owner: "", dueDate: "", details: "" });
+    setShowCaptureDetails(false);
     setJust(v);
     setTimeout(() => setJust(""), 2600);
   };
@@ -155,45 +157,39 @@ export default function Today({
     <div style={{ padding: "0 16px 40px" }}>
       <Problem onDismiss={() => setErr("")}>{err}</Problem>
 
-      {/* capture from anywhere */}
-      <Card pad={14} style={{ marginBottom: 12 }}>
-        <div className="flex items-center gap-2.5">
-          <Zap size={17} strokeWidth={2.3} color={C.ink2} style={{ flexShrink: 0 }} />
-          <input
-            value={capture}
-            onChange={(e) => setCapture(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") commit(); }}
-            placeholder="Throw anything in here"
-            style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", fontFamily: BODY, fontSize: 15, color: C.ink, padding: "6px 0" }}
-          />
-          {capture.trim() && (
-            <button className="tap" onClick={commit} aria-label="Add"
-              style={{ background: C.ink, border: "none", borderRadius: 999, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-              <CornerDownLeft size={15} strokeWidth={2.5} color="#fff" />
-            </button>
-          )}
-        </div>
-        {just && (
-          <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(20,24,51,.07)" }}>
-            <Mono s={9} c={C.ink}>Added · {just.slice(0, 44)}{just.length > 44 ? "…" : ""}</Mono>
+      <Card pad={14} style={{ marginBottom: 14 }}>
+        <form onSubmit={commit}>
+          <label htmlFor="capture-title" style={{ fontWeight: 700 }}>Capture an item</label>
+          <div className="flex items-center gap-2.5" style={{ marginBlock: "5px 8px" }}>
+            <input id="capture-title" name="title" value={capture.title} onChange={setCaptureField("title")}
+              required maxLength={250} placeholder="What needs attention?"
+              style={{ flex: 1, minWidth: 0, color: C.ink, background: C.ground, borderRadius: 8, padding: 9, fontSize: 16 }} />
+            <button type="submit" className="tap" disabled={!capture.title.trim()}
+              style={{ background: C.ink, color: C.card, borderRadius: 8, minHeight: 44, paddingInline: 12 }}>Add</button>
           </div>
-        )}
+          <button type="button" onClick={() => setShowCaptureDetails((open) => !open)}
+            aria-expanded={showCaptureDetails} aria-controls="capture-fields" style={{ fontSize: 13, textDecoration: "underline", cursor: "pointer" }}>
+            {showCaptureDetails ? "Hide fields" : "Add type, owner or due date"}
+          </button>
+          <div id="capture-fields" hidden={!showCaptureDetails} style={{ marginTop: showCaptureDetails ? 10 : 0 }}>
+            <div className="cockpit-capture-fields">
+              <label>Type<select name="kind" value={capture.kind} onChange={setCaptureField("kind")}>
+                <option value="action">Action</option>
+                <option value="editorial">Editorial idea</option>
+                <option value="commercial">Commercial follow-up</option>
+                <option value="production">Production task</option>
+              </select></label>
+              <label>Owner<input name="owner" value={capture.owner} onChange={setCaptureField("owner")} maxLength={100} /></label>
+              <label>Due date<input type="date" name="dueDate" value={capture.dueDate} onChange={setCaptureField("dueDate")} /></label>
+              <label className="cockpit-capture-details">Details<textarea name="details" value={capture.details} onChange={setCaptureField("details")} rows={2} maxLength={1000} /></label>
+            </div>
+          </div>
+          <div role="status">{just && <Mono s={9}>Added to Today · {just}</Mono>}</div>
+        </form>
       </Card>
 
-      <EditorialCall gaps={gaps} threads={threads} onNavigate={onEditorialNavigate} />
-
-      <div className="flex justify-end" style={{ marginBottom: 10 }}>
-        <button className="tap" onClick={() => {
-          navigator.clipboard?.writeText("https://calendly.com/vinnyob/podcast-precall-discussion");
-          setCopied(true); setTimeout(() => setCopied(false), 1600);
-        }}
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, background: C.card, border: "1.5px solid rgba(20,24,51,.1)", borderRadius: 999, padding: "8px 14px", cursor: "pointer", fontFamily: BODY, fontSize: 12.5, fontWeight: 600, color: C.ink }}>
-          <Link2 size={14} strokeWidth={2.3} />{copied ? "Link copied" : "Send pre-call link"}
-        </button>
-      </div>
-
       {/* automatic meeting intake plus the current connected-source briefing */}
-      <Section label="First thing">
+      <Section label="Briefing & meeting intake">
         <Card tint={C.lilac} pad={18} style={{ marginBottom: 10 }}>
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -219,7 +215,7 @@ export default function Today({
               </div>
               {ff.health?.lastError && <div style={{ padding: "7px 10px 0" }}><Mono c={C.red}>Automatic intake issue: {ff.health.lastError}</Mono></div>}
               {decisions.map((d, i) => (
-            <Row key={`d${i}`} accent={C.red} onAdd={() => addExtra(`Decision: ${d.what}`)}>
+            <Row key={`d${i}`} accent={C.red} onAdd={() => addExtra({ title: d.what, kind: "decision", source: "fireflies" })}>
               <div style={{ marginBottom: 4 }}><Mono c={C.red} s={9}>Decision logged</Mono></div>
               <div style={{ fontSize: 14, color: C.ink, lineHeight: 1.4 }}>{d.what}</div>
               {d.why && <div style={{ fontSize: 12.5, color: C.ink2, marginTop: 3, lineHeight: 1.45 }}>{d.why}</div>}
@@ -227,7 +223,7 @@ export default function Today({
             </Row>
               ))}
               {actions.map((a, i) => (
-            <Row key={`a${i}`} onAdd={() => addExtra(a.what)}>
+            <Row key={`a${i}`} onAdd={() => addExtra({ title: a.what, source: "fireflies", dueDate: a.due })}>
               <div style={{ fontSize: 14, color: C.ink, lineHeight: 1.4 }}>{a.what}</div>
               <div className="flex items-center gap-2" style={{ marginTop: 3 }}><Mono s={9}>{a.who}{a.due ? ` · due ${a.due}${a.agreed ? "" : " (inferred)"}` : ""} · {a.meeting}</Mono>{a.sourceUrl && <a href={a.sourceUrl} target="_blank" rel="noreferrer" aria-label="Open Fireflies transcript"><Link2 size={12} /></a>}</div>
             </Row>
@@ -238,9 +234,9 @@ export default function Today({
         </Card>
 
         <Sweep tint={C.mint} icon={Mail} title="The Briefing" sub={`Gmail, Calendar, Drive · ${briefAt ? `updated ${new Date(briefAt).toLocaleTimeString("en-IE", { hour: "2-digit", minute: "2-digit" })}` : "current connections"}`}
-          runLabel="Sweep platforms" onRun={runBrief} state={briefState}>
+          runLabel="Retry briefing" onRun={runBrief} state={briefState}>
           {(brief || []).map((c, i) => (
-            <Row key={i} onAdd={() => addExtra(`Reply — ${c.who}`)}>
+            <Row key={i} onAdd={() => addExtra({ title: `Follow up · ${c.who}`, source: c.src || "briefing" })}>
               <div className="flex items-center gap-2 flex-wrap">
                 <Mono s={9}>{(c.src || "").toUpperCase()}</Mono>
                 <div style={{ fontSize: 14, color: C.ink, fontWeight: 500 }}>{c.who}</div>
@@ -271,6 +267,7 @@ export default function Today({
       )}
 
       {/* rundown */}
+      <div id="today-outcomes" tabIndex={-1}>
       <Section label="Today's outcomes" right={<Mono>{offAir ? "rest day" : `${tasks.filter((t) => done[t.id]).length}/${tasks.length}`}</Mono>}>
         {offAir ? (
           <Card style={{ textAlign: "center", padding: "32px 20px" }}>
@@ -283,7 +280,7 @@ export default function Today({
               const isDone = !!done[t.id];
               return (
                 <div key={t.id} className="flex items-start gap-3" style={{ padding: "11px 16px" }}>
-                  <button onClick={() => toggle(t.id)} className="tap" aria-label="Done"
+                  <button onClick={() => toggle(t.id)} className="tap" aria-label={`Done: ${t.name}`} aria-pressed={isDone}
                     style={{
                       width: 25, height: 25, flexShrink: 0, marginTop: 1, borderRadius: 999, cursor: "pointer",
                       border: isDone ? "none" : "1.5px solid rgba(20,24,51,.2)",
@@ -299,7 +296,10 @@ export default function Today({
                         {t.name}
                       </span>
                     </div>
-                    <div style={{ fontSize: 12.5, color: C.ink2, marginTop: 2, lineHeight: 1.45 }}>{t.note}</div>
+                    {t.note && <div style={{ fontSize: 12.5, color: C.ink2, marginTop: 2, lineHeight: 1.45 }}>{t.note}</div>}
+                    {t.kind && <div style={{ marginTop: 3 }}><Mono s={9}>
+                      {[t.kind, t.owner, t.dueDate && `Due ${t.dueDate}`, t.source !== "manual" && t.source].filter(Boolean).join(" · ")}
+                    </Mono></div>}
                   </div>
                 </div>
               );
@@ -307,6 +307,24 @@ export default function Today({
           </Card>
         )}
       </Section>
+
+      </div>
+
+      <details className="cockpit-today-details">
+        <summary>Editorial desk tools</summary>
+      <EditorialCall gaps={gaps} threads={threads} onNavigate={onEditorialNavigate} />
+
+      <div className="flex justify-end" style={{ marginBottom: 10 }}>
+        <button className="tap" onClick={() => {
+          navigator.clipboard?.writeText("https://calendly.com/vinnyob/podcast-precall-discussion");
+          setCopied(true); setTimeout(() => setCopied(false), 1600);
+        }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, background: C.card, border: "1.5px solid rgba(20,24,51,.1)", borderRadius: 999, padding: "8px 14px", cursor: "pointer", fontFamily: BODY, fontSize: 12.5, fontWeight: 600, color: C.ink }}>
+          <Link2 size={14} strokeWidth={2.3} />{copied ? "Link copied" : "Copy pre-call link"}
+        </button>
+      </div>
+
+      </details>
 
       {/* week */}
       <Section label="This week" right={<Mono>{weekAvg !== null ? `${weekAvg}% avg` : "no baseline"}</Mono>}>

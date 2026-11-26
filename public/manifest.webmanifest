@@ -6,8 +6,8 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F4F5F1",
-  "theme_color": "#141833",
+  "background_color": "#F4EDE1",
+  "theme_color": "#151C34",
   "icons": [
     {
       "src": "/cockpit-192.png",

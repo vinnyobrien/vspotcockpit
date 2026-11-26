@@ -30,7 +30,8 @@ import EpisodeIntelligence from "./rooms/EpisodeIntelligence.jsx";
 import BreakingNews from "./rooms/BreakingNews.jsx";
 import Analysis from "./rooms/Analysis.jsx";
 import Week from "./rooms/Week.jsx";
-import ContentCalendar, { useEditorialCalendar, CalendarPriority } from "./rooms/ContentCalendar.jsx";
+import ContentCalendar, { useEditorialCalendar } from "./rooms/ContentCalendar.jsx";
+import { dateInDublin, deadlines, shiftDate } from "./lib/editorial-calendar.js";
 import SubEditor from "./rooms/SubEditor.jsx";
 
 import Actions from "./rooms/Actions.jsx";
@@ -279,8 +280,24 @@ export default function Cockpit({ onLogout, googleConnected }) {
 
   const toggle = (id) => setDone((p) => ({ ...p, [id]: !p[id] }));
 
-  const addExtra = (name) =>
-    setExtras((p) => [...p, { id: "x" + Math.random().toString(36).slice(2), slot: "—", name, note: "Added today.", w: 1 }]);
+  const addExtra = (input) => {
+    const fields = typeof input === "string" ? { title: input } : input;
+    const title = fields.title?.trim();
+    if (!title) return;
+    const item = {
+      id: crypto.randomUUID(),
+      slot: "",
+      name: title,
+      note: fields.details?.trim() || "",
+      w: 1,
+      kind: fields.kind || "action",
+      owner: fields.owner?.trim() || "",
+      dueDate: fields.dueDate || "",
+      source: fields.source || "manual",
+      capturedAt: new Date().toISOString(),
+    };
+    setExtras((previous) => [...previous, item]);
+  };
 
   /* Content goes to the ledger, which can leave. Client and commercial
      material goes to the vault, which cannot. The split happens once, here. */
@@ -454,7 +471,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
             height: "100vh", overflowY: "auto", padding: "22px 14px 24px",
           }} className="sc cockpit-rail">
             <div style={{ padding: "0 8px 18px" }}>
-              <div className="brand-plaque"><img src="/lockup-paper.png" alt="V Spot Media — drafted 2026" /></div>
+              <div className="brand-plaque"><img src="/vspot-media-skyline.webp" alt="V-Spot Media" /></div>
               <Mono s={9}>VINNY'S MEDIA DESK · {DAYS[dow]} {today.getDate()} {MONTHS[today.getMonth()]}</Mono>
               <div style={{ marginTop: 3 }}><Big s={24}>THE COCKPIT</Big></div>
             </div>
@@ -524,10 +541,10 @@ export default function Cockpit({ onLogout, googleConnected }) {
         )}
 
         {!wide && <header className="cockpit-mobile-head">
-          <img src="/lockup-paper.png" alt="V Spot Media — drafted 2026" />
+          <img src="/vspot-media-skyline.webp" alt="V-Spot Media" />
           <div className="mobile-status">
             <Mono s={8.5} c={C.ink2}>VINNY'S DESK</Mono>
-            <Big s={17} c={C.ink}>TODAY · {pct}%</Big>
+            <Big s={17} c={C.ink}>{room ? current.name : 'THE COCKPIT'}</Big>
           </div>
         </header>}
 
@@ -551,7 +568,7 @@ export default function Cockpit({ onLogout, googleConnected }) {
                 ) : (
                   <>
                     <Mono s={9.5}>{DAYS[dow]} {today.getDate()} {MONTHS[today.getMonth()]} · Tralee</Mono>
-                    <div style={{ marginTop: 3 }}><Big s={30}>THE COCKPIT</Big></div>
+                    <div style={{ marginTop: 3 }}><Big s={30}>TODAY</Big></div>
                   </>
                 )}
               </div>
@@ -572,24 +589,15 @@ export default function Cockpit({ onLogout, googleConnected }) {
         <div className="sc" style={{ height: "calc(100vh - 74px)", overflowY: "auto" }}>
           <div style={{ padding: "0 16px" }}>
             <Problem onDismiss={() => setErr("")}>{err}</Problem>
-            <CalendarPriority calendar={editorialCalendar} onOpen={() => setRoom("calendar")} />
           </div>
 
           {!room && (
             <>
-              <section className="cockpit-today-card" style={{ margin: "0 16px 18px", borderRadius: 22, color: "#FFF9EF", padding: "22px 22px 20px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-                  <img src="/cockpit-mark.svg" alt="V Spot Media mark" width="48" height="48" style={{ objectFit: "contain" }} />
-                  <div><div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 2, color: C.sand }}>VINNY'S MEDIA DESK · MISSION CONTROL</div><div style={{ fontFamily: BODY, fontSize: 24, fontWeight: 800 }}>Today's running order</div></div>
-                </div>
-                <div style={{ fontSize: 13, color: "#E1E8DF", lineHeight: 1.6, marginBottom: 16 }}>The decisions, the people and the production. All the useful chaos, one desk.</div>
-                <div className="cockpit-today-metrics">
-                  {[{ label: "Outcomes left", value: all.filter(t => !done[t.id]).length, room: "actions" }, { label: "Sponsor approaches / day", value: "3–4", room: "growth" }, { label: "Calendar items", value: editorialCalendar.items?.length ?? "—", room: "calendar" }].map(stat => <button key={stat.label} onClick={() => setRoom(stat.room)} className="tap" style={{ textAlign: "left", background: "rgba(255,255,255,.10)", color: "#fffaf2", border: "1px solid rgba(255,255,255,.2)", borderRadius: 14, padding: "12px 10px", cursor: "pointer" }}><div style={{ fontSize: 23, fontWeight: 800 }}>{stat.value}</div><div style={{ fontSize: 10, color: C.sand }}>{stat.label}</div></button>)}
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
-                  {[{ label: "Action queue", room: "actions" }, { label: "Guest desk", room: "guests" }, { label: "Money & admin", room: "finance" }, { label: "Production", room: "build" }].map(link => <button key={link.room} className="tap" onClick={() => setRoom(link.room)} style={{ border: "1px solid #626B87", background: "transparent", color: "#F3F1EC", padding: "8px 11px", borderRadius: 10, fontSize: 12, cursor: "pointer" }}>{link.label} ↗</button>)}
-                </div>
-              </section>
+              <RunningOrder
+                calendar={editorialCalendar}
+                remaining={all.filter((task) => !done[task.id]).length}
+                onOpen={setRoom}
+              />
               <Today
                 today={today} dayKey={dayKey} tasks={all} done={done} toggle={toggle}
                 extras={extras} addExtra={addExtra} gaps={gaps} three={three} setThree={setThree}
@@ -697,6 +705,42 @@ export default function Cockpit({ onLogout, googleConnected }) {
         {panel && <Panel entry={panel} onClose={() => setPanel(null)} />}
       </div>
     </div>
+  );
+}
+
+function RunningOrder({ calendar, remaining, onOpen }) {
+  const today = dateInDublin();
+  const items = calendar.data?.items;
+  const due = items?.flatMap(deadlines).filter(({ date }) => date >= today && date <= shiftDate(today, 7));
+  const awaiting = items?.filter(({ status }) => status === "review").length;
+  const calendarCount = calendar.error ? "Unavailable" : due?.length ?? "Loading";
+  const tiles = [
+    { value: remaining, label: "Open outcomes", room: "outcomes" },
+    { value: "3–4", label: "Daily sponsor target", room: "growth" },
+    { value: calendarCount, label: "Deadlines · next 7 days", room: "calendar" },
+  ];
+  const open = (room) => {
+    if (room === "outcomes") {
+      document.getElementById("today-outcomes")?.scrollIntoView({ block: "start" });
+      return;
+    }
+    onOpen(room);
+  };
+  return (
+    <section className="cockpit-today-card" aria-labelledby="running-order">
+      <div className="cockpit-running-title">
+        <h2 id="running-order">Today’s running order</h2>
+        {awaiting > 0 && <button type="button" onClick={() => onOpen("calendar")}>{awaiting} awaiting sign-off</button>}
+      </div>
+      <div className="cockpit-today-metrics">
+        {tiles.map(({ value, label, room }) => (
+          <button key={room} type="button" className="tap" onClick={() => open(room)}>
+            <strong>{value}</strong>
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 

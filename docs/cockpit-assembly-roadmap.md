@@ -4,7 +4,7 @@
 
 The Cockpit is Vinny's media and commercial workbench: a little editorial desk, a little studio control room, and a practical revenue tracker. It should feel personal and opinionated, while keeping the next useful action obvious. It is not a gallery of unrelated dashboards.
 
-The shell is being restyled around the V Spot Media palette (warm paper, studio teal, coral, and the existing wordmark). The current repo and connected Drive contain the 2026 wordmark and network brand guide, but not the portrait-style Vinny-with-a-wine-bottle logo. Keep that art slot replaceable until the approved file is located.
+The shell uses the V-Spot Media Skyline Badge, the network artwork derived from the water-and-wine PSA. Its palette is midnight navy, cream, red and gold. Condensed italic headings echo the badge lettering.
 
 ## Build order
 
